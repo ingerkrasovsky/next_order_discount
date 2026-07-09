@@ -1,0 +1,81 @@
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to a custom commercial license.
+ * You may not redistribute, resell, sublicense, or share this file.
+ * One license is valid for one installation (one store).
+ *
+ * For full license terms, contact: info@setecom.tech
+ *
+ * @author    Smart Ecommerce Tech
+ * @copyright 2026 Smart Ecommerce Tech
+ * @license   Commercial License
+ */
+
+.page-head-tabs {
+    background: #fff;
+    font-family: "Open Sans", helvetica, arial, sans-serif;
+    font-size: .875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #363a41;
+    text-align: left;
+    width: 100%;
+}
+
+.page-head-tabs {
+    position: fixed;
+    top: 7.9rem;
+    left: 0;
+    z-index: 499;
+    width: 100%;
+    padding: 0 0 0 210px;
+    margin: 0;
+    color: #363a41;
+    background-color: #fff;
+    -webkit-transition: padding-left .5s ease-out;
+    transition: padding-left .5s ease-out;
+}
+
+.snod-page-head-tabs-ps9 {
+    top: 9rem;
+}
+
+.nav-pills .nav-link.active {
+    border-bottom: solid .1875rem #25b9d7;
+}
+
+.bootstrap .nav-pills > li > a {
+    border-radius: 0px;
+}
+
+.page-head-tabs > ul {
+    border-bottom: 0px;
+}
+
+.nav-pills {
+    border-bottom: solid 1px #dfdfdf;
+}
+
+.bootstrap .nav > li > a {
+    padding: 15px 20px;
+    color: #6c868e;
+}
+
+.nav-pills .nav-link.active {
+    color: #363a41;
+    background-color: #f4f9fb;
+}
+
+.nav > li > a:hover {
+    color: #25b9d7;
+}
+
+.page-content {
+    margin-top: 35px;
+    overflow: visible !important;
+}
+
+.page-content .form-wrapper {
+    overflow: visible;
+}
