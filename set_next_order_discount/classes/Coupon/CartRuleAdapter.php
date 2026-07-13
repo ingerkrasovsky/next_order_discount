@@ -147,6 +147,16 @@ class SnodCartRuleAdapter
             : 0.0;
         $value = max(0.0, $value);
 
+        if ($type === 'free_shipping') {
+            $cartRule->free_shipping = 1;
+            $cartRule->reduction_percent = 0;
+            $cartRule->reduction_amount = 0;
+            $cartRule->reduction_currency = 0;
+            $cartRule->reduction_tax = 0;
+
+            return;
+        }
+
         if ($type === 'amount') {
             $cartRule->reduction_amount = $value;
             $cartRule->reduction_tax = isset($params['reduction_tax']) ? (int) (bool) $params['reduction_tax'] : 1;

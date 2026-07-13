@@ -136,9 +136,11 @@ class SnodCouponCodeGenerator
     {
         $escaped = pSQL($code);
 
+        // Note: Db::getValue() delegates to getRow(), which already appends
+        // "LIMIT 1", so no explicit LIMIT is added here (that would double it).
         $existsInCartRules = (int) Db::getInstance()->getValue(
             'SELECT `id_cart_rule` FROM `' . _DB_PREFIX_ . 'cart_rule`'
-            . ' WHERE `code` = "' . $escaped . '" LIMIT 1'
+            . ' WHERE `code` = "' . $escaped . '"'
         );
         if ($existsInCartRules > 0) {
             return true;
@@ -146,7 +148,7 @@ class SnodCouponCodeGenerator
 
         $existsInLinks = (int) Db::getInstance()->getValue(
             'SELECT `id_snod_coupon_link` FROM `' . _DB_PREFIX_ . 'snod_coupon_link`'
-            . ' WHERE `coupon_code` = "' . $escaped . '" LIMIT 1'
+            . ' WHERE `coupon_code` = "' . $escaped . '"'
         );
 
         return $existsInLinks > 0;

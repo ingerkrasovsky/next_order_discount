@@ -20,34 +20,23 @@ if (!defined('_PS_VERSION_')) {
  * Data-access layer for the `snod_rule` table and its condition tables.
  *
  * A rule is "conditions -> discount": the scalar columns hold the outcome and
- * range/flag conditions, while the six M2M tables hold list conditions
- * (statuses, groups, countries, currencies, categories, manufacturers). All
- * writes go through the PrestaShop Db helper, which escapes values with pSQL.
+ * range/flag conditions, while the M2M tables described by
+ * {@see SnodRuleConditionSchema} hold list conditions. All writes go through the
+ * PrestaShop Db helper, which escapes values with pSQL.
  */
 class SnodRuleRepository
 {
     public const TABLE_NAME = 'snod_rule';
     public const PRIMARY_KEY = 'id_snod_rule';
 
-    public const MODE_ALL = 'all';
-    public const MODE_INCLUDE = 'include';
-    public const MODE_EXCLUDE = 'exclude';
-
     public const DISCOUNT_PERCENT = 'percent';
     public const DISCOUNT_AMOUNT = 'amount';
     public const DISCOUNT_FREE_SHIPPING = 'free_shipping';
 
     /**
-     * Condition type => [m2m table without prefix, foreign column].
+     * Step between priorities when renumbering, leaving room for manual tweaks.
      */
-    private const CONDITION_TABLES = [
-        'status' => ['snod_rule_status', 'id_order_state'],
-        'group' => ['snod_rule_group', 'id_group'],
-        'country' => ['snod_rule_country', 'id_country'],
-        'currency' => ['snod_rule_currency', 'id_currency'],
-        'category' => ['snod_rule_category', 'id_category'],
-        'manufacturer' => ['snod_rule_manufacturer', 'id_manufacturer'],
-    ];
+    private const PRIORITY_STEP = 10;
 
     private const ALLOWED_COLUMNS = [
         'id_shop',
@@ -95,6 +84,14 @@ class SnodRuleRepository
         'date_from',
         'date_to',
     ];
+
+    /**
+     * @return array all supported discount type keys
+     */
+    public static function discountTypes()
+    {
+        return [self::DISCOUNT_PERCENT, self::DISCOUNT_AMOUNT, self::DISCOUNT_FREE_SHIPPING];
+    }
 
     /**
      * @param array $data associative array keyed by column name
@@ -166,7 +163,8 @@ class SnodRuleRepository
     }
 
     /**
-     * @param int $id
+     * @param int  $id
+     * @param bool $active
      *
      * @return bool
      */
@@ -184,6 +182,59 @@ class SnodRuleRepository
     public function setPriority($id, $priority)
     {
         return $this->update($id, ['priority' => max(1, (int) $priority)]);
+    }
+
+    /**
+     * Moves a rule one position up/down among the shop's rules by renumbering
+     * priorities in the new order (robust against duplicate/gapped priorities).
+     *
+     * @param int    $idShop
+     * @param int    $idRule
+     * @param string $direction 'up' or 'down'
+     *
+     * @return bool true if the order changed
+     */
+    public function reorder($idShop, $idRule, $direction)
+    {
+        $idRule = (int) $idRule;
+
+        $ids = [];
+        foreach ($this->findAllByShop($idShop) as $rule) {
+            $ids[] = (int) $rule[self::PRIMARY_KEY];
+        }
+
+        $pos = array_search($idRule, $ids, true);
+        if ($pos === false) {
+            return false;
+        }
+
+        if ($direction === 'up' && $pos > 0) {
+            $swap = $pos - 1;
+        } elseif ($direction === 'down' && $pos < count($ids) - 1) {
+            $swap = $pos + 1;
+        } else {
+            return false;
+        }
+
+        $tmp = $ids[$swap];
+        $ids[$swap] = $ids[$pos];
+        $ids[$pos] = $tmp;
+
+        foreach ($ids as $index => $id) {
+            $this->setPriority($id, ($index + 1) * self::PRIORITY_STEP);
+        }
+
+        return true;
+    }
+
+    /**
+     * @param int $idShop
+     *
+     * @return int priority to place a new rule at the end of the list
+     */
+    public function nextPriority($idShop)
+    {
+        return ($this->countByShop($idShop) + 1) * self::PRIORITY_STEP;
     }
 
     /**
@@ -258,24 +309,41 @@ class SnodRuleRepository
     }
 
     /**
+     * Cheap check used to skip the expensive product-category/manufacturer
+     * context gathering when no active rule filters on products.
+     *
+     * @param int $idShop
+     *
+     * @return bool true if an active rule restricts by category or manufacturer
+     */
+    public function hasActiveProductConditions($idShop)
+    {
+        return (bool) Db::getInstance()->getValue(
+            'SELECT 1 FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
+            . ' WHERE `id_shop` = ' . (int) $idShop
+            . ' AND `active` = 1'
+            . ' AND (`category_mode` <> "all" OR `manufacturer_mode` <> "all")'
+        );
+    }
+
+    /**
      * Returns the selected entity ids for one condition type of a rule.
      *
      * @param int    $idRule
-     * @param string $type one of the CONDITION_TABLES keys
+     * @param string $type a SnodRuleConditionSchema type
      *
      * @return array list of ids
      */
     public function getConditions($idRule, $type)
     {
         $idRule = (int) $idRule;
-        if ($idRule <= 0 || !isset(self::CONDITION_TABLES[$type])) {
+        if ($idRule <= 0 || !SnodRuleConditionSchema::isValidType($type)) {
             return [];
         }
 
-        list($table, $column) = self::CONDITION_TABLES[$type];
-
+        $column = SnodRuleConditionSchema::column($type);
         $rows = Db::getInstance()->executeS(
-            'SELECT `' . $column . '` FROM `' . _DB_PREFIX_ . $table . '`'
+            'SELECT `' . bqSQL($column) . '` FROM `' . _DB_PREFIX_ . bqSQL(SnodRuleConditionSchema::table($type)) . '`'
             . ' WHERE `id_snod_rule` = ' . $idRule
         );
         if (!is_array($rows)) {
@@ -298,7 +366,7 @@ class SnodRuleRepository
     public function getAllConditions($idRule)
     {
         $conditions = [];
-        foreach (array_keys(self::CONDITION_TABLES) as $type) {
+        foreach (SnodRuleConditionSchema::types() as $type) {
             $conditions[$type] = $this->getConditions($idRule, $type);
         }
 
@@ -317,23 +385,16 @@ class SnodRuleRepository
     public function setConditions($idRule, $type, array $ids)
     {
         $idRule = (int) $idRule;
-        if ($idRule <= 0 || !isset(self::CONDITION_TABLES[$type])) {
+        if ($idRule <= 0 || !SnodRuleConditionSchema::isValidType($type)) {
             return false;
         }
 
-        list($table, $column) = self::CONDITION_TABLES[$type];
+        $table = SnodRuleConditionSchema::table($type);
+        $column = SnodRuleConditionSchema::column($type);
 
         Db::getInstance()->delete($table, 'id_snod_rule = ' . $idRule);
 
-        $clean = [];
-        foreach ($ids as $id) {
-            $id = (int) $id;
-            if ($id > 0) {
-                $clean[$id] = $id;
-            }
-        }
-
-        foreach ($clean as $id) {
+        foreach ($this->uniquePositiveInts($ids) as $id) {
             $inserted = Db::getInstance()->insert($table, [
                 'id_snod_rule' => $idRule,
                 $column => $id,
@@ -344,6 +405,24 @@ class SnodRuleRepository
         }
 
         return true;
+    }
+
+    /**
+     * @param array $ids
+     *
+     * @return array unique positive integers, order preserved
+     */
+    private function uniquePositiveInts(array $ids)
+    {
+        $clean = [];
+        foreach ($ids as $id) {
+            $id = (int) $id;
+            if ($id > 0) {
+                $clean[$id] = $id;
+            }
+        }
+
+        return array_values($clean);
     }
 
     /**

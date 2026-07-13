@@ -40,6 +40,7 @@ class SnodCouponLinkRepository
         'id_shop_group',
         'id_customer',
         'id_order_source',
+        'id_snod_rule',
         'id_cart_rule',
         'coupon_code',
         'status',
@@ -59,6 +60,7 @@ class SnodCouponLinkRepository
         'id_shop_group',
         'id_customer',
         'id_order_source',
+        'id_snod_rule',
         'id_cart_rule',
     ];
 
@@ -178,6 +180,33 @@ class SnodCouponLinkRepository
             'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
             . ' WHERE `id_shop` = ' . $idShop
             . ' AND `id_order_source` = ' . $idOrderSource
+        );
+
+        return is_array($row) && !empty($row) ? $row : null;
+    }
+
+    /**
+     * Returns the coupon link issued for a given (shop, source order, rule)
+     * triple, enforcing the "one coupon per order per rule" idempotency
+     * guarantee of the rule engine.
+     *
+     * @param int $idShop
+     * @param int $idOrderSource
+     * @param int $idRule
+     *
+     * @return array|null
+     */
+    public function findByShopOrderRule($idShop, $idOrderSource, $idRule)
+    {
+        $idShop = (int) $idShop;
+        $idOrderSource = (int) $idOrderSource;
+        $idRule = (int) $idRule;
+
+        $row = Db::getInstance()->getRow(
+            'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
+            . ' WHERE `id_shop` = ' . $idShop
+            . ' AND `id_order_source` = ' . $idOrderSource
+            . ' AND `id_snod_rule` = ' . $idRule
         );
 
         return is_array($row) && !empty($row) ? $row : null;

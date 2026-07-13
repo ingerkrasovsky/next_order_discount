@@ -17,6 +17,9 @@
         <i class="icon-sitemap"></i>
         {l s='Discount rules' d='Modules.Setnextorderdiscount.Admin'}
         <span class="badge">{$snod_rules_count|intval}</span>
+        <a href="{$AdminLink|escape:'html':'UTF-8'}&tab=rule_edit" class="btn btn-primary btn-xs pull-right">
+            <i class="icon-plus"></i> {l s='Add a rule' d='Modules.Setnextorderdiscount.Admin'}
+        </a>
     </div>
 
     {if $snod_rules_count > 0}
@@ -84,6 +87,11 @@
                             {/if}
                         </td>
                         <td class="text-center">
+                            <a href="{$AdminLink|escape:'html':'UTF-8'}&tab=rule_edit&id_rule={$rule.id_snod_rule|intval}"
+                               class="btn btn-default btn-xs"
+                               title="{l s='Edit' d='Modules.Setnextorderdiscount.Admin'}">
+                                <i class="icon-pencil"></i>
+                            </a>
                             <a href="{$AdminLink|escape:'html':'UTF-8'}&tab=rules&ruleAction=delete&id_rule={$rule.id_snod_rule|intval}"
                                class="btn btn-default btn-xs"
                                onclick="return confirm('{l s='Delete this rule?' d='Modules.Setnextorderdiscount.Admin' js=1}');"

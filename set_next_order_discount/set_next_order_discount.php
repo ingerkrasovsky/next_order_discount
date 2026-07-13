@@ -25,7 +25,6 @@ class set_next_order_discount extends Module
 
     private const COUPON_CLASS_FILES = [
         '/classes/Repository/CouponLinkRepository.php',
-        '/classes/Coupon/CouponEligibilityResolver.php',
         '/classes/Coupon/CouponCodeGenerator.php',
         '/classes/Coupon/CartRuleAdapter.php',
         '/classes/Coupon/CouponGenerationService.php',
@@ -34,7 +33,12 @@ class set_next_order_discount extends Module
     private $couponClassesLoaded = false;
 
     private const RULE_CLASS_FILES = [
+        '/classes/Rule/RuleConditionSchema.php',
+        '/classes/Rule/RuleValueFormatter.php',
         '/classes/Repository/RuleRepository.php',
+        '/classes/Rule/RuleFormHandler.php',
+        '/classes/Rule/RulePresenter.php',
+        '/classes/Rule/RuleMatcher.php',
     ];
 
     private $ruleClassesLoaded = false;
@@ -222,18 +226,149 @@ class set_next_order_discount extends Module
             $orderIsPaid = Validate::isLoadedObject($currentState) ? (bool) $currentState->paid : false;
         }
 
+        $idShop = (int) $order->id_shop;
+        $idCustomer = (int) $order->id_customer;
+        $idLang = (int) $order->id_lang;
+
+        // The product-derived context (order products + their categories and
+        // manufacturers) is the most expensive part, so only gather it when an
+        // active rule actually filters on categories or brands.
+        $productCategoryIds = [];
+        $productManufacturerIds = [];
+        if ($this->getRuleRepository()->hasActiveProductConditions($idShop)) {
+            $productIds = $this->getOrderProductIds($order);
+            $productCategoryIds = $this->getProductCategoryIds($productIds);
+            $productManufacturerIds = $this->getProductManufacturerIds($productIds);
+        }
+
         return [
-            'id_shop' => (int) $order->id_shop,
+            'id_shop' => $idShop,
             'id_shop_group' => (int) $order->id_shop_group,
-            'id_customer' => (int) $order->id_customer,
+            'id_customer' => $idCustomer,
             'id_order_source' => (int) $order->id,
             'id_order_state' => $idOrderState,
             'order_is_paid' => $orderIsPaid,
             'order_total_paid' => (float) $order->total_paid,
             'id_currency' => (int) $order->id_currency,
-            'id_lang' => (int) $order->id_lang,
-            'voucher_name' => $this->trans('Next order discount', [], 'Modules.Setnextorderdiscount.Shop'),
+            'id_lang' => $idLang,
+            'id_country' => $this->getOrderCountry($order),
+            'customer_group_ids' => Customer::getGroupsStatic($idCustomer),
+            'customer_valid_order_count' => (int) Order::getCustomerNbOrders($idCustomer),
+            'product_category_ids' => $productCategoryIds,
+            'product_manufacturer_ids' => $productManufacturerIds,
+            'voucher_name' => $this->getVoucherName($idLang),
         ];
+    }
+
+    /**
+     * Localized voucher name, resolved in the order's language (the coupon is
+     * shown to the customer, so it must not follow the back-office language).
+     *
+     * @param int $idLang
+     *
+     * @return string
+     */
+    private function getVoucherName($idLang)
+    {
+        $locale = null;
+        $language = new Language((int) $idLang);
+        if (Validate::isLoadedObject($language) && !empty($language->locale)) {
+            $locale = $language->locale;
+        }
+
+        return $this->trans('Next order discount', [], 'Modules.Setnextorderdiscount.Shop', $locale);
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return array unique product ids in the order
+     */
+    private function getOrderProductIds(Order $order)
+    {
+        $productIds = [];
+        foreach ((array) $order->getProducts() as $product) {
+            $id = (int) (isset($product['product_id']) ? $product['product_id'] : (isset($product['id_product']) ? $product['id_product'] : 0));
+            if ($id > 0) {
+                $productIds[$id] = $id;
+            }
+        }
+
+        return array_values($productIds);
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return int delivery country id (0 when unavailable)
+     */
+    private function getOrderCountry(Order $order)
+    {
+        $idAddress = (int) $order->id_address_delivery;
+        if ($idAddress <= 0) {
+            return 0;
+        }
+
+        $info = Address::getCountryAndState($idAddress);
+
+        return isset($info['id_country']) ? (int) $info['id_country'] : 0;
+    }
+
+    /**
+     * @param array $productIds
+     *
+     * @return array distinct category ids across the order products
+     */
+    private function getProductCategoryIds(array $productIds)
+    {
+        if (empty($productIds)) {
+            return [];
+        }
+
+        $rows = Db::getInstance()->executeS(
+            'SELECT DISTINCT `id_category` FROM `' . _DB_PREFIX_ . 'category_product`'
+            . ' WHERE `id_product` IN (' . implode(',', array_map('intval', $productIds)) . ')'
+        );
+
+        return $this->columnAsInts($rows, 'id_category');
+    }
+
+    /**
+     * @param array $productIds
+     *
+     * @return array distinct manufacturer ids across the order products
+     */
+    private function getProductManufacturerIds(array $productIds)
+    {
+        if (empty($productIds)) {
+            return [];
+        }
+
+        $rows = Db::getInstance()->executeS(
+            'SELECT DISTINCT `id_manufacturer` FROM `' . _DB_PREFIX_ . 'product`'
+            . ' WHERE `id_manufacturer` > 0'
+            . ' AND `id_product` IN (' . implode(',', array_map('intval', $productIds)) . ')'
+        );
+
+        return $this->columnAsInts($rows, 'id_manufacturer');
+    }
+
+    /**
+     * @param mixed  $rows
+     * @param string $column
+     *
+     * @return array
+     */
+    private function columnAsInts($rows, $column)
+    {
+        $ids = [];
+        foreach ((array) $rows as $row) {
+            if (isset($row[$column])) {
+                $ids[] = (int) $row[$column];
+            }
+        }
+
+        return $ids;
     }
 
     /**
@@ -280,7 +415,7 @@ class set_next_order_discount extends Module
         $this->ensureCouponClassesLoaded();
 
         return new SnodCouponGenerationService(
-            new SnodCouponEligibilityResolver(),
+            $this->getRuleMatcher(),
             new SnodCartRuleAdapter(),
             new SnodCouponLinkRepository()
         );
@@ -318,17 +453,71 @@ class set_next_order_discount extends Module
         return new SnodRuleRepository();
     }
 
+    /**
+     * Factory for the rule form handler (validation + persistence).
+     *
+     * @return SnodRuleFormHandler
+     */
+    public function getRuleFormHandler()
+    {
+        $this->ensureRuleClassesLoaded();
+
+        return new SnodRuleFormHandler(new SnodRuleRepository());
+    }
+
+    /**
+     * Factory for the rule list presenter.
+     *
+     * @return SnodRulePresenter
+     */
+    public function getRulePresenter()
+    {
+        $this->ensureRuleClassesLoaded();
+
+        return new SnodRulePresenter();
+    }
+
+    /**
+     * Factory for the rule matcher (order context -> matching rules).
+     *
+     * @return SnodRuleMatcher
+     */
+    public function getRuleMatcher()
+    {
+        $this->ensureRuleClassesLoaded();
+
+        return new SnodRuleMatcher(new SnodRuleRepository());
+    }
+
+    /**
+     * Global configuration. Discount, validity, minimum and target statuses now
+     * live on individual rules, so only module-wide settings remain here.
+     *
+     * @return array
+     */
     private function getDefaultConfigurationValues()
     {
         return [
             'SNOD_ENABLED' => 0,
-            'SNOD_DISCOUNT_TYPE' => 'percent',
-            'SNOD_DISCOUNT_VALUE' => '10',
-            'SNOD_VALIDITY_DAYS' => '30',
-            'SNOD_MIN_ORDER_AMOUNT' => '0',
-            'SNOD_TARGET_STATUSES' => '',
             'SNOD_DEBUG_MODE' => 0,
+            'SNOD_CODE_PREFIX' => 'NOD',
+            'SNOD_CODE_LENGTH' => 12,
+            'SNOD_CODE_MASK' => '',
         ];
+    }
+
+    /**
+     * All configuration keys removed on uninstall, including legacy keys from
+     * the pre rule-engine layout.
+     *
+     * @return array
+     */
+    private function getAllConfigurationKeys()
+    {
+        return array_merge(
+            array_keys($this->getDefaultConfigurationValues()),
+            ['SNOD_DISCOUNT_TYPE', 'SNOD_DISCOUNT_VALUE', 'SNOD_VALIDITY_DAYS', 'SNOD_MIN_ORDER_AMOUNT', 'SNOD_TARGET_STATUSES']
+        );
     }
 
     private function updateConfigurationValues(array $valuesByKey)
@@ -344,7 +533,7 @@ class set_next_order_discount extends Module
 
     private function deleteConfigurationValues()
     {
-        foreach (array_keys($this->getDefaultConfigurationValues()) as $key) {
+        foreach ($this->getAllConfigurationKeys() as $key) {
             if (Configuration::hasKey($key) && !Configuration::deleteByName($key)) {
                 return false;
             }

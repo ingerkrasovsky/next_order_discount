@@ -57,6 +57,7 @@
                     <th>{l s='Code' d='Modules.Setnextorderdiscount.Admin'}</th>
                     <th>{l s='Customer' d='Modules.Setnextorderdiscount.Admin'}</th>
                     <th>{l s='Source order' d='Modules.Setnextorderdiscount.Admin'}</th>
+                    <th>{l s='Rule' d='Modules.Setnextorderdiscount.Admin'}</th>
                     <th>{l s='Status' d='Modules.Setnextorderdiscount.Admin'}</th>
                     <th>{l s='Valid until' d='Modules.Setnextorderdiscount.Admin'}</th>
                     <th>{l s='Generated' d='Modules.Setnextorderdiscount.Admin'}</th>
@@ -77,6 +78,13 @@
                             {/if}
                         </td>
                         <td>#{$coupon.id_order_source|intval}</td>
+                        <td>
+                            {if $coupon.rule_name}
+                                {$coupon.rule_name|escape:'html':'UTF-8'}
+                            {else}
+                                <span class="text-muted">#{$coupon.id_snod_rule|intval}</span>
+                            {/if}
+                        </td>
                         <td>
                             {assign var=statusCode value=$coupon.status}
                             {assign var=statusLabel value=$snod_coupon_status_labels[$statusCode]|default:$statusCode}

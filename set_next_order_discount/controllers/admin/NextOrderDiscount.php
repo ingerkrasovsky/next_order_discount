@@ -23,6 +23,11 @@ class NextOrderDiscountController extends ModuleAdminController
 {
     private const COUPON_STATUSES = ['created', 'emailed', 'reminded', 'used', 'expired', 'canceled'];
 
+    /**
+     * List conditions exposed in the rule form (mode + multi-select).
+     */
+    private const EDITABLE_MODE_CONDITIONS = ['group', 'country', 'currency', 'category', 'manufacturer'];
+
     public $bootstrap = true;
 
     private $adminLink;
@@ -46,6 +51,7 @@ class NextOrderDiscountController extends ModuleAdminController
             'coupons' => ['name' => $this->trans('Coupons', [], $domain), 'url' => $this->adminLink . '&tab=coupons', 'level' => 0],
             'logs' => ['name' => $this->trans('Logs', [], $domain), 'url' => $this->adminLink . '&tab=logs', 'level' => 0],
             'cron_tools' => ['name' => $this->trans('Cron/Tools', [], $domain), 'url' => $this->adminLink . '&tab=cron_tools', 'level' => 0],
+            'rule_edit' => ['name' => $this->trans('Rule', [], $domain), 'url' => $this->adminLink . '&tab=rule_edit', 'level' => 1, 'parent' => 'rules'],
         ];
 
         $requestTab = Tools::getValue('tab', '');
@@ -85,6 +91,12 @@ class NextOrderDiscountController extends ModuleAdminController
         $this->setTemplate('main.tpl');
     }
 
+    /**
+     * Global settings only: module active, debug and coupon code format.
+     * Discount, validity, minimum and conditions are configured per rule.
+     *
+     * @return void
+     */
     public function settingsTab()
     {
         $errors = [];
@@ -92,91 +104,35 @@ class NextOrderDiscountController extends ModuleAdminController
             $errors = $this->saveSettings();
         }
 
-        $currency = $this->context->currency;
-        $currencySign = Validate::isLoadedObject($currency) ? (string) $currency->sign : '';
-
         if (!empty($errors)) {
-            // Keep the values the merchant just submitted so they can fix them
-            // instead of silently reverting to the persisted configuration.
+            // Keep the submitted values so the merchant can fix them.
             $values = [
                 'snod_enabled' => $this->getSubmittedString('snod_enabled') === '1' ? 1 : 0,
                 'snod_debug_mode' => $this->getSubmittedString('snod_debug_mode') === '1' ? 1 : 0,
-                'snod_discount_type' => $this->getSubmittedString('snod_discount_type'),
-                'snod_discount_value' => $this->getSubmittedString('snod_discount_value'),
-                'snod_validity_days' => $this->getSubmittedString('snod_validity_days'),
-                'snod_min_order_amount' => $this->getSubmittedString('snod_min_order_amount'),
+                'snod_code_prefix' => $this->getSubmittedString('snod_code_prefix'),
+                'snod_code_length' => $this->getSubmittedString('snod_code_length'),
+                'snod_code_mask' => $this->getSubmittedString('snod_code_mask'),
             ];
         } else {
             $values = [
                 'snod_enabled' => (int) Configuration::get('SNOD_ENABLED'),
                 'snod_debug_mode' => (int) Configuration::get('SNOD_DEBUG_MODE'),
-                'snod_discount_type' => (string) Configuration::get('SNOD_DISCOUNT_TYPE'),
-                'snod_discount_value' => (string) Configuration::get('SNOD_DISCOUNT_VALUE'),
-                'snod_validity_days' => (string) Configuration::get('SNOD_VALIDITY_DAYS'),
-                'snod_min_order_amount' => (string) Configuration::get('SNOD_MIN_ORDER_AMOUNT'),
+                'snod_code_prefix' => (string) Configuration::get('SNOD_CODE_PREFIX'),
+                'snod_code_length' => (string) Configuration::get('SNOD_CODE_LENGTH'),
+                'snod_code_mask' => (string) Configuration::get('SNOD_CODE_MASK'),
             ];
         }
 
-        // Guarantee the <select> always matches one of its options.
-        if (!in_array($values['snod_discount_type'], ['percent', 'amount'], true)) {
-            $values['snod_discount_type'] = 'percent';
-        }
-
-        // Target order statuses (multi-select). On a failed save keep the
-        // merchant's selection, otherwise read the persisted CSV.
-        $values['snod_order_states'] = OrderState::getOrderStates((int) $this->context->language->id);
-        if (!empty($errors)) {
-            $submitted = Tools::getValue('snod_target_statuses', []);
-            $values['snod_target_statuses'] = $this->normalizeStatusIds(is_array($submitted) ? $submitted : []);
-        } else {
-            $values['snod_target_statuses'] = $this->parseTargetStatuses((string) Configuration::get('SNOD_TARGET_STATUSES'));
-        }
-
         $values['snodErrors'] = $errors;
-        $values['snod_currency_sign'] = $currencySign;
 
         $this->context->smarty->assign($values);
     }
 
     /**
-     * @param string $csv comma-separated order-state ids
+     * Validates and persists the global settings through the Configuration API
+     * (current shop context, multishop aware). Nothing is written unless valid.
      *
-     * @return array unique positive ids
-     */
-    private function parseTargetStatuses($csv)
-    {
-        $csv = trim((string) $csv);
-        if ($csv === '') {
-            return [];
-        }
-
-        return $this->normalizeStatusIds(explode(',', $csv));
-    }
-
-    /**
-     * @param mixed $ids
-     *
-     * @return array unique positive ids
-     */
-    private function normalizeStatusIds($ids)
-    {
-        $result = [];
-        foreach ((array) $ids as $id) {
-            $id = (int) $id;
-            if ($id > 0) {
-                $result[$id] = $id;
-            }
-        }
-
-        return array_values($result);
-    }
-
-    /**
-     * Validates and persists the Settings form. Values are stored through the
-     * Configuration API in the current shop context (multishop aware). Nothing
-     * is written unless every field is valid.
-     *
-     * @return array<int, string> validation error messages (empty on success)
+     * @return array validation error messages (empty on success)
      */
     private function saveSettings()
     {
@@ -185,45 +141,23 @@ class NextOrderDiscountController extends ModuleAdminController
 
         $enabled = $this->getSubmittedString('snod_enabled') === '1' ? 1 : 0;
         $debugMode = $this->getSubmittedString('snod_debug_mode') === '1' ? 1 : 0;
+        $codePrefix = $this->getSubmittedString('snod_code_prefix');
+        $codeMask = $this->getSubmittedString('snod_code_mask');
 
-        $discountType = $this->getSubmittedString('snod_discount_type');
-        if (!in_array($discountType, ['percent', 'amount'], true)) {
-            $discountType = 'percent';
-        }
-
-        $discountValueRaw = str_replace(',', '.', trim($this->getSubmittedString('snod_discount_value')));
-        if ($discountValueRaw === '' || !is_numeric($discountValueRaw) || (float) $discountValueRaw <= 0) {
-            $errors[] = $this->trans('Discount value must be a number greater than zero.', [], $domain);
-        } elseif ($discountType === 'percent' && (float) $discountValueRaw > 100) {
-            $errors[] = $this->trans('A percentage discount cannot exceed 100.', [], $domain);
-        }
-
-        $validityDaysRaw = trim($this->getSubmittedString('snod_validity_days'));
-        if ($validityDaysRaw === '' || !ctype_digit($validityDaysRaw) || (int) $validityDaysRaw < 1) {
-            $errors[] = $this->trans('Validity period must be a whole number of days (at least 1).', [], $domain);
-        }
-
-        $minOrderRaw = str_replace(',', '.', trim($this->getSubmittedString('snod_min_order_amount')));
-        if ($minOrderRaw === '') {
-            $minOrderRaw = '0';
-        }
-        if (!is_numeric($minOrderRaw) || (float) $minOrderRaw < 0) {
-            $errors[] = $this->trans('Minimum order amount must be zero or a positive number.', [], $domain);
+        $codeLengthRaw = trim($this->getSubmittedString('snod_code_length'));
+        if ($codeLengthRaw === '' || !ctype_digit($codeLengthRaw) || (int) $codeLengthRaw < 1) {
+            $errors[] = $this->trans('Code length must be a whole number greater than zero.', [], $domain);
         }
 
         if (!empty($errors)) {
             return $errors;
         }
 
-        $targetStatuses = $this->normalizeStatusIds(Tools::getValue('snod_target_statuses', []));
-
         Configuration::updateValue('SNOD_ENABLED', $enabled);
-        Configuration::updateValue('SNOD_DISCOUNT_TYPE', $discountType);
-        Configuration::updateValue('SNOD_DISCOUNT_VALUE', (float) $discountValueRaw);
-        Configuration::updateValue('SNOD_VALIDITY_DAYS', (int) $validityDaysRaw);
-        Configuration::updateValue('SNOD_MIN_ORDER_AMOUNT', (float) $minOrderRaw);
-        Configuration::updateValue('SNOD_TARGET_STATUSES', implode(',', $targetStatuses));
         Configuration::updateValue('SNOD_DEBUG_MODE', $debugMode);
+        Configuration::updateValue('SNOD_CODE_PREFIX', $codePrefix);
+        Configuration::updateValue('SNOD_CODE_LENGTH', (int) $codeLengthRaw);
+        Configuration::updateValue('SNOD_CODE_MASK', $codeMask);
 
         $this->context->smarty->assign(['updatedMessage' => true]);
 
@@ -300,9 +234,11 @@ class NextOrderDiscountController extends ModuleAdminController
         $rows = Db::getInstance()->executeS(
             'SELECT cl.*,'
             . ' CONCAT(c.`firstname`, " ", c.`lastname`) AS customer_name,'
-            . ' c.`email` AS customer_email'
+            . ' c.`email` AS customer_email,'
+            . ' r.`name` AS rule_name'
             . ' FROM `' . _DB_PREFIX_ . 'snod_coupon_link` cl'
             . ' LEFT JOIN `' . _DB_PREFIX_ . 'customer` c ON c.`id_customer` = cl.`id_customer`'
+            . ' LEFT JOIN `' . _DB_PREFIX_ . 'snod_rule` r ON r.`id_snod_rule` = cl.`id_snod_rule`'
             . ' WHERE ' . $where
             . ' ORDER BY cl.`id_snod_coupon_link` DESC'
             . ' LIMIT ' . (int) $offset . ', ' . (int) $perPage
@@ -368,13 +304,14 @@ class NextOrderDiscountController extends ModuleAdminController
             Tools::redirectAdmin($this->adminLink . '&tab=rules');
         }
 
+        $presenter = $this->module->getRulePresenter();
         $statusNames = $this->getOrderStateNameMap();
-        $currency = $this->context->currency;
-        $currencySign = Validate::isLoadedObject($currency) ? (string) $currency->sign : '';
+        $labels = $this->getRuleConditionLabels();
+        $currencySign = $this->getCurrencySign();
 
         $view = [];
         foreach ($repository->findAllByShop($idShop) as $rule) {
-            $view[] = $this->decorateRuleForList($rule, $statusNames, $currencySign);
+            $view[] = $presenter->present($rule, $currencySign, $statusNames, $labels);
         }
 
         $this->context->smarty->assign([
@@ -410,49 +347,233 @@ class NextOrderDiscountController extends ModuleAdminController
                 break;
             case 'up':
             case 'down':
-                $this->reorderRule($repository, $idShop, $idRule, $action);
+                $repository->reorder($idShop, $idRule, $action);
                 break;
         }
     }
 
     /**
-     * Moves a rule one position up/down by renumbering priorities of the shop's
-     * rules in the new order (robust against duplicate/gapped priorities).
-     *
-     * @param SnodRuleRepository $repository
-     * @param int                $idShop
-     * @param int                $idRule
-     * @param string             $direction 'up' or 'down'
+     * Add/edit form for a single discount rule. Delegates validation and
+     * persistence to SnodRuleFormHandler.
      *
      * @return void
      */
-    private function reorderRule($repository, $idShop, $idRule, $direction)
+    public function ruleeditTab()
     {
-        $ids = [];
-        foreach ($repository->findAllByShop($idShop) as $rule) {
-            $ids[] = (int) $rule['id_snod_rule'];
+        $handler = $this->module->getRuleFormHandler();
+        $repository = $this->module->getRuleRepository();
+        $idShop = (int) $this->context->shop->id;
+        $idRule = (int) Tools::getValue('id_rule');
+
+        $input = $this->readRuleInput();
+        $errors = [];
+        if (Tools::isSubmit('saveRule')) {
+            $result = $handler->save($input, $idShop, $idRule, (int) $this->context->shop->id_shop_group);
+            if (empty($result['errors'])) {
+                Tools::redirectAdmin($this->adminLink . '&tab=rules');
+            }
+            $errors = $this->translateRuleErrors($result['errors']);
         }
 
-        $pos = array_search($idRule, $ids, true);
-        if ($pos === false) {
-            return;
+        $rule = null;
+        if ($idRule > 0) {
+            $rule = $repository->findById($idRule);
+            if ($rule === null || (int) $rule['id_shop'] !== $idShop) {
+                $rule = null;
+                $idRule = 0;
+            }
         }
 
-        if ($direction === 'up' && $pos > 0) {
-            $swap = $pos - 1;
-        } elseif ($direction === 'down' && $pos < count($ids) - 1) {
-            $swap = $pos + 1;
+        if (Tools::isSubmit('saveRule')) {
+            $form = $handler->valuesFromInput($input);
+        } elseif ($rule !== null) {
+            $form = $handler->valuesFromRule($rule);
         } else {
-            return;
+            $form = $handler->defaultValues();
         }
 
-        $tmp = $ids[$swap];
-        $ids[$swap] = $ids[$pos];
-        $ids[$pos] = $tmp;
+        $this->context->smarty->assign([
+            'snod_rule_errors' => $errors,
+            'snod_rule_id' => $idRule,
+            'snod_is_edit' => $idRule > 0,
+            'snod_rule_form' => $form,
+            'snod_order_states' => OrderState::getOrderStates((int) $this->context->language->id),
+            'snod_conditions' => $this->getRuleConditionBlocks($form),
+            'snod_currency_sign' => $this->getCurrencySign(),
+        ]);
+    }
 
-        foreach ($ids as $index => $id) {
-            $repository->setPriority($id, ($index + 1) * 10);
+    /**
+     * Builds the list-condition blocks (mode + entity multi-select) rendered in
+     * the rule form: customer groups, countries, currencies.
+     *
+     * @param array $form current form values
+     *
+     * @return array
+     */
+    private function getRuleConditionBlocks(array $form)
+    {
+        $idLang = (int) $this->context->language->id;
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+
+        $sources = [
+            'group' => [
+                $this->trans('Customer groups', [], $domain),
+                $this->normalizeEntities(Group::getGroups($idLang), 'id_group'),
+            ],
+            'country' => [
+                $this->trans('Countries', [], $domain),
+                $this->normalizeEntities(Country::getCountries($idLang, true), 'id_country'),
+            ],
+            'currency' => [
+                $this->trans('Currencies', [], $domain),
+                $this->normalizeEntities(Currency::getCurrencies(), 'id_currency'),
+            ],
+            'category' => [
+                $this->trans('Product categories', [], $domain),
+                $this->normalizeEntities(Category::getSimpleCategories($idLang), 'id_category'),
+            ],
+            'manufacturer' => [
+                $this->trans('Brands', [], $domain),
+                $this->normalizeEntities(Manufacturer::getManufacturers(false, $idLang), 'id_manufacturer'),
+            ],
+        ];
+
+        $blocks = [];
+        foreach (self::EDITABLE_MODE_CONDITIONS as $type) {
+            if (!isset($sources[$type])) {
+                continue;
+            }
+            $blocks[] = [
+                'type' => $type,
+                'label' => $sources[$type][0],
+                'list' => $sources[$type][1],
+                'mode' => isset($form[$type . '_mode']) ? $form[$type . '_mode'] : 'all',
+                'ids' => isset($form[$type . '_ids']) ? $form[$type . '_ids'] : [],
+            ];
         }
+
+        return $blocks;
+    }
+
+    /**
+     * Normalizes a PrestaShop entity list to a flat [{id, name}] shape.
+     *
+     * @param mixed  $rows
+     * @param string $idKey
+     *
+     * @return array
+     */
+    private function normalizeEntities($rows, $idKey)
+    {
+        $entities = [];
+        foreach ((array) $rows as $row) {
+            if (!isset($row[$idKey])) {
+                continue;
+            }
+            $id = (int) $row[$idKey];
+            $entities[] = [
+                'id' => $id,
+                'name' => isset($row['name']) ? $row['name'] : ('#' . $id),
+            ];
+        }
+
+        return $entities;
+    }
+
+    /**
+     * Reads the raw rule form fields into a plain input array for the handler.
+     *
+     * @return array
+     */
+    private function readRuleInput()
+    {
+        $statuses = Tools::getValue('snod_rule_statuses', []);
+
+        $input = [
+            'name' => $this->getSubmittedString('snod_rule_name'),
+            'active' => $this->getSubmittedString('snod_rule_active'),
+            'stop_further' => $this->getSubmittedString('snod_rule_stop'),
+            'discount_type' => $this->getSubmittedString('snod_rule_discount_type'),
+            'discount_value' => $this->getSubmittedString('snod_rule_discount_value'),
+            'validity_days' => $this->getSubmittedString('snod_rule_validity_days'),
+            'next_order_min_amount' => $this->getSubmittedString('snod_rule_next_min'),
+            'source_total_min' => $this->getSubmittedString('snod_rule_source_min'),
+            'source_total_max' => $this->getSubmittedString('snod_rule_source_max'),
+            'date_from' => $this->getSubmittedString('snod_rule_date_from'),
+            'date_to' => $this->getSubmittedString('snod_rule_date_to'),
+            'customer_order_count_min' => $this->getSubmittedString('snod_rule_order_count_min'),
+            'customer_order_count_max' => $this->getSubmittedString('snod_rule_order_count_max'),
+            'status_ids' => is_array($statuses) ? $statuses : [],
+        ];
+
+        foreach (self::EDITABLE_MODE_CONDITIONS as $type) {
+            $ids = Tools::getValue('snod_rule_' . $type . '_ids', []);
+            $input[$type . '_mode'] = $this->getSubmittedString('snod_rule_' . $type . '_mode');
+            $input[$type . '_ids'] = is_array($ids) ? $ids : [];
+        }
+
+        return $input;
+    }
+
+    /**
+     * Maps handler error codes to translated messages.
+     *
+     * @param array $codes
+     *
+     * @return array
+     */
+    private function translateRuleErrors(array $codes)
+    {
+        $messages = $this->getRuleErrorMessages();
+        $translated = [];
+        foreach ($codes as $code) {
+            $translated[] = isset($messages[$code]) ? $messages[$code] : $code;
+        }
+
+        return $translated;
+    }
+
+    /**
+     * @return array error code => translated message
+     */
+    private function getRuleErrorMessages()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+
+        return [
+            SnodRuleFormHandler::ERR_NAME_REQUIRED => $this->trans('Rule name is required.', [], $domain),
+            SnodRuleFormHandler::ERR_DISCOUNT_VALUE => $this->trans('Discount value must be a number greater than zero.', [], $domain),
+            SnodRuleFormHandler::ERR_DISCOUNT_PERCENT_MAX => $this->trans('A percentage discount cannot exceed 100.', [], $domain),
+            SnodRuleFormHandler::ERR_VALIDITY => $this->trans('Validity period must be a whole number of days (at least 1).', [], $domain),
+            SnodRuleFormHandler::ERR_SOURCE_RANGE => $this->trans('Order total minimum cannot be greater than the maximum.', [], $domain),
+            SnodRuleFormHandler::ERR_ORDER_COUNT_RANGE => $this->trans('Order count minimum cannot be greater than the maximum.', [], $domain),
+            SnodRuleFormHandler::ERR_DATE_RANGE => $this->trans('The start date cannot be after the end date.', [], $domain),
+            SnodRuleFormHandler::ERR_SAVE_FAILED => $this->trans('Could not save the rule.', [], $domain),
+            SnodRuleFormHandler::ERR_NOT_FOUND => $this->trans('Rule not found.', [], $domain),
+        ];
+    }
+
+    /**
+     * @return array translated labels consumed by the rule presenter
+     */
+    private function getRuleConditionLabels()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+
+        return [
+            'free_shipping' => $this->trans('Free shipping', [], $domain),
+            'order_total' => $this->trans('Order total', [], $domain),
+            'order_no' => $this->trans('Order no.', [], $domain),
+            'date_window' => $this->trans('Date window', [], $domain),
+            'conditions' => [
+                SnodRuleConditionSchema::TYPE_GROUP => $this->trans('Groups', [], $domain),
+                SnodRuleConditionSchema::TYPE_COUNTRY => $this->trans('Countries', [], $domain),
+                SnodRuleConditionSchema::TYPE_CURRENCY => $this->trans('Currencies', [], $domain),
+                SnodRuleConditionSchema::TYPE_CATEGORY => $this->trans('Categories', [], $domain),
+                SnodRuleConditionSchema::TYPE_MANUFACTURER => $this->trans('Brands', [], $domain),
+            ],
+        ];
     }
 
     /**
@@ -469,111 +590,12 @@ class NextOrderDiscountController extends ModuleAdminController
     }
 
     /**
-     * Prepares a rule row for the list view (labels, status names, summary).
-     *
-     * @param array  $rule
-     * @param array  $statusNames
-     * @param string $currencySign
-     *
-     * @return array
+     * @return string current context currency sign
      */
-    private function decorateRuleForList(array $rule, array $statusNames, $currencySign)
+    private function getCurrencySign()
     {
-        $domain = 'Modules.Setnextorderdiscount.Admin';
-        $conditions = isset($rule['conditions']) ? $rule['conditions'] : [];
+        $currency = $this->context->currency;
 
-        $type = (string) $rule['discount_type'];
-        $value = $this->formatRuleNumber($rule['discount_value']);
-        if ($type === 'amount') {
-            $discountLabel = $value . ' ' . $currencySign;
-        } elseif ($type === 'free_shipping') {
-            $discountLabel = $this->trans('Free shipping', [], $domain);
-        } else {
-            $discountLabel = $value . ' %';
-        }
-
-        $statusList = [];
-        foreach ((array) (isset($conditions['status']) ? $conditions['status'] : []) as $sid) {
-            $sid = (int) $sid;
-            $statusList[] = isset($statusNames[$sid]) ? $statusNames[$sid] : ('#' . $sid);
-        }
-
-        return [
-            'id_snod_rule' => (int) $rule['id_snod_rule'],
-            'name' => (string) $rule['name'],
-            'active' => (int) $rule['active'],
-            'priority' => (int) $rule['priority'],
-            'stop_further' => (int) $rule['stop_further'],
-            'discount_label' => $discountLabel,
-            'validity_days' => (int) $rule['validity_days'],
-            'status_names' => $statusList,
-            'summary' => $this->buildConditionSummary($rule, $conditions, $currencySign),
-        ];
-    }
-
-    /**
-     * @param array  $rule
-     * @param array  $conditions
-     * @param string $currencySign
-     *
-     * @return array short human-readable condition strings
-     */
-    private function buildConditionSummary(array $rule, array $conditions, $currencySign)
-    {
-        $domain = 'Modules.Setnextorderdiscount.Admin';
-        $parts = [];
-
-        $min = (float) $rule['source_total_min'];
-        $max = (float) $rule['source_total_max'];
-        $totalLabel = $this->trans('Order total', [], $domain);
-        if ($min > 0 && $max > 0) {
-            $parts[] = $totalLabel . ' ' . $this->formatRuleNumber($min) . '–' . $this->formatRuleNumber($max) . ' ' . $currencySign;
-        } elseif ($min > 0) {
-            $parts[] = $totalLabel . ' ≥ ' . $this->formatRuleNumber($min) . ' ' . $currencySign;
-        } elseif ($max > 0) {
-            $parts[] = $totalLabel . ' ≤ ' . $this->formatRuleNumber($max) . ' ' . $currencySign;
-        }
-
-        $listConditions = [
-            'group' => $this->trans('Groups', [], $domain),
-            'country' => $this->trans('Countries', [], $domain),
-            'currency' => $this->trans('Currencies', [], $domain),
-            'category' => $this->trans('Categories', [], $domain),
-            'manufacturer' => $this->trans('Brands', [], $domain),
-        ];
-        foreach ($listConditions as $key => $label) {
-            $mode = (string) $rule[$key . '_mode'];
-            $count = count((array) (isset($conditions[$key]) ? $conditions[$key] : []));
-            if ($mode !== 'all' && $count > 0) {
-                $parts[] = $label . ': ' . $mode . ' (' . $count . ')';
-            }
-        }
-
-        $cmin = (int) $rule['customer_order_count_min'];
-        $cmax = (int) $rule['customer_order_count_max'];
-        if ($cmin > 0 || $cmax > 0) {
-            $parts[] = $this->trans('Order no.', [], $domain) . ' ' . ($cmin > 0 ? $cmin : '…') . '–' . ($cmax > 0 ? $cmax : '…');
-        }
-
-        if (!empty($rule['date_from']) || !empty($rule['date_to'])) {
-            $parts[] = $this->trans('Date window', [], $domain);
-        }
-
-        return $parts;
-    }
-
-    /**
-     * Formats a decimal for display, trimming trailing zeros.
-     *
-     * @param mixed $value
-     *
-     * @return string
-     */
-    private function formatRuleNumber($value)
-    {
-        $formatted = number_format((float) $value, 2, '.', '');
-        $formatted = rtrim(rtrim($formatted, '0'), '.');
-
-        return $formatted === '' ? '0' : $formatted;
+        return Validate::isLoadedObject($currency) ? (string) $currency->sign : '';
     }
 }
