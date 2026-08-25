@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your next order discount</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f5f7; font-family:Arial,Helvetica,sans-serif; color:#333333;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f5f7;">
+        <tr>
+            <td align="center" style="padding:24px 12px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                    <tr>
+                        <td style="background-color:#2b3a67; padding:24px 32px; color:#ffffff; font-size:20px; font-weight:bold;">
+                            <img src="{shop_logo}" alt="{shop_name}" style="max-height:44px; max-width:220px; vertical-align:middle; border:0;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:32px;">
+                            <p style="margin:0 0 16px; font-size:16px;">Hi {customer_firstname},</p>
+                            <p style="margin:0 0 24px; font-size:15px; line-height:1.5;">
+                                Thank you for your order. As a token of our appreciation, here is a
+                                personal discount for your next purchase at {shop_name}.
+                            </p>
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px; border:1px dashed #2b3a67; border-radius:8px;">
+                                <tr>
+                                    <td align="center" style="padding:24px;">
+                                        <div style="font-size:13px; text-transform:uppercase; letter-spacing:1px; color:#6b7280; margin-bottom:8px;">Your discount</div>
+                                        <div style="font-size:30px; font-weight:bold; color:#2b3a67; margin-bottom:12px;">{coupon_value}</div>
+                                        <div style="display:inline-block; padding:10px 18px; background-color:#2b3a67; color:#ffffff; font-size:20px; font-weight:bold; letter-spacing:2px; border-radius:6px;">{coupon_code}</div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px; font-size:14px; line-height:1.6;">
+                                <tr>
+                                    <td style="padding:6px 0; color:#6b7280; width:55%;">Valid until</td>
+                                    <td style="padding:6px 0; text-align:right; font-weight:bold;">{valid_to}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px 0; color:#6b7280;">Minimum order amount</td>
+                                    <td style="padding:6px 0; text-align:right; font-weight:bold;">{minimum_amount}</td>
+                                </tr>
+                            </table>
+                            <p style="margin:0 0 8px; font-size:15px; line-height:1.5;">
+                                Simply enter the code above at checkout to apply your discount.
+                            </p>
+                            <p style="margin:24px 0 0; font-size:15px;">See you soon,<br />The {shop_name} team</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:20px 32px; background-color:#f0f1f4; color:#9ca3af; font-size:12px; line-height:1.5;">
+                            You are receiving this email because you placed an order at {shop_name}.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

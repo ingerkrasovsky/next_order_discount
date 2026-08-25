@@ -12,6 +12,16 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
+namespace Setecom\NextOrderDiscount\Coupon;
+
+use CartRule;
+use Configuration;
+use Db;
+use Language;
+use Shop;
+use Validate;
+use Exception;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -23,7 +33,7 @@ if (!defined('_PS_VERSION_')) {
  * its later deactivation, so the rest of the module never touches the CartRule
  * ObjectModel directly.
  */
-class SnodCartRuleAdapter
+class CartRuleAdapter
 {
     /**
      * Creates a CartRule from normalized parameters.

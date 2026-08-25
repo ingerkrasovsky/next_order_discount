@@ -12,6 +12,10 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
+namespace Setecom\NextOrderDiscount\Repository;
+
+use Db;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -22,7 +26,7 @@ if (!defined('_PS_VERSION_')) {
  * The queue decouples heavy work (emails, reminders, maintenance) from order
  * hooks. Each task carries a unique correlation id used for idempotency.
  */
-class SnodDispatchQueueRepository
+class DispatchQueueRepository
 {
     public const TABLE_NAME = 'snod_dispatch_queue';
     public const PRIMARY_KEY = 'id_snod_dispatch';

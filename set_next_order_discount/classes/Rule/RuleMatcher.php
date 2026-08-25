@@ -12,6 +12,10 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
+namespace Setecom\NextOrderDiscount\Rule;
+
+use Setecom\NextOrderDiscount\Repository\RuleRepository;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -25,7 +29,7 @@ if (!defined('_PS_VERSION_')) {
  * repository and the context array, never on hooks/controllers, so it is
  * unit-testable and reusable across hooks and cron.
  */
-class SnodRuleMatcher
+class RuleMatcher
 {
     /**
      * Maps each list-condition type to the order-context key that feeds it and
@@ -45,9 +49,9 @@ class SnodRuleMatcher
     private $repository;
 
     /**
-     * @param SnodRuleRepository $repository
+     * @param RuleRepository $repository
      */
-    public function __construct(SnodRuleRepository $repository)
+    public function __construct(RuleRepository $repository)
     {
         $this->repository = $repository;
     }
@@ -104,8 +108,11 @@ class SnodRuleMatcher
     }
 
     /**
-     * When the rule lists trigger statuses, the order state must be one of them;
-     * otherwise the rule falls back to "the order is paid".
+     * The status condition behaves like every other rule condition: when the
+     * rule lists trigger statuses the order state must be one of them; when the
+     * list is empty the condition imposes no restriction (any status matches).
+     * The decision is therefore driven entirely by the rule configuration, not
+     * by whether the order happens to be paid.
      *
      * @param array $rule
      * @param array $context
@@ -114,14 +121,14 @@ class SnodRuleMatcher
      */
     private function matchesStatus(array $rule, array $context)
     {
-        $statuses = $this->ruleConditionIds($rule, SnodRuleConditionSchema::TYPE_STATUS);
-        if (!empty($statuses)) {
-            $state = isset($context['id_order_state']) ? (int) $context['id_order_state'] : 0;
-
-            return in_array($state, $statuses, true);
+        $statuses = $this->ruleConditionIds($rule, RuleConditionSchema::TYPE_STATUS);
+        if (empty($statuses)) {
+            return true;
         }
 
-        return !empty($context['order_is_paid']);
+        $state = isset($context['id_order_state']) ? (int) $context['id_order_state'] : 0;
+
+        return in_array($state, $statuses, true);
     }
 
     /**
@@ -207,9 +214,9 @@ class SnodRuleMatcher
      */
     private function matchesModeConditions(array $rule, array $contextValues)
     {
-        foreach (SnodRuleConditionSchema::modeTypes() as $type) {
-            $mode = SnodRuleConditionSchema::normalizeMode($rule[SnodRuleConditionSchema::modeColumn($type)]);
-            if ($mode === SnodRuleConditionSchema::MODE_ALL) {
+        foreach (RuleConditionSchema::modeTypes() as $type) {
+            $mode = RuleConditionSchema::normalizeMode($rule[RuleConditionSchema::modeColumn($type)]);
+            if ($mode === RuleConditionSchema::MODE_ALL) {
                 continue;
             }
 
@@ -222,10 +229,10 @@ class SnodRuleMatcher
             $ctxValues = isset($contextValues[$type]) ? $contextValues[$type] : [];
             $intersects = count(array_intersect($ruleIds, $ctxValues)) > 0;
 
-            if ($mode === SnodRuleConditionSchema::MODE_INCLUDE && !$intersects) {
+            if ($mode === RuleConditionSchema::MODE_INCLUDE && !$intersects) {
                 return false;
             }
-            if ($mode === SnodRuleConditionSchema::MODE_EXCLUDE && $intersects) {
+            if ($mode === RuleConditionSchema::MODE_EXCLUDE && $intersects) {
                 return false;
             }
         }

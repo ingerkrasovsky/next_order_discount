@@ -1,0 +1,20 @@
+{shop_name}
+
+Hi {customer_firstname},
+
+Thank you for your order. As a token of our appreciation, here is a personal
+discount for your next purchase at {shop_name}.
+
+Your discount: {coupon_value}
+Coupon code:   {coupon_code}
+
+Valid until:          {valid_to}
+Minimum order amount: {minimum_amount}
+
+Simply enter the code above at checkout to apply your discount.
+
+See you soon,
+The {shop_name} team
+
+--
+You are receiving this email because you placed an order at {shop_name}.

@@ -12,6 +12,10 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
+namespace Setecom\NextOrderDiscount\Repository;
+
+use Db;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -23,7 +27,7 @@ if (!defined('_PS_VERSION_')) {
  * processes from running the same task. All time arithmetic is done server-side
  * with NOW()/DATE_ADD so the logic is immune to PHP/MySQL timezone drift.
  */
-class SnodCronLockRepository
+class CronLockRepository
 {
     public const TABLE_NAME = 'snod_cron_lock';
 

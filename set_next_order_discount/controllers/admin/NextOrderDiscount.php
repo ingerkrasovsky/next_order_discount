@@ -16,12 +16,27 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Setecom\NextOrderDiscount\Cron\CronRouter;
+use Setecom\NextOrderDiscount\Mail\DefaultEmailProvider;
+use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
+use Setecom\NextOrderDiscount\Repository\CronLockRepository;
+use Setecom\NextOrderDiscount\Repository\LogRepository;
+use Setecom\NextOrderDiscount\Repository\RuleEmailRepository;
+use Setecom\NextOrderDiscount\Repository\RuleRepository;
+use Setecom\NextOrderDiscount\Rule\RuleConditionSchema;
+use Setecom\NextOrderDiscount\Rule\RuleFormHandler;
+
 /**
  * @property set_next_order_discount $module
  */
 class NextOrderDiscountController extends ModuleAdminController
 {
     private const COUPON_STATUSES = ['created', 'emailed', 'reminded', 'used', 'expired', 'canceled'];
+
+    /**
+     * Log levels selectable in the Logs tab filter.
+     */
+    private const LOG_LEVELS = ['debug', 'info', 'warning', 'error'];
 
     /**
      * List conditions exposed in the rule form (mode + multi-select).
@@ -41,6 +56,19 @@ class NextOrderDiscountController extends ModuleAdminController
 
     public function initContent()
     {
+        if (Tools::getValue('ajax')) {
+            $action = Tools::getValue('action');
+            if ($action === 'runCronTask') {
+                $this->respondJson($this->runCronTaskAjax());
+            }
+            if ($action === 'previewRuleEmail') {
+                $this->ajaxProcessPreviewRuleEmail();
+            }
+            if ($action === 'sendTestRuleEmail') {
+                $this->ajaxProcessSendTestRuleEmail();
+            }
+        }
+
         parent::initContent();
 
         $domain = 'Modules.Setnextorderdiscount.Admin';
@@ -324,7 +352,7 @@ class NextOrderDiscountController extends ModuleAdminController
      * Executes a mutating rule action, guarding that the rule belongs to the
      * current shop.
      *
-     * @param SnodRuleRepository $repository
+     * @param RuleRepository $repository
      * @param string             $action
      * @param int                $idRule
      * @param int                $idShop
@@ -354,7 +382,7 @@ class NextOrderDiscountController extends ModuleAdminController
 
     /**
      * Add/edit form for a single discount rule. Delegates validation and
-     * persistence to SnodRuleFormHandler.
+     * persistence to RuleFormHandler.
      *
      * @return void
      */
@@ -400,6 +428,9 @@ class NextOrderDiscountController extends ModuleAdminController
             'snod_order_states' => OrderState::getOrderStates((int) $this->context->language->id),
             'snod_conditions' => $this->getRuleConditionBlocks($form),
             'snod_currency_sign' => $this->getCurrencySign(),
+            'snod_languages' => $this->getFormLanguages(),
+            'snod_email_types' => $this->getEmailTypeBlocks(),
+            'snod_email_content' => $this->buildRuleEmailContent($idRule),
         ]);
     }
 
@@ -505,6 +536,10 @@ class NextOrderDiscountController extends ModuleAdminController
             'customer_order_count_min' => $this->getSubmittedString('snod_rule_order_count_min'),
             'customer_order_count_max' => $this->getSubmittedString('snod_rule_order_count_max'),
             'status_ids' => is_array($statuses) ? $statuses : [],
+            'code_prefix' => $this->getSubmittedString('snod_rule_code_prefix'),
+            'code_length' => $this->getSubmittedString('snod_rule_code_length'),
+            'code_mask' => $this->getSubmittedString('snod_rule_code_mask'),
+            'email' => $this->readEmailInput(),
         ];
 
         foreach (self::EDITABLE_MODE_CONDITIONS as $type) {
@@ -542,15 +577,15 @@ class NextOrderDiscountController extends ModuleAdminController
         $domain = 'Modules.Setnextorderdiscount.Admin';
 
         return [
-            SnodRuleFormHandler::ERR_NAME_REQUIRED => $this->trans('Rule name is required.', [], $domain),
-            SnodRuleFormHandler::ERR_DISCOUNT_VALUE => $this->trans('Discount value must be a number greater than zero.', [], $domain),
-            SnodRuleFormHandler::ERR_DISCOUNT_PERCENT_MAX => $this->trans('A percentage discount cannot exceed 100.', [], $domain),
-            SnodRuleFormHandler::ERR_VALIDITY => $this->trans('Validity period must be a whole number of days (at least 1).', [], $domain),
-            SnodRuleFormHandler::ERR_SOURCE_RANGE => $this->trans('Order total minimum cannot be greater than the maximum.', [], $domain),
-            SnodRuleFormHandler::ERR_ORDER_COUNT_RANGE => $this->trans('Order count minimum cannot be greater than the maximum.', [], $domain),
-            SnodRuleFormHandler::ERR_DATE_RANGE => $this->trans('The start date cannot be after the end date.', [], $domain),
-            SnodRuleFormHandler::ERR_SAVE_FAILED => $this->trans('Could not save the rule.', [], $domain),
-            SnodRuleFormHandler::ERR_NOT_FOUND => $this->trans('Rule not found.', [], $domain),
+            RuleFormHandler::ERR_NAME_REQUIRED => $this->trans('Rule name is required.', [], $domain),
+            RuleFormHandler::ERR_DISCOUNT_VALUE => $this->trans('Discount value must be a number greater than zero.', [], $domain),
+            RuleFormHandler::ERR_DISCOUNT_PERCENT_MAX => $this->trans('A percentage discount cannot exceed 100.', [], $domain),
+            RuleFormHandler::ERR_VALIDITY => $this->trans('Validity period must be a whole number of days (at least 1).', [], $domain),
+            RuleFormHandler::ERR_SOURCE_RANGE => $this->trans('Order total minimum cannot be greater than the maximum.', [], $domain),
+            RuleFormHandler::ERR_ORDER_COUNT_RANGE => $this->trans('Order count minimum cannot be greater than the maximum.', [], $domain),
+            RuleFormHandler::ERR_DATE_RANGE => $this->trans('The start date cannot be after the end date.', [], $domain),
+            RuleFormHandler::ERR_SAVE_FAILED => $this->trans('Could not save the rule.', [], $domain),
+            RuleFormHandler::ERR_NOT_FOUND => $this->trans('Rule not found.', [], $domain),
         ];
     }
 
@@ -567,11 +602,11 @@ class NextOrderDiscountController extends ModuleAdminController
             'order_no' => $this->trans('Order no.', [], $domain),
             'date_window' => $this->trans('Date window', [], $domain),
             'conditions' => [
-                SnodRuleConditionSchema::TYPE_GROUP => $this->trans('Groups', [], $domain),
-                SnodRuleConditionSchema::TYPE_COUNTRY => $this->trans('Countries', [], $domain),
-                SnodRuleConditionSchema::TYPE_CURRENCY => $this->trans('Currencies', [], $domain),
-                SnodRuleConditionSchema::TYPE_CATEGORY => $this->trans('Categories', [], $domain),
-                SnodRuleConditionSchema::TYPE_MANUFACTURER => $this->trans('Brands', [], $domain),
+                RuleConditionSchema::TYPE_GROUP => $this->trans('Groups', [], $domain),
+                RuleConditionSchema::TYPE_COUNTRY => $this->trans('Countries', [], $domain),
+                RuleConditionSchema::TYPE_CURRENCY => $this->trans('Currencies', [], $domain),
+                RuleConditionSchema::TYPE_CATEGORY => $this->trans('Categories', [], $domain),
+                RuleConditionSchema::TYPE_MANUFACTURER => $this->trans('Brands', [], $domain),
             ],
         ];
     }
@@ -590,6 +625,79 @@ class NextOrderDiscountController extends ModuleAdminController
     }
 
     /**
+     * @return array shop languages: id_lang, name, iso_code
+     */
+    private function getFormLanguages()
+    {
+        $languages = [];
+        foreach (Language::getLanguages(false) as $lang) {
+            $languages[] = [
+                'id_lang' => (int) $lang['id_lang'],
+                'name' => (string) $lang['name'],
+                'iso_code' => (string) $lang['iso_code'],
+            ];
+        }
+
+        return $languages;
+    }
+
+    /**
+     * @return array the per-rule email types with translated labels
+     */
+    private function getEmailTypeBlocks()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+
+        return [
+            ['type' => RuleEmailRepository::TYPE_COUPON, 'label' => $this->trans('Coupon email', [], $domain)],
+            ['type' => RuleEmailRepository::TYPE_REMINDER_1, 'label' => $this->trans('First reminder email', [], $domain)],
+            ['type' => RuleEmailRepository::TYPE_REMINDER_2, 'label' => $this->trans('Second reminder email', [], $domain)],
+        ];
+    }
+
+    /**
+     * Builds the email editor content for the form: the rule's stored subject/HTML
+     * per type and language, falling back to the shipped default template for
+     * languages the rule has not customized (and for a brand-new rule).
+     *
+     * @param int $idRule
+     *
+     * @return array content[type][id_lang] => ['subject' => string, 'html' => string]
+     */
+    private function buildRuleEmailContent($idRule)
+    {
+        $idRule = (int) $idRule;
+        $emailRepository = new RuleEmailRepository();
+        $provider = new DefaultEmailProvider();
+        $stored = $idRule > 0 ? $emailRepository->findAllForRule($idRule) : [];
+        $languages = $this->getFormLanguages();
+
+        $content = [];
+        foreach (RuleEmailRepository::types() as $type) {
+            foreach ($languages as $lang) {
+                $idLang = (int) $lang['id_lang'];
+                if (isset($stored[$type][$idLang]) && trim((string) $stored[$type][$idLang]['html']) !== '') {
+                    $content[$type][$idLang] = $stored[$type][$idLang];
+                } else {
+                    $content[$type][$idLang] = $provider->getDefault($type, $idLang);
+                }
+            }
+        }
+
+        return $content;
+    }
+
+    /**
+     * @return array the raw submitted per-rule email content (nested array)
+     */
+    private function readEmailInput()
+    {
+        $email = Tools::getValue('snod_email', []);
+
+        return is_array($email) ? $email : [];
+    }
+
+    /**
      * @return string current context currency sign
      */
     private function getCurrencySign()
@@ -597,5 +705,328 @@ class NextOrderDiscountController extends ModuleAdminController
         $currency = $this->context->currency;
 
         return Validate::isLoadedObject($currency) ? (string) $currency->sign : '';
+    }
+
+    /**
+     * Builds the Cron/Tools tab: the cron endpoint URL (token-bearing), a manual
+     * trigger for each background task, current lock state and a queue snapshot.
+     *
+     * @return void
+     */
+    public function crontoolsTab()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+        $cronToken = (string) Configuration::get('SNOD_CRON_TOKEN');
+        $cronBaseUrl = $this->context->link->getModuleLink(
+            $this->module->name,
+            'cron',
+            ['token' => $cronToken],
+            true
+        );
+
+        $labels = [
+            CronRouter::TASK_PROCESS_QUEUE => $this->trans('Process the dispatch queue', [], $domain),
+            CronRouter::TASK_PLAN_REMINDERS => $this->trans('Plan coupon reminders', [], $domain),
+            CronRouter::TASK_EXPIRE_COUPONS => $this->trans('Expire lapsed coupons', [], $domain),
+        ];
+
+        $lockRepository = new CronLockRepository();
+        $tasks = [];
+        foreach (CronRouter::availableTasks() as $task) {
+            $tasks[] = [
+                'task' => $task,
+                'label' => isset($labels[$task]) ? $labels[$task] : $task,
+                'url' => $cronBaseUrl . '&task=' . urlencode($task),
+                'locked' => $lockRepository->isLocked(CronRouter::lockNameFor($task)),
+            ];
+        }
+
+        $this->context->smarty->assign([
+            'snod_cron_base_url' => $cronBaseUrl,
+            'snod_cron_tasks' => $tasks,
+            'snod_queue_counts' => $this->getQueueCounts(),
+            'snod_admin_link' => $this->adminLink,
+            'snod_admin_token' => (string) $this->token,
+        ]);
+    }
+
+    /**
+     * Canonical PrestaShop AJAX entry point (ajax=1&action=runCronTask). The
+     * framework validates the admin token and dispatches here before initContent.
+     *
+     * @return void
+     */
+    public function ajaxProcessRunCronTask()
+    {
+        $this->respondJson($this->runCronTaskAjax());
+    }
+
+    /**
+     * Handles the manual "run task" AJAX action for the Cron/Tools tab. The admin
+     * controller token is validated by the framework before this runs; the task
+     * itself executes under the same lock as the public cron endpoint.
+     *
+     * @return array the cron router result
+     */
+    private function runCronTaskAjax()
+    {
+        $task = (string) Tools::getValue('task');
+
+        return $this->module->getCronRouter()->run($task, (int) $this->context->shop->id);
+    }
+
+    /**
+     * @return array dispatch-queue counts keyed by status for the current shop
+     *               context (all shops when in the "all shops" context)
+     */
+    private function getQueueCounts()
+    {
+        $counts = ['pending' => 0, 'processing' => 0, 'done' => 0, 'failed' => 0];
+
+        $where = '1';
+        $isAllShops = Shop::isFeatureActive() && Shop::getContext() == Shop::CONTEXT_ALL;
+        if (!$isAllShops) {
+            $where = '`id_shop` = ' . (int) $this->context->shop->id;
+        }
+
+        $rows = Db::getInstance()->executeS(
+            'SELECT `status`, COUNT(*) AS total FROM `' . _DB_PREFIX_ . 'snod_dispatch_queue`'
+            . ' WHERE ' . $where
+            . ' GROUP BY `status`'
+        );
+        foreach ((array) $rows as $row) {
+            $status = isset($row['status']) ? (string) $row['status'] : '';
+            if (array_key_exists($status, $counts)) {
+                $counts[$status] = (int) $row['total'];
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Emits a JSON response and terminates the request.
+     *
+     * @param array $data
+     *
+     * @return void
+     */
+    private function respondJson(array $data)
+    {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
+
+    /**
+     * AJAX: renders a rule email body with sample placeholder values so the
+     * merchant can preview it. HTML/subject arrive base64-encoded to survive any
+     * request-level filtering.
+     *
+     * @return void
+     */
+    public function ajaxProcessPreviewRuleEmail()
+    {
+        $idLang = (int) Tools::getValue('id_lang', (int) $this->context->language->id);
+        $html = base64_decode((string) Tools::getValue('html_b64', ''), true);
+        $subject = base64_decode((string) Tools::getValue('subject_b64', ''), true);
+        $logo = (string) Configuration::get('PS_LOGO');
+        $logoUrl = $logo !== '' ? ($this->context->link->getBaseLink() . 'img/' . $logo) : '';
+        $vars = array_merge($this->sampleEmailVars($idLang), ['{shop_logo}' => $logoUrl]);
+
+        $this->respondJson([
+            'success' => true,
+            'subject' => strtr((string) $subject, $vars),
+            'html' => strtr((string) $html, $vars),
+        ]);
+    }
+
+    /**
+     * AJAX: sends a test copy of a rule email (rendered with sample values) to an
+     * address, through the generic pass-through mail template.
+     *
+     * @return void
+     */
+    public function ajaxProcessSendTestRuleEmail()
+    {
+        $email = (string) Tools::getValue('email', '');
+        if (!Validate::isEmail($email)) {
+            $this->respondJson(['success' => false, 'error' => 'invalid_email']);
+        }
+
+        $idLang = (int) Tools::getValue('id_lang', (int) $this->context->language->id);
+        $idShop = (int) $this->context->shop->id;
+        $html = base64_decode((string) Tools::getValue('html_b64', ''), true);
+        $subject = base64_decode((string) Tools::getValue('subject_b64', ''), true);
+        $vars = array_merge($this->sampleEmailVars($idLang), ['{shop_logo}' => 'cid:shop_logo']);
+
+        $finalHtml = strtr((string) $html, $vars);
+        $finalSubject = strtr((string) $subject, $vars);
+        if ($finalSubject === '') {
+            $finalSubject = $this->trans('Test email', [], 'Modules.Setnextorderdiscount.Admin');
+        }
+
+        $sent = false;
+        try {
+            $sent = Mail::Send(
+                $idLang,
+                'custom',
+                $finalSubject,
+                [
+                    '{snod_body_html}' => $finalHtml,
+                    '{snod_body_txt}' => trim(strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>', '</div>'], "\n", $finalHtml))),
+                ],
+                $email,
+                null,
+                null,
+                null,
+                null,
+                null,
+                rtrim(_PS_MODULE_DIR_, '/') . '/' . $this->module->name . '/mails/',
+                false,
+                $idShop
+            );
+        } catch (\Throwable $e) {
+            $sent = false;
+        }
+
+        $this->respondJson(['success' => (bool) $sent]);
+    }
+
+    /**
+     * @param int $idLang
+     *
+     * @return array sample placeholder values for previews and test emails
+     */
+    private function sampleEmailVars($idLang)
+    {
+        $format = 'Y-m-d';
+        $language = new Language((int) $idLang);
+        if (Validate::isLoadedObject($language) && !empty($language->date_format_lite)) {
+            $format = (string) $language->date_format_lite;
+        }
+
+        return [
+            '{coupon_code}' => 'NOD-SAMPLE12',
+            '{coupon_value}' => '10%',
+            '{valid_to}' => date($format, strtotime('+30 days')),
+            '{shop_name}' => (string) Configuration::get('PS_SHOP_NAME', null, null, (int) $this->context->shop->id),
+            '{customer_firstname}' => 'Alex',
+            '{minimum_amount}' => '—',
+        ];
+    }
+
+    /**
+     * Builds the Dashboard tab: the coupon funnel aggregates for the current
+     * shop context and a queue snapshot.
+     *
+     * @return void
+     */
+    public function dashboardTab()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+        $couponLinkRepository = new CouponLinkRepository();
+        $funnel = $couponLinkRepository->funnelCounts($this->getShopScopeId());
+
+        $generated = (int) $funnel['generated'];
+        $used = (int) $funnel['used'];
+        $conversion = $generated > 0 ? round(($used / $generated) * 100, 1) : 0.0;
+
+        $steps = [
+            ['key' => 'generated', 'label' => $this->trans('Generated', [], $domain)],
+            ['key' => 'emailed', 'label' => $this->trans('Emailed', [], $domain)],
+            ['key' => 'reminded', 'label' => $this->trans('Reminded', [], $domain)],
+            ['key' => 'used', 'label' => $this->trans('Used', [], $domain)],
+            ['key' => 'expired', 'label' => $this->trans('Expired', [], $domain)],
+            ['key' => 'canceled', 'label' => $this->trans('Canceled', [], $domain)],
+        ];
+
+        $funnelView = [];
+        foreach ($steps as $step) {
+            $value = (int) $funnel[$step['key']];
+            $funnelView[] = [
+                'key' => $step['key'],
+                'label' => $step['label'],
+                'value' => $value,
+                'percent' => $generated > 0 ? round(($value / $generated) * 100, 1) : 0.0,
+            ];
+        }
+
+        $this->context->smarty->assign([
+            'snod_funnel' => $funnelView,
+            'snod_funnel_generated' => $generated,
+            'snod_conversion_rate' => $conversion,
+            'snod_queue_counts' => $this->getQueueCounts(),
+        ]);
+    }
+
+    /**
+     * Builds the Logs tab: a paginated, filterable view of the module log,
+     * scoped to the current shop context.
+     *
+     * @return void
+     */
+    public function logsTab()
+    {
+        $perPage = 30;
+
+        $levelFilter = $this->getSubmittedString('snod_log_level');
+        if (!in_array($levelFilter, self::LOG_LEVELS, true)) {
+            $levelFilter = '';
+        }
+
+        $channelFilter = preg_replace('/[^a-z0-9_\-]/i', '', $this->getSubmittedString('snod_log_channel'));
+        $channelFilter = is_string($channelFilter) ? $channelFilter : '';
+
+        $page = (int) Tools::getValue('snod_log_page', 1);
+        if ($page < 1) {
+            $page = 1;
+        }
+
+        $filters = [
+            'id_shop' => $this->getShopScopeId(),
+            'level' => $levelFilter,
+            'channel' => $channelFilter,
+        ];
+
+        $logRepository = new LogRepository();
+        $total = $logRepository->countRecent($filters);
+        $totalPages = $total > 0 ? (int) ceil($total / $perPage) : 1;
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        $baseUrl = $this->adminLink . '&tab=logs';
+        if ($levelFilter !== '') {
+            $baseUrl .= '&snod_log_level=' . urlencode($levelFilter);
+        }
+        if ($channelFilter !== '') {
+            $baseUrl .= '&snod_log_channel=' . urlencode($channelFilter);
+        }
+
+        $this->context->smarty->assign([
+            'snod_logs' => $logRepository->findRecent($filters, $perPage, $offset),
+            'snod_log_levels' => self::LOG_LEVELS,
+            'snod_log_filter_level' => $levelFilter,
+            'snod_log_filter_channel' => $channelFilter,
+            'snod_log_page' => $page,
+            'snod_log_prev_page' => $page - 1,
+            'snod_log_next_page' => $page + 1,
+            'snod_log_total_pages' => $totalPages,
+            'snod_log_total' => $total,
+            'snod_logs_base_url' => $baseUrl,
+        ]);
+    }
+
+    /**
+     * @return int the shop id to scope aggregates to, or 0 in the "all shops"
+     *             multishop context
+     */
+    private function getShopScopeId()
+    {
+        $isAllShops = Shop::isFeatureActive() && Shop::getContext() == Shop::CONTEXT_ALL;
+
+        return $isAllShops ? 0 : (int) $this->context->shop->id;
     }
 }

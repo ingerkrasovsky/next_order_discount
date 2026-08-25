@@ -52,6 +52,9 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'snod_rule` (
             `currency_mode` VARCHAR(16) NOT NULL DEFAULT "all",
             `category_mode` VARCHAR(16) NOT NULL DEFAULT "all",
             `manufacturer_mode` VARCHAR(16) NOT NULL DEFAULT "all",
+            `code_prefix` VARCHAR(32) NOT NULL DEFAULT "",
+            `code_length` INT UNSIGNED NOT NULL DEFAULT 0,
+            `code_mask` VARCHAR(64) NOT NULL DEFAULT "",
             `created_at` DATETIME NOT NULL,
             `updated_at` DATETIME NOT NULL,
             PRIMARY KEY (`id_snod_rule`),
@@ -102,6 +105,18 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'snod_rule_manufacturer`
             `id_snod_rule` INT UNSIGNED NOT NULL,
             `id_manufacturer` INT UNSIGNED NOT NULL,
             PRIMARY KEY (`id_snod_rule`, `id_manufacturer`),
+            FOREIGN KEY (`id_snod_rule`) REFERENCES `' . _DB_PREFIX_ . 'snod_rule` (`id_snod_rule`)
+                ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
+
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'snod_rule_email` (
+            `id_snod_rule` INT UNSIGNED NOT NULL,
+            `email_type` VARCHAR(32) NOT NULL,
+            `id_lang` INT UNSIGNED NOT NULL,
+            `subject` VARCHAR(255) NOT NULL DEFAULT "",
+            `html` LONGTEXT DEFAULT NULL,
+            `updated_at` DATETIME NOT NULL,
+            PRIMARY KEY (`id_snod_rule`, `email_type`, `id_lang`),
             FOREIGN KEY (`id_snod_rule`) REFERENCES `' . _DB_PREFIX_ . 'snod_rule` (`id_snod_rule`)
                 ON DELETE CASCADE ON UPDATE CASCADE
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
@@ -162,6 +177,22 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'snod_cron_lock` (
             `owner_token` VARCHAR(128) NOT NULL,
             `updated_at` DATETIME NOT NULL,
             PRIMARY KEY (`lock_name`)
+        ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
+
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'snod_log` (
+            `id_snod_log` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
+            `level` VARCHAR(16) NOT NULL,
+            `channel` VARCHAR(64) NOT NULL DEFAULT "",
+            `message` TEXT NOT NULL,
+            `context_json` LONGTEXT DEFAULT NULL,
+            `correlation_id` VARCHAR(128) DEFAULT NULL,
+            `created_at` DATETIME NOT NULL,
+            PRIMARY KEY (`id_snod_log`),
+            KEY `idx_snod_log_level_date` (`level`, `created_at`),
+            KEY `idx_snod_log_channel` (`channel`),
+            KEY `idx_snod_log_correlation` (`correlation_id`),
+            KEY `idx_snod_log_shop` (`id_shop`)
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
 
 // Seed a sensible default rule (single coupon on any paid order) if none exist.

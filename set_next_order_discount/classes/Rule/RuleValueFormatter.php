@@ -12,6 +12,10 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
+namespace Setecom\NextOrderDiscount\Rule;
+
+use Tools;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -20,7 +24,7 @@ if (!defined('_PS_VERSION_')) {
  * Small, reusable value formatting helpers shared by the rule services so the
  * same decimal/date presentation logic is not duplicated.
  */
-class SnodRuleValueFormatter
+class RuleValueFormatter
 {
     /**
      * Formats a decimal for display, trimming trailing zeros ("7.50" -> "7.5",

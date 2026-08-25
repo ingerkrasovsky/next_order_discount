@@ -12,6 +12,15 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
+namespace Setecom\NextOrderDiscount\Coupon;
+
+use Configuration;
+use Exception;
+use Setecom\NextOrderDiscount\Logger\ModuleLogger;
+use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
+use Setecom\NextOrderDiscount\Rule\RuleMatcher;
+use Setecom\NextOrderDiscount\Queue\QueueService;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -26,33 +35,46 @@ if (!defined('_PS_VERSION_')) {
  * races. Every rule is processed in isolation and exception-safe, so one rule's
  * failure never affects the others and a coupon can never break order flow.
  */
-class SnodCouponGenerationService
+class CouponGenerationService
 {
     public const MAX_VALIDITY_DAYS = 3650;
+
+    /**
+     * Log channel for coupon generation events.
+     */
+    private const LOG_CHANNEL = 'coupon';
 
     private $ruleMatcher;
     private $cartRuleAdapter;
     private $couponLinkRepository;
+    private $queueService;
+    private $logger;
 
     /**
-     * @param SnodRuleMatcher          $ruleMatcher
-     * @param SnodCartRuleAdapter      $cartRuleAdapter
-     * @param SnodCouponLinkRepository $couponLinkRepository
+     * @param RuleMatcher          $ruleMatcher
+     * @param CartRuleAdapter      $cartRuleAdapter
+     * @param CouponLinkRepository $couponLinkRepository
+     * @param QueueService         $queueService
+     * @param ModuleLogger|null    $logger               optional structured logger
      */
     public function __construct(
-        SnodRuleMatcher $ruleMatcher,
-        SnodCartRuleAdapter $cartRuleAdapter,
-        SnodCouponLinkRepository $couponLinkRepository
+        RuleMatcher $ruleMatcher,
+        CartRuleAdapter $cartRuleAdapter,
+        CouponLinkRepository $couponLinkRepository,
+        QueueService $queueService,
+        ModuleLogger $logger = null
     ) {
         $this->ruleMatcher = $ruleMatcher;
         $this->cartRuleAdapter = $cartRuleAdapter;
         $this->couponLinkRepository = $couponLinkRepository;
+        $this->queueService = $queueService;
+        $this->logger = $logger;
     }
 
     /**
      * Generates a coupon for every rule that matches the order context.
      *
-     * @param array $context see SnodRuleMatcher for the expected keys, plus
+     * @param array $context see RuleMatcher for the expected keys, plus
      *                       id_customer, id_order_source, id_shop_group,
      *                       id_currency and an optional voucher_name
      *
@@ -64,12 +86,41 @@ class SnodCouponGenerationService
         $idCustomer = isset($context['id_customer']) ? (int) $context['id_customer'] : 0;
         $idOrderSource = isset($context['id_order_source']) ? (int) $context['id_order_source'] : 0;
 
+        $matchedRules = $this->ruleMatcher->match($context);
+        if (empty($matchedRules)) {
+            $this->logCoupon(
+                ModuleLogger::LEVEL_DEBUG,
+                'No matching rule for order',
+                ['id_order' => $idOrderSource, 'id_shop' => $idShop, 'id_order_state' => isset($context['id_order_state']) ? (int) $context['id_order_state'] : 0],
+                $this->orderCorrelation($idOrderSource)
+            );
+        }
+
         $results = [];
-        foreach ($this->ruleMatcher->match($context) as $rule) {
+        foreach ($matchedRules as $rule) {
             $results[] = $this->generateForRule($rule, $context, $idShop, $idCustomer, $idOrderSource);
         }
 
         return ['coupons' => $results];
+    }
+
+    /**
+     * Issues one coupon for a matched rule and logs the outcome.
+     *
+     * @param array $rule
+     * @param array $context
+     * @param int   $idShop
+     * @param int   $idCustomer
+     * @param int   $idOrderSource
+     *
+     * @return array
+     */
+    private function generateForRule(array $rule, array $context, $idShop, $idCustomer, $idOrderSource)
+    {
+        $result = $this->issueForRule($rule, $context, $idShop, $idCustomer, $idOrderSource);
+        $this->logResult($result, $rule, $idShop, $idOrderSource, $idCustomer);
+
+        return $result;
     }
 
     /**
@@ -83,7 +134,7 @@ class SnodCouponGenerationService
      *
      * @return array
      */
-    private function generateForRule(array $rule, array $context, $idShop, $idCustomer, $idOrderSource)
+    private function issueForRule(array $rule, array $context, $idShop, $idCustomer, $idOrderSource)
     {
         $idRule = (int) $rule['id_snod_rule'];
 
@@ -98,7 +149,11 @@ class SnodCouponGenerationService
         $idCartRule = 0;
 
         try {
-            $generator = new SnodCouponCodeGenerator($idShop);
+            $generator = new CouponCodeGenerator($idShop, [
+                'prefix' => isset($rule['code_prefix']) ? (string) $rule['code_prefix'] : '',
+                'length' => isset($rule['code_length']) ? (int) $rule['code_length'] : 0,
+                'mask' => isset($rule['code_mask']) ? (string) $rule['code_mask'] : '',
+            ]);
             $code = $generator->generate();
             if ($code === '') {
                 return $this->failure($idRule, 'code_generation_failed');
@@ -134,7 +189,7 @@ class SnodCouponGenerationService
                 'id_snod_rule' => $idRule,
                 'id_cart_rule' => $idCartRule,
                 'coupon_code' => $code,
-                'status' => SnodCouponLinkRepository::STATUS_CREATED,
+                'status' => CouponLinkRepository::STATUS_CREATED,
                 'valid_from' => $now,
                 'valid_to' => $validTo,
                 'generated_at' => $now,
@@ -157,6 +212,9 @@ class SnodCouponGenerationService
                     'id_cart_rule' => $idCartRule,
                 ]);
             }
+
+            // Hand off the email to the queue so the hook returns immediately.
+            $this->enqueueCouponEmail($idLink, $idShop, $idCustomer, $code);
 
             return [
                 'success' => true,
@@ -214,6 +272,16 @@ class SnodCouponGenerationService
      */
     private function existingResult($idRule, array $existing)
     {
+        // Self-heal: if a prior run issued the coupon but failed to queue its
+        // email, enqueue it now. Deduplication by correlation id keeps this a
+        // no-op once the email task exists.
+        $this->enqueueCouponEmail(
+            (int) $existing['id_snod_coupon_link'],
+            isset($existing['id_shop']) ? (int) $existing['id_shop'] : 0,
+            isset($existing['id_customer']) ? (int) $existing['id_customer'] : 0,
+            (string) $existing['coupon_code']
+        );
+
         return [
             'success' => true,
             'reason' => 'already_exists',
@@ -222,6 +290,106 @@ class SnodCouponGenerationService
             'id_cart_rule' => (int) $existing['id_cart_rule'],
             'code' => (string) $existing['coupon_code'],
         ];
+    }
+
+    /**
+     * Best-effort enqueue of the coupon email task. Queuing must never roll back
+     * or fail an already-issued coupon, so any error here is swallowed; the
+     * coupon still exists and can be re-detected on a later pass.
+     *
+     * @param int    $idCouponLink
+     * @param int    $idShop
+     * @param int    $idCustomer
+     * @param string $code
+     *
+     * @return void
+     */
+    private function enqueueCouponEmail($idCouponLink, $idShop, $idCustomer, $code)
+    {
+        try {
+            $this->queueService->enqueueCouponEmail((int) $idCouponLink, (int) $idShop, [
+                'id_customer' => (int) $idCustomer,
+                'coupon_code' => (string) $code,
+            ]);
+        } catch (Exception $e) {
+            // Intentionally ignored: see method docblock.
+        }
+    }
+
+    /**
+     * Logs the outcome of a single rule's coupon generation: an issued coupon at
+     * info, an idempotent skip at debug, and any failure at error — each keyed by
+     * the order so all coupons of one order share a correlation id.
+     *
+     * @param array $result
+     * @param array $rule
+     * @param int   $idShop
+     * @param int   $idOrderSource
+     * @param int   $idCustomer
+     *
+     * @return void
+     */
+    private function logResult(array $result, array $rule, $idShop, $idOrderSource, $idCustomer)
+    {
+        if ($this->logger === null) {
+            return;
+        }
+
+        $reason = isset($result['reason']) ? (string) $result['reason'] : '';
+        $context = [
+            'id_order' => (int) $idOrderSource,
+            'id_shop' => (int) $idShop,
+            'id_customer' => (int) $idCustomer,
+            'id_snod_rule' => (int) $rule['id_snod_rule'],
+            'rule_name' => isset($rule['name']) ? (string) $rule['name'] : '',
+            'code' => isset($result['code']) ? (string) $result['code'] : '',
+            'id_cart_rule' => isset($result['id_cart_rule']) ? (int) $result['id_cart_rule'] : 0,
+        ];
+        $correlationId = $this->orderCorrelation($idOrderSource);
+
+        if ($reason === 'ok') {
+            $this->logCoupon(ModuleLogger::LEVEL_INFO, 'Coupon issued', $context, $correlationId);
+
+            return;
+        }
+
+        if ($reason === 'already_exists') {
+            $this->logCoupon(ModuleLogger::LEVEL_DEBUG, 'Coupon already issued (skipped)', $context, $correlationId);
+
+            return;
+        }
+
+        $context['reason'] = $reason;
+        $this->logCoupon(ModuleLogger::LEVEL_ERROR, 'Coupon generation failed', $context, $correlationId);
+    }
+
+    /**
+     * @param int $idOrderSource
+     *
+     * @return string a correlation id shared by all coupons of one order
+     */
+    private function orderCorrelation($idOrderSource)
+    {
+        return 'order:' . (int) $idOrderSource;
+    }
+
+    /**
+     * Best-effort structured log entry for a coupon event.
+     *
+     * @param string      $level
+     * @param string      $message
+     * @param array       $context
+     * @param string|null $correlationId
+     *
+     * @return void
+     */
+    private function logCoupon($level, $message, array $context, $correlationId)
+    {
+        if ($this->logger === null) {
+            return;
+        }
+
+        $this->logger->{$level}($message, $context, $correlationId, self::LOG_CHANNEL);
     }
 
     /**

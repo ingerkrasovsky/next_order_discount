@@ -16,32 +16,57 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+if (!defined('SNOD_AUTOLOAD_REGISTERED')) {
+    define('SNOD_AUTOLOAD_REGISTERED', true);
+    // PSR-4 autoloader for the module's own classes/ (no Composer/vendor needed;
+    // the module ships zero third-party dependencies).
+    spl_autoload_register(function ($class) {
+        $prefix = 'Setecom\\NextOrderDiscount\\';
+        if (strpos($class, $prefix) !== 0) {
+            return;
+        }
+        $relative = substr($class, strlen($prefix));
+        $path = __DIR__ . '/classes/' . str_replace('\\', '/', $relative) . '.php';
+        if (is_file($path)) {
+            require_once $path;
+        }
+    });
+}
+
+use Setecom\NextOrderDiscount\Coupon\CartRuleAdapter;
+use Setecom\NextOrderDiscount\Coupon\CouponGenerationService;
+use Setecom\NextOrderDiscount\Coupon\CouponLifecycleManager;
+use Setecom\NextOrderDiscount\Cron\CronRouter;
+use Setecom\NextOrderDiscount\Cron\CronSecurityService;
+use Setecom\NextOrderDiscount\Cron\LockManager;
+use Setecom\NextOrderDiscount\Logger\ModuleLogger;
+use Setecom\NextOrderDiscount\Mail\CouponMailer;
+use Setecom\NextOrderDiscount\Mail\MailTemplateResolver;
+use Setecom\NextOrderDiscount\Queue\CouponEmailHandler;
+use Setecom\NextOrderDiscount\Queue\QueueRetryPolicy;
+use Setecom\NextOrderDiscount\Queue\QueueService;
+use Setecom\NextOrderDiscount\Queue\QueueWorker;
+use Setecom\NextOrderDiscount\Queue\ReminderEmailHandler;
+use Setecom\NextOrderDiscount\Reminder\ReminderCandidateRepository;
+use Setecom\NextOrderDiscount\Reminder\ReminderMailer;
+use Setecom\NextOrderDiscount\Reminder\ReminderPlanner;
+use Setecom\NextOrderDiscount\Reminder\ReminderPolicy;
+use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
+use Setecom\NextOrderDiscount\Repository\CronLockRepository;
+use Setecom\NextOrderDiscount\Repository\DispatchQueueRepository;
+use Setecom\NextOrderDiscount\Repository\LogRepository;
+use Setecom\NextOrderDiscount\Repository\RuleEmailRepository;
+use Setecom\NextOrderDiscount\Repository\RuleRepository;
+use Setecom\NextOrderDiscount\Rule\RuleFormHandler;
+use Setecom\NextOrderDiscount\Rule\RuleMatcher;
+use Setecom\NextOrderDiscount\Rule\RulePresenter;
+
 class set_next_order_discount extends Module
 {
     private const MODULE_HOOKS = [
         'actionValidateOrder',
         'actionOrderStatusPostUpdate',
     ];
-
-    private const COUPON_CLASS_FILES = [
-        '/classes/Repository/CouponLinkRepository.php',
-        '/classes/Coupon/CouponCodeGenerator.php',
-        '/classes/Coupon/CartRuleAdapter.php',
-        '/classes/Coupon/CouponGenerationService.php',
-    ];
-
-    private $couponClassesLoaded = false;
-
-    private const RULE_CLASS_FILES = [
-        '/classes/Rule/RuleConditionSchema.php',
-        '/classes/Rule/RuleValueFormatter.php',
-        '/classes/Repository/RuleRepository.php',
-        '/classes/Rule/RuleFormHandler.php',
-        '/classes/Rule/RulePresenter.php',
-        '/classes/Rule/RuleMatcher.php',
-    ];
-
-    private $ruleClassesLoaded = false;
 
     public function __construct()
     {
@@ -387,106 +412,143 @@ class set_next_order_discount extends Module
     }
 
     /**
-     * Lazily require the coupon classes (no Composer autoloading, per the
-     * base-module architecture). Idempotent within a request.
-     *
-     * @return void
-     */
-    private function ensureCouponClassesLoaded()
-    {
-        if ($this->couponClassesLoaded) {
-            return;
-        }
-
-        foreach (self::COUPON_CLASS_FILES as $relativePath) {
-            require_once __DIR__ . $relativePath;
-        }
-
-        $this->couponClassesLoaded = true;
-    }
-
-    /**
      * Factory for the coupon generation service with its collaborators wired.
+     * Classes load on demand through the registered PSR-4 autoloader.
      *
-     * @return SnodCouponGenerationService
+     * @return CouponGenerationService
      */
     private function getCouponGenerationService()
     {
-        $this->ensureCouponClassesLoaded();
-
-        return new SnodCouponGenerationService(
+        return new CouponGenerationService(
             $this->getRuleMatcher(),
-            new SnodCartRuleAdapter(),
-            new SnodCouponLinkRepository()
+            new CartRuleAdapter(),
+            new CouponLinkRepository(),
+            new QueueService(new DispatchQueueRepository()),
+            $this->getModuleLogger()
         );
-    }
-
-    /**
-     * Lazily require the rule classes (no Composer autoloading, per the
-     * base-module architecture). Idempotent within a request.
-     *
-     * @return void
-     */
-    private function ensureRuleClassesLoaded()
-    {
-        if ($this->ruleClassesLoaded) {
-            return;
-        }
-
-        foreach (self::RULE_CLASS_FILES as $relativePath) {
-            require_once __DIR__ . $relativePath;
-        }
-
-        $this->ruleClassesLoaded = true;
     }
 
     /**
      * Factory for the rule repository. Public so the admin controller can list
      * and manage discount rules.
      *
-     * @return SnodRuleRepository
+     * @return RuleRepository
      */
     public function getRuleRepository()
     {
-        $this->ensureRuleClassesLoaded();
-
-        return new SnodRuleRepository();
+        return new RuleRepository();
     }
 
     /**
      * Factory for the rule form handler (validation + persistence).
      *
-     * @return SnodRuleFormHandler
+     * @return RuleFormHandler
      */
     public function getRuleFormHandler()
     {
-        $this->ensureRuleClassesLoaded();
-
-        return new SnodRuleFormHandler(new SnodRuleRepository());
+        return new RuleFormHandler(new RuleRepository(), new RuleEmailRepository());
     }
 
     /**
      * Factory for the rule list presenter.
      *
-     * @return SnodRulePresenter
+     * @return RulePresenter
      */
     public function getRulePresenter()
     {
-        $this->ensureRuleClassesLoaded();
-
-        return new SnodRulePresenter();
+        return new RulePresenter();
     }
 
     /**
      * Factory for the rule matcher (order context -> matching rules).
      *
-     * @return SnodRuleMatcher
+     * @return RuleMatcher
      */
     public function getRuleMatcher()
     {
-        $this->ensureRuleClassesLoaded();
+        return new RuleMatcher(new RuleRepository());
+    }
 
-        return new SnodRuleMatcher(new SnodRuleRepository());
+    /**
+     * Guards the public cron endpoint with the secret token.
+     *
+     * @return CronSecurityService
+     */
+    public function getCronSecurityService()
+    {
+        return new CronSecurityService();
+    }
+
+    /**
+     * Structured module logger, with the minimum level taken from configuration.
+     *
+     * @return ModuleLogger
+     */
+    public function getModuleLogger()
+    {
+        $level = (string) Configuration::get('SNOD_LOG_LEVEL');
+        if ($level === '') {
+            $level = ModuleLogger::LEVEL_INFO;
+        }
+
+        return new ModuleLogger(new LogRepository(), $level);
+    }
+
+    /**
+     * Composition root for the background tasks: assembles the queue worker (with
+     * its email/reminder handlers), the reminder planner and the coupon lifecycle
+     * manager behind the lock-aware cron router.
+     *
+     * @return CronRouter
+     */
+    public function getCronRouter()
+    {
+        $couponLinkRepository = new CouponLinkRepository();
+        $dispatchQueueRepository = new DispatchQueueRepository();
+        $queueService = new QueueService($dispatchQueueRepository);
+
+        $ruleEmailRepository = new RuleEmailRepository();
+
+        $reminderHandler = new ReminderEmailHandler(new ReminderMailer($couponLinkRepository, $ruleEmailRepository));
+        $handlers = [
+            QueueService::TASK_COUPON_EMAIL => new CouponEmailHandler(
+                new CouponMailer($couponLinkRepository, new MailTemplateResolver(), $ruleEmailRepository)
+            ),
+            QueueService::TASK_REMINDER_1 => $reminderHandler,
+            QueueService::TASK_REMINDER_2 => $reminderHandler,
+        ];
+
+        $logger = $this->getModuleLogger();
+
+        $worker = new QueueWorker($dispatchQueueRepository, new QueueRetryPolicy(), $handlers, $logger);
+
+        $planner = new ReminderPlanner(
+            new ReminderCandidateRepository(),
+            $queueService,
+            ReminderPolicy::fromConfiguration($this->getCurrentShopId())
+        );
+
+        $lifecycleManager = new CouponLifecycleManager($couponLinkRepository, new CartRuleAdapter());
+
+        return new CronRouter(
+            new LockManager(new CronLockRepository()),
+            $worker,
+            $planner,
+            $lifecycleManager,
+            $logger
+        );
+    }
+
+    /**
+     * @return int|null the current shop id, or null when not in a single-shop context
+     */
+    private function getCurrentShopId()
+    {
+        if (isset($this->context->shop) && (int) $this->context->shop->id > 0) {
+            return (int) $this->context->shop->id;
+        }
+
+        return null;
     }
 
     /**
@@ -503,7 +565,24 @@ class set_next_order_discount extends Module
             'SNOD_CODE_PREFIX' => 'NOD',
             'SNOD_CODE_LENGTH' => 12,
             'SNOD_CODE_MASK' => '',
+            'SNOD_CRON_TOKEN' => $this->generateCronToken(),
+            'SNOD_LOG_LEVEL' => ModuleLogger::LEVEL_INFO,
         ];
+    }
+
+    /**
+     * Generates a high-entropy secret token for the public cron endpoint, with a
+     * portable fallback when the CSPRNG is unavailable.
+     *
+     * @return string
+     */
+    private function generateCronToken()
+    {
+        try {
+            return bin2hex(random_bytes(16));
+        } catch (Exception $e) {
+            return md5(uniqid((string) mt_rand(), true));
+        }
     }
 
     /**

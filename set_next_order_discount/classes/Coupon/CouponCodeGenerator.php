@@ -12,6 +12,13 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
+namespace Setecom\NextOrderDiscount\Coupon;
+
+use Configuration;
+use Db;
+use Tools;
+use Exception;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -32,7 +39,7 @@ if (!defined('_PS_VERSION_')) {
  * native PrestaShop cart rules and the module's own coupon links, retrying up
  * to MAX_ATTEMPTS times before giving up.
  */
-class SnodCouponCodeGenerator
+class CouponCodeGenerator
 {
     public const MAX_ATTEMPTS = 20;
     public const MAX_CODE_LENGTH = 64;
@@ -46,13 +53,18 @@ class SnodCouponCodeGenerator
     private const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
     private $idShop;
+    private $overrides;
 
     /**
-     * @param int $idShop shop scope used to read configuration (0 = global)
+     * @param int   $idShop    shop scope used to read configuration (0 = global)
+     * @param array $overrides per-rule overrides: keys 'prefix' (string),
+     *                         'length' (int), 'mask' (string). An empty/zero
+     *                         override falls back to the global configuration.
      */
-    public function __construct($idShop = 0)
+    public function __construct($idShop = 0, array $overrides = [])
     {
         $this->idShop = (int) $idShop;
+        $this->overrides = $overrides;
     }
 
     /**
@@ -204,7 +216,8 @@ class SnodCouponCodeGenerator
      */
     private function getPrefix()
     {
-        $raw = $this->getConfig('SNOD_CODE_PREFIX');
+        $override = isset($this->overrides['prefix']) ? (string) $this->overrides['prefix'] : '';
+        $raw = $override !== '' ? $override : $this->getConfig('SNOD_CODE_PREFIX');
         if ($raw === false || $raw === null) {
             $raw = self::DEFAULT_PREFIX;
         }
@@ -222,7 +235,8 @@ class SnodCouponCodeGenerator
      */
     private function getRandomLength()
     {
-        $length = (int) $this->getConfig('SNOD_CODE_LENGTH');
+        $override = isset($this->overrides['length']) ? (int) $this->overrides['length'] : 0;
+        $length = $override > 0 ? $override : (int) $this->getConfig('SNOD_CODE_LENGTH');
         if ($length <= 0) {
             $length = self::DEFAULT_RANDOM_LENGTH;
         }
@@ -236,7 +250,8 @@ class SnodCouponCodeGenerator
      */
     private function getMask()
     {
-        $raw = $this->getConfig('SNOD_CODE_MASK');
+        $override = isset($this->overrides['mask']) ? (string) $this->overrides['mask'] : '';
+        $raw = $override !== '' ? $override : $this->getConfig('SNOD_CODE_MASK');
         if ($raw === false || $raw === null) {
             return '';
         }

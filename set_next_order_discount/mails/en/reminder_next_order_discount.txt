@@ -1,0 +1,20 @@
+{shop_name}
+
+Hi {customer_firstname},
+
+Just a friendly reminder: the discount we saved for your next order at
+{shop_name} is still waiting for you — but not for long.
+
+Your discount: {coupon_value}
+Coupon code:   {coupon_code}
+
+Expires on:           {valid_to}
+Minimum order amount: {minimum_amount}
+
+Enter the code above at checkout before it expires to claim your discount.
+
+See you soon,
+The {shop_name} team
+
+--
+You are receiving this reminder because you have an unused discount at {shop_name}.

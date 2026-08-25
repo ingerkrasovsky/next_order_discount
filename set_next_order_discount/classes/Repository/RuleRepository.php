@@ -12,6 +12,11 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
+namespace Setecom\NextOrderDiscount\Repository;
+
+use Db;
+use Setecom\NextOrderDiscount\Rule\RuleConditionSchema;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -21,10 +26,10 @@ if (!defined('_PS_VERSION_')) {
  *
  * A rule is "conditions -> discount": the scalar columns hold the outcome and
  * range/flag conditions, while the M2M tables described by
- * {@see SnodRuleConditionSchema} hold list conditions. All writes go through the
+ * {@see RuleConditionSchema} hold list conditions. All writes go through the
  * PrestaShop Db helper, which escapes values with pSQL.
  */
-class SnodRuleRepository
+class RuleRepository
 {
     public const TABLE_NAME = 'snod_rule';
     public const PRIMARY_KEY = 'id_snod_rule';
@@ -60,6 +65,9 @@ class SnodRuleRepository
         'currency_mode',
         'category_mode',
         'manufacturer_mode',
+        'code_prefix',
+        'code_length',
+        'code_mask',
     ];
 
     private const INT_COLUMNS = [
@@ -71,6 +79,7 @@ class SnodRuleRepository
         'validity_days',
         'customer_order_count_min',
         'customer_order_count_max',
+        'code_length',
     ];
 
     private const FLOAT_COLUMNS = [
@@ -330,20 +339,20 @@ class SnodRuleRepository
      * Returns the selected entity ids for one condition type of a rule.
      *
      * @param int    $idRule
-     * @param string $type a SnodRuleConditionSchema type
+     * @param string $type a RuleConditionSchema type
      *
      * @return array list of ids
      */
     public function getConditions($idRule, $type)
     {
         $idRule = (int) $idRule;
-        if ($idRule <= 0 || !SnodRuleConditionSchema::isValidType($type)) {
+        if ($idRule <= 0 || !RuleConditionSchema::isValidType($type)) {
             return [];
         }
 
-        $column = SnodRuleConditionSchema::column($type);
+        $column = RuleConditionSchema::column($type);
         $rows = Db::getInstance()->executeS(
-            'SELECT `' . bqSQL($column) . '` FROM `' . _DB_PREFIX_ . bqSQL(SnodRuleConditionSchema::table($type)) . '`'
+            'SELECT `' . bqSQL($column) . '` FROM `' . _DB_PREFIX_ . bqSQL(RuleConditionSchema::table($type)) . '`'
             . ' WHERE `id_snod_rule` = ' . $idRule
         );
         if (!is_array($rows)) {
@@ -366,7 +375,7 @@ class SnodRuleRepository
     public function getAllConditions($idRule)
     {
         $conditions = [];
-        foreach (SnodRuleConditionSchema::types() as $type) {
+        foreach (RuleConditionSchema::types() as $type) {
             $conditions[$type] = $this->getConditions($idRule, $type);
         }
 
@@ -385,12 +394,12 @@ class SnodRuleRepository
     public function setConditions($idRule, $type, array $ids)
     {
         $idRule = (int) $idRule;
-        if ($idRule <= 0 || !SnodRuleConditionSchema::isValidType($type)) {
+        if ($idRule <= 0 || !RuleConditionSchema::isValidType($type)) {
             return false;
         }
 
-        $table = SnodRuleConditionSchema::table($type);
-        $column = SnodRuleConditionSchema::column($type);
+        $table = RuleConditionSchema::table($type);
+        $column = RuleConditionSchema::column($type);
 
         Db::getInstance()->delete($table, 'id_snod_rule = ' . $idRule);
 

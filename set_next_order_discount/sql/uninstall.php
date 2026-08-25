@@ -24,10 +24,12 @@ $sql = [
     'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'snod_rule_currency`',
     'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'snod_rule_category`',
     'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'snod_rule_manufacturer`',
+    'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'snod_rule_email`',
     'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'snod_rule`',
     'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'snod_dispatch_queue`',
     'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'snod_cron_lock`',
     'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'snod_coupon_link`',
+    'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'snod_log`',
 ];
 
 foreach ($sql as $query) {

@@ -12,6 +12,12 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
+namespace Setecom\NextOrderDiscount\Rule;
+
+use Tools;
+use Setecom\NextOrderDiscount\Repository\RuleEmailRepository;
+use Setecom\NextOrderDiscount\Repository\RuleRepository;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -23,7 +29,7 @@ if (!defined('_PS_VERSION_')) {
  * it takes a plain input array and returns error *codes* (the controller maps
  * them to translated messages), which keeps it unit-testable.
  */
-class SnodRuleFormHandler
+class RuleFormHandler
 {
     public const ERR_NAME_REQUIRED = 'name_required';
     public const ERR_DISCOUNT_VALUE = 'discount_value_invalid';
@@ -39,13 +45,16 @@ class SnodRuleFormHandler
     private const DEFAULT_VALIDITY_DAYS = 30;
 
     private $repository;
+    private $emailRepository;
 
     /**
-     * @param SnodRuleRepository $repository
+     * @param RuleRepository      $repository
+     * @param RuleEmailRepository $emailRepository
      */
-    public function __construct(SnodRuleRepository $repository)
+    public function __construct(RuleRepository $repository, RuleEmailRepository $emailRepository)
     {
         $this->repository = $repository;
+        $this->emailRepository = $emailRepository;
     }
 
     /**
@@ -86,15 +95,17 @@ class SnodRuleFormHandler
             }
         }
 
+        $this->persistEmails($idRule, $input);
+
         $this->repository->setConditions(
             $idRule,
-            SnodRuleConditionSchema::TYPE_STATUS,
+            RuleConditionSchema::TYPE_STATUS,
             $this->intList(isset($input['status_ids']) ? $input['status_ids'] : [])
         );
 
         // Persist the list conditions present in the input (all/include/exclude
         // types). Types the form did not submit keep their stored selection.
-        foreach (SnodRuleConditionSchema::modeTypes() as $type) {
+        foreach (RuleConditionSchema::modeTypes() as $type) {
             $idsKey = $type . '_ids';
             if (!array_key_exists($idsKey, $input)) {
                 continue;
@@ -114,7 +125,7 @@ class SnodRuleFormHandler
             'name' => '',
             'active' => 1,
             'stop_further' => 1,
-            'discount_type' => SnodRuleRepository::DISCOUNT_PERCENT,
+            'discount_type' => RuleRepository::DISCOUNT_PERCENT,
             'discount_value' => '10',
             'validity_days' => (string) self::DEFAULT_VALIDITY_DAYS,
             'next_order_min_amount' => '0',
@@ -125,10 +136,13 @@ class SnodRuleFormHandler
             'customer_order_count_min' => '0',
             'customer_order_count_max' => '0',
             'status_ids' => [],
+            'code_prefix' => '',
+            'code_length' => '',
+            'code_mask' => '',
         ];
 
-        foreach (SnodRuleConditionSchema::modeTypes() as $type) {
-            $values[$type . '_mode'] = SnodRuleConditionSchema::MODE_ALL;
+        foreach (RuleConditionSchema::modeTypes() as $type) {
+            $values[$type . '_mode'] = RuleConditionSchema::MODE_ALL;
             $values[$type . '_ids'] = [];
         }
 
@@ -149,23 +163,28 @@ class SnodRuleFormHandler
             'active' => (int) $rule['active'],
             'stop_further' => (int) $rule['stop_further'],
             'discount_type' => (string) $rule['discount_type'],
-            'discount_value' => SnodRuleValueFormatter::decimal($rule['discount_value']),
+            'discount_value' => RuleValueFormatter::decimal($rule['discount_value']),
             'validity_days' => (int) $rule['validity_days'],
-            'next_order_min_amount' => SnodRuleValueFormatter::decimal($rule['next_order_min_amount']),
-            'source_total_min' => SnodRuleValueFormatter::decimal($rule['source_total_min']),
-            'source_total_max' => SnodRuleValueFormatter::decimal($rule['source_total_max']),
-            'date_from' => SnodRuleValueFormatter::dateColumnToInput($rule['date_from']),
-            'date_to' => SnodRuleValueFormatter::dateColumnToInput($rule['date_to']),
+            'next_order_min_amount' => RuleValueFormatter::decimal($rule['next_order_min_amount']),
+            'source_total_min' => RuleValueFormatter::decimal($rule['source_total_min']),
+            'source_total_max' => RuleValueFormatter::decimal($rule['source_total_max']),
+            'date_from' => RuleValueFormatter::dateColumnToInput($rule['date_from']),
+            'date_to' => RuleValueFormatter::dateColumnToInput($rule['date_to']),
             'customer_order_count_min' => (int) $rule['customer_order_count_min'],
             'customer_order_count_max' => (int) $rule['customer_order_count_max'],
-            'status_ids' => isset($conditions[SnodRuleConditionSchema::TYPE_STATUS])
-                ? $conditions[SnodRuleConditionSchema::TYPE_STATUS]
+            'status_ids' => isset($conditions[RuleConditionSchema::TYPE_STATUS])
+                ? $conditions[RuleConditionSchema::TYPE_STATUS]
                 : [],
+            'code_prefix' => isset($rule['code_prefix']) ? (string) $rule['code_prefix'] : '',
+            'code_length' => (isset($rule['code_length']) && (int) $rule['code_length'] > 0)
+                ? (string) (int) $rule['code_length']
+                : '',
+            'code_mask' => isset($rule['code_mask']) ? (string) $rule['code_mask'] : '',
         ];
 
-        foreach (SnodRuleConditionSchema::modeTypes() as $type) {
-            $modeColumn = SnodRuleConditionSchema::modeColumn($type);
-            $values[$type . '_mode'] = isset($rule[$modeColumn]) ? (string) $rule[$modeColumn] : SnodRuleConditionSchema::MODE_ALL;
+        foreach (RuleConditionSchema::modeTypes() as $type) {
+            $modeColumn = RuleConditionSchema::modeColumn($type);
+            $values[$type . '_mode'] = isset($rule[$modeColumn]) ? (string) $rule[$modeColumn] : RuleConditionSchema::MODE_ALL;
             $values[$type . '_ids'] = isset($conditions[$type]) ? $conditions[$type] : [];
         }
 
@@ -194,10 +213,13 @@ class SnodRuleFormHandler
             'customer_order_count_min' => $this->str($input, 'customer_order_count_min'),
             'customer_order_count_max' => $this->str($input, 'customer_order_count_max'),
             'status_ids' => $this->intList(isset($input['status_ids']) ? $input['status_ids'] : []),
+            'code_prefix' => $this->str($input, 'code_prefix'),
+            'code_length' => $this->str($input, 'code_length'),
+            'code_mask' => $this->str($input, 'code_mask'),
         ];
 
-        foreach (SnodRuleConditionSchema::modeTypes() as $type) {
-            $values[$type . '_mode'] = SnodRuleConditionSchema::normalizeMode($this->str($input, $type . '_mode'));
+        foreach (RuleConditionSchema::modeTypes() as $type) {
+            $values[$type . '_mode'] = RuleConditionSchema::normalizeMode($this->str($input, $type . '_mode'));
             $values[$type . '_ids'] = $this->intList(isset($input[$type . '_ids']) ? $input[$type . '_ids'] : []);
         }
 
@@ -225,17 +247,17 @@ class SnodRuleFormHandler
         $data['name'] = $name;
 
         $type = $this->str($input, 'discount_type');
-        if (!in_array($type, SnodRuleRepository::discountTypes(), true)) {
-            $type = SnodRuleRepository::DISCOUNT_PERCENT;
+        if (!in_array($type, RuleRepository::discountTypes(), true)) {
+            $type = RuleRepository::DISCOUNT_PERCENT;
         }
         $data['discount_type'] = $type;
 
         $data['discount_value'] = 0.0;
-        if ($type !== SnodRuleRepository::DISCOUNT_FREE_SHIPPING) {
+        if ($type !== RuleRepository::DISCOUNT_FREE_SHIPPING) {
             $raw = str_replace(',', '.', trim($this->str($input, 'discount_value')));
             if ($raw === '' || !is_numeric($raw) || (float) $raw <= 0) {
                 $errors[] = self::ERR_DISCOUNT_VALUE;
-            } elseif ($type === SnodRuleRepository::DISCOUNT_PERCENT && (float) $raw > 100) {
+            } elseif ($type === RuleRepository::DISCOUNT_PERCENT && (float) $raw > 100) {
                 $errors[] = self::ERR_DISCOUNT_PERCENT_MAX;
             } else {
                 $data['discount_value'] = (float) $raw;
@@ -279,14 +301,21 @@ class SnodRuleFormHandler
         $data['active'] = $this->str($input, 'active') === '1' ? 1 : 0;
         $data['stop_further'] = $this->str($input, 'stop_further') === '1' ? 1 : 0;
 
+        // Per-rule coupon code overrides. Empty values mean "use the global
+        // default from Settings", so they are stored empty/zero and resolved at
+        // generation time; the values are sanitized, never hard-rejected.
+        $data['code_prefix'] = $this->sanitizeCodePrefix($this->str($input, 'code_prefix'));
+        $data['code_length'] = $this->codeLength($this->str($input, 'code_length'));
+        $data['code_mask'] = $this->sanitizeCodeMask($this->str($input, 'code_mask'));
+
         // Mode columns for the list conditions that the submitted form manages
         // (a type absent from the input is left untouched, never reset).
-        foreach (SnodRuleConditionSchema::modeTypes() as $type) {
+        foreach (RuleConditionSchema::modeTypes() as $type) {
             $modeKey = $type . '_mode';
             if (!array_key_exists($modeKey, $input)) {
                 continue;
             }
-            $data[SnodRuleConditionSchema::modeColumn($type)] = SnodRuleConditionSchema::normalizeMode(
+            $data[RuleConditionSchema::modeColumn($type)] = RuleConditionSchema::normalizeMode(
                 $this->str($input, $modeKey)
             );
         }
@@ -374,6 +403,84 @@ class SnodRuleFormHandler
         }
 
         return date('Y-m-d', $timestamp) . ($endOfDay ? ' 23:59:59' : ' 00:00:00');
+    }
+
+    /**
+     * Persists the per-rule email content (subject + HTML) for every email type
+     * and language present in the submitted form. Absent types/languages are
+     * left untouched. Empty content is stored as-is; the mailer falls back to the
+     * shipped default template when a language has no usable content.
+     *
+     * @param int   $idRule
+     * @param array $input
+     *
+     * @return void
+     */
+    private function persistEmails($idRule, array $input)
+    {
+        if (!isset($input['email']) || !is_array($input['email'])) {
+            return;
+        }
+
+        foreach (RuleEmailRepository::types() as $type) {
+            if (!isset($input['email'][$type]) || !is_array($input['email'][$type])) {
+                continue;
+            }
+
+            $block = $input['email'][$type];
+            $subjects = (isset($block['subject']) && is_array($block['subject'])) ? $block['subject'] : [];
+            $htmls = (isset($block['html']) && is_array($block['html'])) ? $block['html'] : [];
+
+            $langIds = array_unique(array_merge(array_keys($subjects), array_keys($htmls)));
+            foreach ($langIds as $idLang) {
+                $idLang = (int) $idLang;
+                if ($idLang <= 0) {
+                    continue;
+                }
+                $subject = isset($subjects[$idLang]) ? Tools::substr((string) $subjects[$idLang], 0, 255) : '';
+                $html = isset($htmls[$idLang]) ? (string) $htmls[$idLang] : '';
+                $this->emailRepository->save($idRule, $type, $idLang, $subject, $html);
+            }
+        }
+    }
+
+    /**
+     * @param string $raw
+     *
+     * @return string sanitized prefix (A-Z0-9, <=20); '' means "use global"
+     */
+    private function sanitizeCodePrefix($raw)
+    {
+        $prefix = preg_replace('/[^A-Z0-9]/', '', Tools::strtoupper(trim((string) $raw)));
+
+        return is_string($prefix) ? Tools::substr($prefix, 0, 20) : '';
+    }
+
+    /**
+     * @param string $raw
+     *
+     * @return string sanitized mask (A-Z0-9#_-, <=64); '' means "use global"
+     */
+    private function sanitizeCodeMask($raw)
+    {
+        $mask = preg_replace('/[^A-Z0-9#_\-]/', '', Tools::strtoupper(trim((string) $raw)));
+
+        return is_string($mask) ? Tools::substr($mask, 0, 64) : '';
+    }
+
+    /**
+     * @param string $raw
+     *
+     * @return int random-part length, or 0 to use the global default
+     */
+    private function codeLength($raw)
+    {
+        $raw = trim((string) $raw);
+        if ($raw === '' || !ctype_digit($raw)) {
+            return 0;
+        }
+
+        return (int) $raw;
     }
 
     /**

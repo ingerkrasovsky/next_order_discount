@@ -1,0 +1,643 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file original="ModulesSetnextorderdiscountAdmin" source-language="en-US" target-language="ru-RU" datatype="plaintext">
+    <body>
+      <trans-unit id="38631b523a72f3a56fd17832df6c3de29cdd4a0f">
+        <source>A percentage discount cannot exceed 100.</source>
+        <target>Процентная скидка не может превышать 100.</target>
+      </trans-unit>
+      <trans-unit id="c3cd636a585b20c40ac2df5ffb403e83cb2eef51">
+        <source>Actions</source>
+        <target>Действия</target>
+      </trans-unit>
+      <trans-unit id="a733b809d2f1233496ab516eed0f3ef75cf3791a">
+        <source>Active</source>
+        <target>Активно</target>
+      </trans-unit>
+      <trans-unit id="d9e3f759e006b4caf9b6aa591b08cce3c67e2209">
+        <source>Active date window</source>
+        <target>Окно активности (даты)</target>
+      </trans-unit>
+      <trans-unit id="d119887bf72362125175c1ba5ca0f51e3b143bbd">
+        <source>Add a rule</source>
+        <target>Добавить правило</target>
+      </trans-unit>
+      <trans-unit id="6a72085653e4c5be8c7640c868ef787cbcf063d1">
+        <source>All</source>
+        <target>Все</target>
+      </trans-unit>
+      <trans-unit id="792b75d2cf516ea4700eae6d6109c5cfb8d36f39">
+        <source>All (no restriction)</source>
+        <target>Все (без ограничений)</target>
+      </trans-unit>
+      <trans-unit id="9dda7ef7a013e9ae2ddff61002d53fd01bf21889">
+        <source>All except the selected</source>
+        <target>Все, кроме выбранных</target>
+      </trans-unit>
+      <trans-unit id="6405179d241bf89ae6303c61e7e618b36c53a096">
+        <source>All statuses</source>
+        <target>Все статусы</target>
+      </trans-unit>
+      <trans-unit id="55201ac9166b370daeb5cfb419c06dfd4d02619a">
+        <source>Any status</source>
+        <target>Любой статус</target>
+      </trans-unit>
+      <trans-unit id="ecd05348c2a555579030121c949156cb499534b0">
+        <source>Brands</source>
+        <target>Бренды</target>
+      </trans-unit>
+      <trans-unit id="77dfd2135f4db726c47299bb55be26f7f4525a46">
+        <source>Cancel</source>
+        <target>Отмена</target>
+      </trans-unit>
+      <trans-unit id="f840ac65b3e56cbe7d49f5922ce51270404ec62c">
+        <source>Canceled</source>
+        <target>Отменён</target>
+      </trans-unit>
+      <trans-unit id="6ccb60071be8f00760a3824d9f7d0fad57de789f">
+        <source>Categories</source>
+        <target>Категории</target>
+      </trans-unit>
+      <trans-unit id="879f0b1bef59eeebf78cfd3a22f6f8077810cecf">
+        <source>Channel</source>
+        <target>Канал</target>
+      </trans-unit>
+      <trans-unit id="7b44dd15ce9ab47ce7131c0c5f5be78b86db82f1">
+        <source>Click to disable</source>
+        <target>Нажмите, чтобы отключить</target>
+      </trans-unit>
+      <trans-unit id="1b58a6ec8dc01c2d7b070f13248a918bcbad5431">
+        <source>Click to enable</source>
+        <target>Нажмите, чтобы включить</target>
+      </trans-unit>
+      <trans-unit id="adac69379a626c2436948a4ef1792c7d719ef929">
+        <source>Code</source>
+        <target>Код</target>
+      </trans-unit>
+      <trans-unit id="c66435e9d9788155e906e69cf2337978a5a3fae0">
+        <source>Code length must be a whole number greater than zero.</source>
+        <target>Длина кода должна быть целым числом больше нуля.</target>
+      </trans-unit>
+      <trans-unit id="f8e58f344247eb457d906b819c6376048a37f5ec">
+        <source>Code mask</source>
+        <target>Маска кода</target>
+      </trans-unit>
+      <trans-unit id="1f19cfe5d673e9dcdce57b2b3c259e7f5b3df219">
+        <source>Code prefix</source>
+        <target>Префикс кода</target>
+      </trans-unit>
+      <trans-unit id="5506eb6161a07356d96e91770d25d5a0f22200ef">
+        <source>Conditions</source>
+        <target>Условия</target>
+      </trans-unit>
+      <trans-unit id="5bdfe7c39a7a654549c6b89466e5f82c1f32308d">
+        <source>Conversion (used vs generated):</source>
+        <target>Конверсия (использовано к выданным):</target>
+      </trans-unit>
+      <trans-unit id="2b6a8b85da6426d3a8c097b6ab86004fc6a17321">
+        <source>Correlation</source>
+        <target>Корреляция</target>
+      </trans-unit>
+      <trans-unit id="89482586a358d7ebda86771beebf8817737cb417">
+        <source>Could not save the rule.</source>
+        <target>Не удалось сохранить правило.</target>
+      </trans-unit>
+      <trans-unit id="8467c0d99c7925d9e5fdb471fce551ee2115df40">
+        <source>Countries</source>
+        <target>Страны</target>
+      </trans-unit>
+      <trans-unit id="0d3d0f5d52bfb4fd0f60eb3f4b534467b91dd068">
+        <source>Coupon email</source>
+        <target>Письмо с купоном</target>
+      </trans-unit>
+      <trans-unit id="aa9392743ff0de520fa7acd551e4a2d89829b41b">
+        <source>Coupon funnel</source>
+        <target>Воронка купонов</target>
+      </trans-unit>
+      <trans-unit id="97a3bacad749a8c1213633a58dd5564f4f064807">
+        <source>Coupons</source>
+        <target>Купоны</target>
+      </trans-unit>
+      <trans-unit id="accf40c89baa4fa88e6a7ff11e1f805beecafd3f">
+        <source>Created</source>
+        <target>Создан</target>
+      </trans-unit>
+      <trans-unit id="c188ffa0cc77495c3b8bde3e89da123f44762f75">
+        <source>Cron / Tools</source>
+        <target>Cron / Инструменты</target>
+      </trans-unit>
+      <trans-unit id="830f62dc200f279742b4258f4a8397a8fce44703">
+        <source>Cron URL</source>
+        <target>URL для cron</target>
+      </trans-unit>
+      <trans-unit id="f278c5eeb26dce758fbdad1b247e1f7146abfcff">
+        <source>Cron/Tools</source>
+        <target>Cron/Инструменты</target>
+      </trans-unit>
+      <trans-unit id="a68898efa4d2e2d8bfd469058246118350f79d78">
+        <source>Currencies</source>
+        <target>Валюты</target>
+      </trans-unit>
+      <trans-unit id="0e85749a6f40d4614b87411e141fe8109099bc4f">
+        <source>Customer</source>
+        <target>Клиент</target>
+      </trans-unit>
+      <trans-unit id="236ddab4832d076fa0fb45c9820feb176fc13e2f">
+        <source>Customer groups</source>
+        <target>Группы клиентов</target>
+      </trans-unit>
+      <trans-unit id="e53ded572f567466e3cb5c843708b3d233789fad">
+        <source>Customer order number</source>
+        <target>Номер заказа клиента</target>
+      </trans-unit>
+      <trans-unit id="d87f47b47e4d5794d53fe0734c49417bd046cde0">
+        <source>Dashboard</source>
+        <target>Дашборд</target>
+      </trans-unit>
+      <trans-unit id="eb9a4bc1c0c153e4e4b042a79113b815b7e3021d">
+        <source>Date</source>
+        <target>Дата</target>
+      </trans-unit>
+      <trans-unit id="fb9a9f47c6b56bae5e2262c7841076e849481c53">
+        <source>Date window</source>
+        <target>Окно дат</target>
+      </trans-unit>
+      <trans-unit id="db0dd3026eeabb25699ceaf9ec4e63d90a734d0a">
+        <source>Debug mode</source>
+        <target>Режим отладки</target>
+      </trans-unit>
+      <trans-unit id="f6fdbe48dc54dd86f63097a03bd24094dedd713a">
+        <source>Delete</source>
+        <target>Удалить</target>
+      </trans-unit>
+      <trans-unit id="b524936d7aa1316e00d3354c9a8664d00e4bce5a">
+        <source>Discount</source>
+        <target>Скидка</target>
+      </trans-unit>
+      <trans-unit id="22c038e6589319bbd7fba6815afd68b579a2001b">
+        <source>Discount rules</source>
+        <target>Правила скидок</target>
+      </trans-unit>
+      <trans-unit id="c5137ddde86cfc76661e7870cbe48497224fa33b">
+        <source>Discount type</source>
+        <target>Тип скидки</target>
+      </trans-unit>
+      <trans-unit id="cfbd2d59622d0507e5380c08986b5a85a1204dc7">
+        <source>Discount value</source>
+        <target>Значение скидки</target>
+      </trans-unit>
+      <trans-unit id="a2a1c5c5982fef2e310324c0a9c7c6aee6541b9d">
+        <source>Discount value must be a number greater than zero.</source>
+        <target>Значение скидки должно быть числом больше нуля.</target>
+      </trans-unit>
+      <trans-unit id="cb269b9ec3adf54048b7d3f83c5706f364383c2b">
+        <source>Dispatch queue</source>
+        <target>Очередь отправки</target>
+      </trans-unit>
+      <trans-unit id="f801bfc13afad3f57e8032b84688e1c1ab2d7ba4">
+        <source>Documentation, feature requests or bug reports:</source>
+        <target>Документация, предложения и сообщения об ошибках:</target>
+      </trans-unit>
+      <trans-unit id="e9b450d14bc2363d292c84f17cfad5cfbd58a458">
+        <source>Done</source>
+        <target>Готово</target>
+      </trans-unit>
+      <trans-unit id="e37156eedf058580dc9606b742794ef401aae98b">
+        <source>Each rule has its own email content, pre-filled with the default template. Placeholders (coupon_code, coupon_value, valid_to, minimum_amount, customer_firstname, shop_name) are replaced when the email is sent.</source>
+        <target>У каждого правила своё письмо, предзаполненное дефолтным шаблоном. Плейсхолдеры (coupon_code, coupon_value, valid_to, minimum_amount, customer_firstname, shop_name) подставляются при отправке письма.</target>
+      </trans-unit>
+      <trans-unit id="5301648dcf6b53cefc9ed52999aaa92d4603cae0">
+        <source>Edit</source>
+        <target>Изменить</target>
+      </trans-unit>
+      <trans-unit id="1f53b22761f2755644f59a9a62705126375d8099">
+        <source>Edit rule</source>
+        <target>Изменить правило</target>
+      </trans-unit>
+      <trans-unit id="84add5b2952787581cb9a8851eef63d1ec75d22b">
+        <source>Email</source>
+        <target>Email</target>
+      </trans-unit>
+      <trans-unit id="a2b663db0433c1601bf605ec2e98196125466d9f">
+        <source>Emailed</source>
+        <target>Email отправлен</target>
+      </trans-unit>
+      <trans-unit id="8a06a09e196bad6eadfa7d6beaf83331ba36582b">
+        <source>Enables verbose logging for troubleshooting. Keep disabled in production.</source>
+        <target>Включает подробное логирование для диагностики. В продакшене держите выключенным.</target>
+      </trans-unit>
+      <trans-unit id="961bb4517909aac10d610ac2bf4dc8ca0fcf1245">
+        <source>Expire lapsed coupons</source>
+        <target>Просрочить истёкшие купоны</target>
+      </trans-unit>
+      <trans-unit id="a689a999a5e62055bda8c21b1dbe92c119308def">
+        <source>Expired</source>
+        <target>Истёк</target>
+      </trans-unit>
+      <trans-unit id="09fef5d8d9a3c86b2523fef60d512606e7fe0003">
+        <source>Failed</source>
+        <target>Ошибка</target>
+      </trans-unit>
+      <trans-unit id="d7decf1aa22b02ae8abf9a96849ee423eee838e4">
+        <source>Filter</source>
+        <target>Фильтр</target>
+      </trans-unit>
+      <trans-unit id="9a1eddada27d54996c03592175e994b5b5cf7305">
+        <source>First reminder email</source>
+        <target>Первое напоминание</target>
+      </trans-unit>
+      <trans-unit id="341e8bb9d2362aecfc9871902a007c9cd64e530f">
+        <source>Fixed amount</source>
+        <target>Фиксированная сумма</target>
+      </trans-unit>
+      <trans-unit id="75f527181b574f84568f33f67adc3b267a6fef9c">
+        <source>Free</source>
+        <target>Свободно</target>
+      </trans-unit>
+      <trans-unit id="b6da5263ea361ec875fab0f88ca4d12a7ec638e5">
+        <source>Free shipping</source>
+        <target>Бесплатная доставка</target>
+      </trans-unit>
+      <trans-unit id="3f66052a107eaf9bae7cad0f61fb462f47ec2c47">
+        <source>From</source>
+        <target>С</target>
+      </trans-unit>
+      <trans-unit id="9239ee2cda84eca4c3440e2a7b50148af67da3d4">
+        <source>General</source>
+        <target>Основное</target>
+      </trans-unit>
+      <trans-unit id="8eefdd52ad2d9b9bb6ad00ddcd70e1821191b6cd">
+        <source>Generated</source>
+        <target>Выдано</target>
+      </trans-unit>
+      <trans-unit id="ae9629f4ebb82c6331c0809fa9a0e54b00e578e6">
+        <source>Groups</source>
+        <target>Группы</target>
+      </trans-unit>
+      <trans-unit id="4c41038188894303cbb976481fb1aa9e2a5e355e">
+        <source>HTML content</source>
+        <target>HTML-содержимое</target>
+      </trans-unit>
+      <trans-unit id="5fe3dd3158baff86e7419f9286c40a7f696e4780">
+        <source>How many valid orders the customer must have. Set both to 1 for first-order-only. Use 0 for no limit.</source>
+        <target>Сколько валидных заказов должно быть у клиента. Укажите 1 и 1 — только для первого заказа. 0 — без ограничения.</target>
+      </trans-unit>
+      <trans-unit id="f168b436a0f0e9b9853778d3b9cd7673966bc44f">
+        <source>If disabled, no coupons are generated for new orders. Discounts themselves are configured in the Rules tab.</source>
+        <target>Если выключено, купоны для новых заказов не создаются. Сами скидки настраиваются во вкладке «Правила».</target>
+      </trans-unit>
+      <trans-unit id="74d7dbc3886eec0f2062291ae539a3d8971ec4f8">
+        <source>Ignored for free shipping. Percentage is capped at 100.</source>
+        <target>Игнорируется для бесплатной доставки. Процент ограничен 100.</target>
+      </trans-unit>
+      <trans-unit id="a8603c91de6859135be826839f975a510b33b127">
+        <source>Internal label shown in the rules list.</source>
+        <target>Внутренняя метка, отображается в списке правил.</target>
+      </trans-unit>
+      <trans-unit id="34fc3a5867d01b1417c5f6b8ab593da1bdc45833">
+        <source>Leave empty to trigger on any status (no restriction). Hold Ctrl/Cmd to select several.</source>
+        <target>Оставьте пустым для срабатывания на любом статусе (без ограничения). Удерживайте Ctrl/Cmd для выбора нескольких.</target>
+      </trans-unit>
+      <trans-unit id="8b7086f6387fa78f303932d7e9e633d29ef598b2">
+        <source>Leave empty to use the global default.</source>
+        <target>Оставьте пустым, чтобы использовать глобальное значение.</target>
+      </trans-unit>
+      <trans-unit id="3a11dece0639eab91483c3f15e486c9c6c14eab8">
+        <source>Length of the random part (clamped between 4 and 32). Ignored when a mask is set.</source>
+        <target>Длина случайной части (от 4 до 32). Игнорируется, если задана маска.</target>
+      </trans-unit>
+      <trans-unit id="7c7f5d049fad2569721d446c4a811f9bd5da5393">
+        <source>Level</source>
+        <target>Уровень</target>
+      </trans-unit>
+      <trans-unit id="891ebccd5baa32daed16fb5a0825ca7a4464931f">
+        <source>Lock</source>
+        <target>Блокировка</target>
+      </trans-unit>
+      <trans-unit id="126dd3b70a5ca7818e0e26ad1e008d23b0f14a53">
+        <source>Logs</source>
+        <target>Логи</target>
+      </trans-unit>
+      <trans-unit id="5e840f8281cbfc1cfa42a07c3c393d5ad357ff16">
+        <source>Manual run</source>
+        <target>Ручной запуск</target>
+      </trans-unit>
+      <trans-unit id="a95e85aed56318093b024674e217cae0bd30241d">
+        <source>Max</source>
+        <target>Макс</target>
+      </trans-unit>
+      <trans-unit id="68f4145fee7dde76afceb910165924ad14cf0d00">
+        <source>Message</source>
+        <target>Сообщение</target>
+      </trans-unit>
+      <trans-unit id="7eb0cee888ab55b559592d38eec027e9118d7d35">
+        <source>Min</source>
+        <target>Мин</target>
+      </trans-unit>
+      <trans-unit id="8ea36dfd7b0be66353f77a0feb0eed90e24d260f">
+        <source>Minimum next order amount</source>
+        <target>Минимальная сумма следующего заказа</target>
+      </trans-unit>
+      <trans-unit id="b1fec3a3c9a9a7ad72619067f7dea718f8c1ee4b">
+        <source>Minimum total the coupon requires on the next order. 0 to disable.</source>
+        <target>Минимальная сумма следующего заказа для применения купона. 0 — отключить.</target>
+      </trans-unit>
+      <trans-unit id="ff99def4de0170bdbcb15b434365817ed0b5e64c">
+        <source>Module active</source>
+        <target>Модуль активен</target>
+      </trans-unit>
+      <trans-unit id="260ff8ae7182fc851337b6b2fdb25f8cac2b8d47">
+        <source>Move down</source>
+        <target>Переместить вниз</target>
+      </trans-unit>
+      <trans-unit id="b4f57cd0cd5c7d88461c1718646713dea47a36c9">
+        <source>Move up</source>
+        <target>Переместить вверх</target>
+      </trans-unit>
+      <trans-unit id="709a23220f2c3d64d1e1d6d18c4d5280f8d82fca">
+        <source>Name</source>
+        <target>Название</target>
+      </trans-unit>
+      <trans-unit id="97e2e9fd57980decdd1004f953f3c50a6794f0aa">
+        <source>Need help?</source>
+        <target>Нужна помощь?</target>
+      </trans-unit>
+      <trans-unit id="b9ac14b0c6a55d1ae0c63d6a84dff7a2b1a47e49">
+        <source>New rule</source>
+        <target>Новое правило</target>
+      </trans-unit>
+      <trans-unit id="bc981983e7f547dc62e19a1e383acfe00782a6d5">
+        <source>Next</source>
+        <target>Далее</target>
+      </trans-unit>
+      <trans-unit id="816c52fd2bdd94a63cd0944823a6c0aa9384c103">
+        <source>No</source>
+        <target>Нет</target>
+      </trans-unit>
+      <trans-unit id="efbec23f15bf47b63693cfcd7ca079b558e273de">
+        <source>No coupons found yet. Coupons appear here once they are generated for qualifying orders.</source>
+        <target>Купонов пока нет. Они появятся здесь после создания для подходящих заказов.</target>
+      </trans-unit>
+      <trans-unit id="6f6f507bef0dcc842eae13d49fe9edf66490cd95">
+        <source>No discount rules yet.</source>
+        <target>Правил скидок пока нет.</target>
+      </trans-unit>
+      <trans-unit id="ce74d5f1d9495b3284287144ec7a4b12612fdb8c">
+        <source>No log entries.</source>
+        <target>Записей в логе нет.</target>
+      </trans-unit>
+      <trans-unit id="c3d7bee2c04243b3fec7f11ee0a2f0db83d25b06">
+        <source>Only the selected</source>
+        <target>Только выбранные</target>
+      </trans-unit>
+      <trans-unit id="23cded407b4a224ddbf88ae7337fb5b68cf9abf2">
+        <source>Optional pattern where each "#" becomes a random character; other characters are kept. Overrides prefix and length.</source>
+        <target>Необязательный шаблон, где каждый «#» заменяется случайным символом; остальные символы сохраняются. Переопределяет префикс и длину.</target>
+      </trans-unit>
+      <trans-unit id="f43a86a495285d2272966d50c83ed7a9cd483701">
+        <source>Optional. Leave both empty for an always-active rule.</source>
+        <target>Необязательно. Оставьте оба поля пустыми для всегда активного правила.</target>
+      </trans-unit>
+      <trans-unit id="9f73a6e071e873daddf77d5209455a5d46e3654d">
+        <source>Order count minimum cannot be greater than the maximum.</source>
+        <target>Минимум количества заказов не может быть больше максимума.</target>
+      </trans-unit>
+      <trans-unit id="be42782d4ef499e09b91242343c62224928e663d">
+        <source>Order no.</source>
+        <target>Заказ №</target>
+      </trans-unit>
+      <trans-unit id="2f32f2000aa65d24654aaf9f04739691d96dd31c">
+        <source>Order total</source>
+        <target>Сумма заказа</target>
+      </trans-unit>
+      <trans-unit id="44c26a9c2701c85c37adf7d0360422785febda38">
+        <source>Order total minimum cannot be greater than the maximum.</source>
+        <target>Минимум суммы заказа не может быть больше максимума.</target>
+      </trans-unit>
+      <trans-unit id="0ffc4637c1b12b512ffc679ac4b98e00ca414029">
+        <source>Order total range that triggers this rule. Use 0 for no limit.</source>
+        <target>Диапазон суммы заказа, при котором срабатывает правило. 0 — без ограничения.</target>
+      </trans-unit>
+      <trans-unit id="1737d975a047f08c21cc5f25dc1106759ee346b6">
+        <source>Override the coupon code format for this rule. Leave a field empty to use the global default.</source>
+        <target>Переопределите формат кода купона для этого правила. Оставьте поле пустым, чтобы использовать глобальное значение.</target>
+      </trans-unit>
+      <trans-unit id="fb06270f7c212baabc8749ffc36e49dc8f321548">
+        <source>Page</source>
+        <target>Страница</target>
+      </trans-unit>
+      <trans-unit id="96f608c16cef16caa06bf38901fb5f618a35a70b">
+        <source>Pending</source>
+        <target>В ожидании</target>
+      </trans-unit>
+      <trans-unit id="a92697cdc83c5e59146da61cb1c6888cd4327f66">
+        <source>Percentage (%)</source>
+        <target>Процент (%)</target>
+      </trans-unit>
+      <trans-unit id="91cfe508af913d22bbc1848dd6094d43b2038b02">
+        <source>Plan coupon reminders</source>
+        <target>Спланировать напоминания о купонах</target>
+      </trans-unit>
+      <trans-unit id="81790bbc90b83b630752f69b14e663a656889e9d">
+        <source>Prefix before the random part (letters and digits). Leave empty for none.</source>
+        <target>Префикс перед случайной частью (буквы и цифры). Оставьте пустым, чтобы не использовать.</target>
+      </trans-unit>
+      <trans-unit id="4d6278728c5c30836b64b9e37ff1f2e49516f7c7">
+        <source>PrestaShop Addons contact form</source>
+        <target>Форма обратной связи PrestaShop Addons</target>
+      </trans-unit>
+      <trans-unit id="f1fbb2b43dca281d0138f4fcc92543ad143ef0b1">
+        <source>Preview</source>
+        <target>Предпросмотр</target>
+      </trans-unit>
+      <trans-unit id="50f94286ba30706a19070d3ec0a0c8d34d6cf6eb">
+        <source>Previous</source>
+        <target>Назад</target>
+      </trans-unit>
+      <trans-unit id="886cbff9d9df761ec642945e519631a23ed173a2">
+        <source>Priority</source>
+        <target>Приоритет</target>
+      </trans-unit>
+      <trans-unit id="91ae6a9718b81672244cdd6b43391c69e5cd98cf">
+        <source>Process the dispatch queue</source>
+        <target>Обработать очередь отправки</target>
+      </trans-unit>
+      <trans-unit id="e63451d3cf90040c075dc1fe95aa1f7d7528c37f">
+        <source>Processing</source>
+        <target>Обрабатывается</target>
+      </trans-unit>
+      <trans-unit id="21a6f1708d8fe0294dbe065b9964ce68dac902d1">
+        <source>Product categories</source>
+        <target>Категории товаров</target>
+      </trans-unit>
+      <trans-unit id="6b9eb431a59e58e26dc1a04bce820f91297c0a0a">
+        <source>Random part length</source>
+        <target>Длина случайной части</target>
+      </trans-unit>
+      <trans-unit id="744404772d517f75b5c5cfa7f7e9aabeb5c83a2e">
+        <source>Reminded</source>
+        <target>Напоминание отправлено</target>
+      </trans-unit>
+      <trans-unit id="44c57abd888a66b36d4b7c902134063e4a097223">
+        <source>Reset</source>
+        <target>Сбросить</target>
+      </trans-unit>
+      <trans-unit id="6f0abcde9c0bc1fc64cf121079d6dda0a4ae4fd9">
+        <source>Restrict this rule by the selected items. "All" ignores the list.</source>
+        <target>Ограничить правило выбранными элементами. «Все» игнорирует список.</target>
+      </trans-unit>
+      <trans-unit id="78e1790e29a5541b6d02348fc3f45f18445709f4">
+        <source>Rule</source>
+        <target>Правило</target>
+      </trans-unit>
+      <trans-unit id="9e84d721dc29380b88a37b0dd5ec0f925b4ac77f">
+        <source>Rule name</source>
+        <target>Название правила</target>
+      </trans-unit>
+      <trans-unit id="5ddb6273162841a6369f7d6b0cba5dcaad08b49e">
+        <source>Rule name is required.</source>
+        <target>Название правила обязательно.</target>
+      </trans-unit>
+      <trans-unit id="54bd3038988c9b7739b15bb1cb19c84fe9e34042">
+        <source>Rule not found.</source>
+        <target>Правило не найдено.</target>
+      </trans-unit>
+      <trans-unit id="bb11a8e3f8712e36e7cd9d1c615a4e3dbb03336a">
+        <source>Rules</source>
+        <target>Правила</target>
+      </trans-unit>
+      <trans-unit id="2af00e23c480ba779fddda60673b28364ccb8e89">
+        <source>Run now</source>
+        <target>Запустить сейчас</target>
+      </trans-unit>
+      <trans-unit id="73989d9c59264da08a15dba21c7d58237a91f08f">
+        <source>Running</source>
+        <target>Выполняется</target>
+      </trans-unit>
+      <trans-unit id="efc007a393f66cdb14d57d385822a3d9e36ef873">
+        <source>Save</source>
+        <target>Сохранить</target>
+      </trans-unit>
+      <trans-unit id="3738a3799b885b4f072d533927ac0e4898dd43e7">
+        <source>Search code</source>
+        <target>Поиск по коду</target>
+      </trans-unit>
+      <trans-unit id="6e80a178258a58c4f4b0d327d34f3dcaac417cf2">
+        <source>Second reminder email</source>
+        <target>Второе напоминание</target>
+      </trans-unit>
+      <trans-unit id="fc552c754dd8f66b415bc0e0df960c5ad545e7bb">
+        <source>Send test email</source>
+        <target>Отправить тестовое письмо</target>
+      </trans-unit>
+      <trans-unit id="c7f73bb54d928922c3838bb789ee9fb8a5b1eb37">
+        <source>Settings</source>
+        <target>Настройки</target>
+      </trans-unit>
+      <trans-unit id="9bfc557947364f0c63e887afcf5af167217b152c">
+        <source>Source order</source>
+        <target>Исходный заказ</target>
+      </trans-unit>
+      <trans-unit id="d73452879a6b587dc6ec01bedb261daaf2d0340a">
+        <source>Source order total</source>
+        <target>Сумма исходного заказа</target>
+      </trans-unit>
+      <trans-unit id="bae7d5be70820ed56467bd9a63744e23b47bd711">
+        <source>Status</source>
+        <target>Статус</target>
+      </trans-unit>
+      <trans-unit id="9e253470c876ee6d5c720eb777aeb82d4c26e28f">
+        <source>Stop</source>
+        <target>Стоп</target>
+      </trans-unit>
+      <trans-unit id="f5c075919649f2235a9bfaf65c365c8de3b44518">
+        <source>Stop after this rule</source>
+        <target>Остановиться после этого правила</target>
+      </trans-unit>
+      <trans-unit id="95df23f13ec39f461dcda5ae76cb46df0bd54804">
+        <source>Stop evaluating further rules after this one</source>
+        <target>Прекратить проверку последующих правил после этого</target>
+      </trans-unit>
+      <trans-unit id="8d183dbdcea3b29906090bd83fa6fa37923cc8ec">
+        <source>Subject</source>
+        <target>Тема</target>
+      </trans-unit>
+      <trans-unit id="7bb0ddf9221c03b806b03c209e8366000124aa15">
+        <source>Task</source>
+        <target>Задача</target>
+      </trans-unit>
+      <trans-unit id="72d6f43fc9543254529d2c9d108bfe86426f2dad">
+        <source>Test email</source>
+        <target>Тестовое письмо</target>
+      </trans-unit>
+      <trans-unit id="41d818de0e1d816fcf9708acbd4dabec85a63433">
+        <source>The start date cannot be after the end date.</source>
+        <target>Дата начала не может быть позже даты окончания.</target>
+      </trans-unit>
+      <trans-unit id="ae79ea1e9c6391a9ed83a2e18a031b835feec0c9">
+        <source>To</source>
+        <target>По</target>
+      </trans-unit>
+      <trans-unit id="d866ef55cc18eaf9c88ad54188abde709c6254f9">
+        <source>Total entries:</source>
+        <target>Всего записей:</target>
+      </trans-unit>
+      <trans-unit id="b5cf50e440c417947c635f3c6c1b2285d7cd6b91">
+        <source>Trigger on order statuses</source>
+        <target>Срабатывание по статусам заказа</target>
+      </trans-unit>
+      <trans-unit id="48b50da6a96218ed4e30b6a00e08f62038bd9e19">
+        <source>Trigger statuses</source>
+        <target>Статусы срабатывания</target>
+      </trans-unit>
+      <trans-unit id="ccca7f0a21ba4c5125221d9c94913cb52baed32d">
+        <source>Trigger the background tasks from your server cron using the URLs below. Keep the token secret: anyone with a URL can run the corresponding task.</source>
+        <target>Запускайте фоновые задачи из серверного cron по указанным ниже URL. Держите токен в секрете: любой, у кого есть URL, может запустить соответствующую задачу.</target>
+      </trans-unit>
+      <trans-unit id="f2f8570ddd7b1e7b571311bbf9159efb02571e07">
+        <source>Updated</source>
+        <target>Обновлён</target>
+      </trans-unit>
+      <trans-unit id="02c0e4a1da64085d6e5e5cc69335b54b181e8a32">
+        <source>Used</source>
+        <target>Использован</target>
+      </trans-unit>
+      <trans-unit id="c8214d35a16e2ce6ecca4a054a7242e2e5ff7fe6">
+        <source>Valid until</source>
+        <target>Действует до</target>
+      </trans-unit>
+      <trans-unit id="dbc5c52e073823ba4fe43f0f21d8dd13fb624944">
+        <source>Validity</source>
+        <target>Срок действия</target>
+      </trans-unit>
+      <trans-unit id="78e808274f6e5407d3b2b06709be979584667852">
+        <source>Validity period (days)</source>
+        <target>Срок действия (дни)</target>
+      </trans-unit>
+      <trans-unit id="d0289b11f8d8608d0832c5567fc7bdc7c2cb47d0">
+        <source>Validity period must be a whole number of days (at least 1).</source>
+        <target>Срок действия должен быть целым числом дней (не менее 1).</target>
+      </trans-unit>
+      <trans-unit id="5e9eac33a3d583b8384b1f286225c6d5f3ca1bc3">
+        <source>When enabled, no further rules are evaluated after this one matches (single coupon). Disable to allow additional matching rules to issue their own coupons.</source>
+        <target>Если включено, после срабатывания этого правила остальные не проверяются (один купон). Отключите, чтобы другие подходящие правила тоже могли выдавать свои купоны.</target>
+      </trans-unit>
+      <trans-unit id="5397e0583f14f6c88de06b1ef28f460a1fb5b0ae">
+        <source>Yes</source>
+        <target>Да</target>
+      </trans-unit>
+      <trans-unit id="98b418d3ea6f733f6fcffeb70c4afe1aa32d4426">
+        <source>based on</source>
+        <target>на основе</target>
+      </trans-unit>
+      <trans-unit id="5548ae4f34cbb6e30414532924e2088d915b460f">
+        <source>days</source>
+        <target>дн.</target>
+      </trans-unit>
+      <trans-unit id="61d464842cdbafc0c7e84fa63eb0cdca206a776b">
+        <source>generated coupons</source>
+        <target>выданных купонов</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

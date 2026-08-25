@@ -12,6 +12,8 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
+namespace Setecom\NextOrderDiscount\Rule;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -24,7 +26,7 @@ if (!defined('_PS_VERSION_')) {
  * presenter and (later) the matcher all iterate this schema instead of
  * hard-coding table/column names.
  */
-class SnodRuleConditionSchema
+class RuleConditionSchema
 {
     public const TYPE_STATUS = 'status';
     public const TYPE_GROUP = 'group';

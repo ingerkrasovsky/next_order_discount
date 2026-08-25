@@ -63,7 +63,7 @@
                                     <span class="label label-default">{$statusName|escape:'html':'UTF-8'}</span>
                                 {/foreach}
                             {else}
-                                <span class="label label-info">{l s='Any paid status' d='Modules.Setnextorderdiscount.Admin'}</span>
+                                <span class="label label-info">{l s='Any status' d='Modules.Setnextorderdiscount.Admin'}</span>
                             {/if}
                         </td>
                         <td>
