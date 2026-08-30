@@ -12,7 +12,7 @@
  * @license   Commercial License
  *}
 
-<div class="panel">
+<div class="panel page-content">
     <h3><i class="icon icon-file-text"></i> {l s='Logs' d='Modules.Setnextorderdiscount.Admin'}</h3>
 
     <form method="post" action="{$AdminLink|escape:'html':'UTF-8'}&tab=logs" class="form-inline" style="margin-bottom:15px;">
@@ -51,10 +51,10 @@
                         <tr>
                             <td style="white-space:nowrap;">{$entry.created_at|escape:'html':'UTF-8'}</td>
                             <td>
-                                {if $entry.level == 'error'}<span class="label label-danger">{$entry.level|escape:'html':'UTF-8'}</span>
-                                {elseif $entry.level == 'warning'}<span class="label label-warning">{$entry.level|escape:'html':'UTF-8'}</span>
-                                {elseif $entry.level == 'info'}<span class="label label-info">{$entry.level|escape:'html':'UTF-8'}</span>
-                                {else}<span class="label label-default">{$entry.level|escape:'html':'UTF-8'}</span>{/if}
+                                {if $entry.level == 'error'}<span class="snod-badge snod-badge-danger"><i class="material-icons">error</i>{$entry.level|escape:'html':'UTF-8'}</span>
+                                {elseif $entry.level == 'warning'}<span class="snod-badge snod-badge-exclude"><i class="material-icons">warning</i>{$entry.level|escape:'html':'UTF-8'}</span>
+                                {elseif $entry.level == 'info'}<span class="snod-badge snod-badge-include"><i class="material-icons">info</i>{$entry.level|escape:'html':'UTF-8'}</span>
+                                {else}<span class="snod-badge snod-badge-all"><i class="material-icons">bug_report</i>{$entry.level|escape:'html':'UTF-8'}</span>{/if}
                             </td>
                             <td><code>{$entry.channel|escape:'html':'UTF-8'}</code></td>
                             <td>

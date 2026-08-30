@@ -129,6 +129,27 @@ class LogRepository
     }
 
     /**
+     * Deletes log entries older than the given number of days. A value of 0 (or
+     * less) keeps everything (no-op), so retention can be disabled from settings.
+     *
+     * @param int $days
+     *
+     * @return bool
+     */
+    public function pruneOlderThan($days)
+    {
+        $days = (int) $days;
+        if ($days <= 0) {
+            return true;
+        }
+
+        return (bool) Db::getInstance()->execute(
+            'DELETE FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
+            . ' WHERE `created_at` < DATE_SUB(NOW(), INTERVAL ' . $days . ' DAY)'
+        );
+    }
+
+    /**
      * Builds a safe WHERE clause from the supported filters.
      *
      * @param array $filters

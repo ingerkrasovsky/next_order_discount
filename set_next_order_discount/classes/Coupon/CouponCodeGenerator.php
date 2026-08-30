@@ -14,9 +14,7 @@
  */
 namespace Setecom\NextOrderDiscount\Coupon;
 
-use Configuration;
 use Db;
-use Tools;
 use Exception;
 
 if (!defined('_PS_VERSION_')) {
@@ -24,42 +22,55 @@ if (!defined('_PS_VERSION_')) {
 }
 
 /**
- * Generates unique, human-friendly coupon codes.
+ * Generates unique coupon codes from a per-rule template.
  *
- * The code shape is driven by module configuration (read in the current shop
- * scope for multishop correctness):
- *  - SNOD_CODE_MASK   optional pattern where each "#" is replaced by a random
- *                     character and every other character is kept literally
- *                     (e.g. "NOD-####-####"); ignored if it has no placeholder;
- *  - SNOD_CODE_PREFIX prefix used when no mask is set (default "NOD");
- *  - SNOD_CODE_LENGTH random-part length used when no mask is set (default 12).
+ * The shape is driven entirely by the rule's own settings (no store-wide
+ * configuration):
+ *  - length   the number of random characters in the generated key;
+ *  - type     the key alphabet: 1 = A-Z, 2 = 0-9, 3 = A-Z + 0-9;
+ *  - template a pattern where "%key%" is replaced by the generated key and every
+ *             other character is kept literally (e.g. "NOD-%key%" -> "NOD-AB12CD8X").
+ *             When the template has no "%key%" placeholder the key is appended.
  *
- * The random part uses a cryptographically secure source (random_int) over an
- * unambiguous alphabet (no 0/O/1/I/L). Uniqueness is verified against both the
- * native PrestaShop cart rules and the module's own coupon links, retrying up
- * to MAX_ATTEMPTS times before giving up.
+ * The random key uses a cryptographically secure source (random_int). Uniqueness
+ * is verified against both the native PrestaShop cart rules and the module's own
+ * coupon links, retrying up to MAX_ATTEMPTS times before giving up.
  */
 class CouponCodeGenerator
 {
     public const MAX_ATTEMPTS = 20;
     public const MAX_CODE_LENGTH = 64;
 
-    private const DEFAULT_PREFIX = 'NOD';
-    private const DEFAULT_RANDOM_LENGTH = 12;
-    private const MIN_RANDOM_LENGTH = 4;
-    private const MAX_RANDOM_LENGTH = 32;
-    private const MAX_PREFIX_LENGTH = 20;
-    private const MASK_PLACEHOLDER = '#';
-    private const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    public const TYPE_ALPHA = 1;
+    public const TYPE_NUMERIC = 2;
+    public const TYPE_ALPHANUMERIC = 3;
+
+    public const DEFAULT_LENGTH = 8;
+    public const DEFAULT_TYPE = self::TYPE_ALPHANUMERIC;
+    public const DEFAULT_TEMPLATE = 'NOD-%key%';
+
+    public const PLACEHOLDER = '%key%';
+
+    private const MIN_LENGTH = 4;
+    private const MAX_LENGTH = 32;
+
+    /**
+     * Full-set alphabets per key type (ambiguous characters included, as chosen).
+     */
+    private const ALPHABETS = [
+        self::TYPE_ALPHA => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        self::TYPE_NUMERIC => '0123456789',
+        self::TYPE_ALPHANUMERIC => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+    ];
 
     private $idShop;
     private $overrides;
 
     /**
-     * @param int   $idShop    shop scope used to read configuration (0 = global)
-     * @param array $overrides per-rule overrides: keys 'prefix' (string),
-     *                         'length' (int), 'mask' (string). An empty/zero
-     *                         override falls back to the global configuration.
+     * @param int   $idShop    shop scope (kept for signature compatibility)
+     * @param array $overrides per-rule settings: 'length' (int), 'type' (int),
+     *                         'template' (string). Empty/invalid values fall back
+     *                         to the DEFAULT_* constants.
      */
     public function __construct($idShop = 0, array $overrides = [])
     {
@@ -89,51 +100,20 @@ class CouponCodeGenerator
     }
 
     /**
-     * Produces one candidate code from the mask, or from prefix + random part.
+     * Produces one candidate code by rendering the key into the template.
      *
      * @return string
      */
     private function buildCode()
     {
-        $mask = $this->getMask();
-        if ($mask !== '') {
-            return $this->buildFromMask($mask);
-        }
+        $key = $this->randomKey($this->getLength(), $this->getAlphabet());
+        $template = $this->getTemplate();
 
-        return $this->buildFromPrefix();
-    }
+        $code = strpos($template, self::PLACEHOLDER) !== false
+            ? str_replace(self::PLACEHOLDER, $key, $template)
+            : $template . $key;
 
-    /**
-     * @param string $mask sanitized pattern containing at least one placeholder
-     *
-     * @return string
-     */
-    private function buildFromMask($mask)
-    {
-        $code = '';
-        $length = strlen($mask);
-        for ($i = 0; $i < $length; ++$i) {
-            $char = $mask[$i];
-            $code .= ($char === self::MASK_PLACEHOLDER) ? $this->randomChar() : $char;
-        }
-
-        return $code;
-    }
-
-    /**
-     * @return string
-     */
-    private function buildFromPrefix()
-    {
-        $prefix = $this->getPrefix();
-        $random = $this->randomString($this->getRandomLength());
-
-        // Prefix (<=20) + separator + random (<=32) never exceeds MAX_CODE_LENGTH.
-        if ($prefix === '') {
-            return $random;
-        }
-
-        return $prefix . '-' . $random;
+        return substr($code, 0, self::MAX_CODE_LENGTH);
     }
 
     /**
@@ -167,29 +147,20 @@ class CouponCodeGenerator
     }
 
     /**
-     * @param int $length
+     * @param int    $length
+     * @param string $alphabet
      *
-     * @return string
+     * @return string a random key of the given length over the alphabet
      */
-    private function randomString($length)
+    private function randomKey($length, $alphabet)
     {
-        $length = (int) $length;
+        $maxIndex = strlen($alphabet) - 1;
         $result = '';
-        for ($i = 0; $i < $length; ++$i) {
-            $result .= $this->randomChar();
+        for ($i = 0; $i < (int) $length; ++$i) {
+            $result .= $alphabet[$this->randomInt(0, $maxIndex)];
         }
 
         return $result;
-    }
-
-    /**
-     * @return string one random character from the alphabet
-     */
-    private function randomChar()
-    {
-        $maxIndex = strlen(self::ALPHABET) - 1;
-
-        return self::ALPHABET[$this->randomInt(0, $maxIndex)];
     }
 
     /**
@@ -211,78 +182,63 @@ class CouponCodeGenerator
     }
 
     /**
-     * @return string sanitized prefix (A-Z0-9, <=MAX_PREFIX_LENGTH); '' if the
-     *                merchant explicitly cleared it
+     * @return int key length clamped to [MIN_LENGTH, MAX_LENGTH]
      */
-    private function getPrefix()
-    {
-        $override = isset($this->overrides['prefix']) ? (string) $this->overrides['prefix'] : '';
-        $raw = $override !== '' ? $override : $this->getConfig('SNOD_CODE_PREFIX');
-        if ($raw === false || $raw === null) {
-            $raw = self::DEFAULT_PREFIX;
-        }
-
-        $prefix = preg_replace('/[^A-Z0-9]/', '', Tools::strtoupper(trim((string) $raw)));
-        if (!is_string($prefix)) {
-            return '';
-        }
-
-        return substr($prefix, 0, self::MAX_PREFIX_LENGTH);
-    }
-
-    /**
-     * @return int random-part length clamped to [MIN_RANDOM_LENGTH, MAX_RANDOM_LENGTH]
-     */
-    private function getRandomLength()
+    private function getLength()
     {
         $override = isset($this->overrides['length']) ? (int) $this->overrides['length'] : 0;
-        $length = $override > 0 ? $override : (int) $this->getConfig('SNOD_CODE_LENGTH');
-        if ($length <= 0) {
-            $length = self::DEFAULT_RANDOM_LENGTH;
-        }
+        $length = $override > 0 ? $override : self::DEFAULT_LENGTH;
 
-        return max(self::MIN_RANDOM_LENGTH, min(self::MAX_RANDOM_LENGTH, $length));
+        return max(self::MIN_LENGTH, min(self::MAX_LENGTH, $length));
     }
 
     /**
-     * @return string sanitized mask containing at least one placeholder, or ''
-     *                when no usable mask is configured
+     * @return string the alphabet for the configured key type
      */
-    private function getMask()
+    private function getAlphabet()
     {
-        $override = isset($this->overrides['mask']) ? (string) $this->overrides['mask'] : '';
-        $raw = $override !== '' ? $override : $this->getConfig('SNOD_CODE_MASK');
-        if ($raw === false || $raw === null) {
-            return '';
+        $type = isset($this->overrides['type']) ? (int) $this->overrides['type'] : 0;
+        if (!isset(self::ALPHABETS[$type])) {
+            $type = self::DEFAULT_TYPE;
         }
 
-        $mask = preg_replace('/[^A-Z0-9#_\-]/', '', Tools::strtoupper(trim((string) $raw)));
-        if (!is_string($mask)) {
-            return '';
-        }
-
-        $mask = substr($mask, 0, self::MAX_CODE_LENGTH);
-        if (strpos($mask, self::MASK_PLACEHOLDER) === false) {
-            return '';
-        }
-
-        return $mask;
+        return self::ALPHABETS[$type];
     }
 
     /**
-     * Reads a configuration value in the configured shop scope, falling back to
-     * the global value when no shop is set.
-     *
-     * @param string $key
-     *
-     * @return mixed
+     * @return string sanitized template, guaranteed non-empty
      */
-    private function getConfig($key)
+    private function getTemplate()
     {
-        if ($this->idShop > 0) {
-            return Configuration::get($key, null, null, $this->idShop);
+        $raw = isset($this->overrides['template']) ? trim((string) $this->overrides['template']) : '';
+        if ($raw === '') {
+            $raw = self::DEFAULT_TEMPLATE;
         }
 
-        return Configuration::get($key);
+        $template = self::sanitizeTemplate($raw);
+        if ($template === '') {
+            $template = self::DEFAULT_TEMPLATE;
+        }
+
+        return substr($template, 0, self::MAX_CODE_LENGTH);
+    }
+
+    /**
+     * Keeps the "%key%" placeholder and a safe literal charset (letters, digits,
+     * dash and underscore), dropping anything else.
+     *
+     * @param string $raw
+     *
+     * @return string
+     */
+    public static function sanitizeTemplate($raw)
+    {
+        // Protect the placeholder while stripping the literal part.
+        $sentinel = "\x01";
+        $tmp = str_replace(self::PLACEHOLDER, $sentinel, (string) $raw);
+        $tmp = preg_replace('/[^A-Za-z0-9_\-' . $sentinel . ']/', '', $tmp);
+        $tmp = is_string($tmp) ? $tmp : '';
+
+        return str_replace($sentinel, self::PLACEHOLDER, $tmp);
     }
 }

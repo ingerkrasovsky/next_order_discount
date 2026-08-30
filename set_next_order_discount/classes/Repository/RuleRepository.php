@@ -38,15 +38,20 @@ class RuleRepository
     public const DISCOUNT_AMOUNT = 'amount';
     public const DISCOUNT_FREE_SHIPPING = 'free_shipping';
 
+    public const REMINDER_BASIS_AFTER_EMAIL = 'after_email';
+    public const REMINDER_BASIS_BEFORE_EXPIRY = 'before_expiry';
+
     /**
      * Step between priorities when renumbering, leaving room for manual tweaks.
      */
-    private const PRIORITY_STEP = 10;
+    private const PRIORITY_STEP = 1;
 
     private const ALLOWED_COLUMNS = [
         'id_shop',
         'id_shop_group',
         'name',
+        'voucher_name',
+        'voucher_description',
         'active',
         'priority',
         'stop_further',
@@ -60,14 +65,18 @@ class RuleRepository
         'date_to',
         'customer_order_count_min',
         'customer_order_count_max',
+        'reminder_enabled',
+        'reminder_basis',
+        'reminder1_days',
+        'reminder2_days',
         'group_mode',
         'country_mode',
         'currency_mode',
         'category_mode',
         'manufacturer_mode',
-        'code_prefix',
         'code_length',
-        'code_mask',
+        'code_type',
+        'code_template',
     ];
 
     private const INT_COLUMNS = [
@@ -80,6 +89,10 @@ class RuleRepository
         'customer_order_count_min',
         'customer_order_count_max',
         'code_length',
+        'code_type',
+        'reminder_enabled',
+        'reminder1_days',
+        'reminder2_days',
     ];
 
     private const FLOAT_COLUMNS = [
@@ -92,7 +105,25 @@ class RuleRepository
     private const NULLABLE_COLUMNS = [
         'date_from',
         'date_to',
+        'voucher_name',
+        'voucher_description',
+        // Per-rule coupon-code settings: an empty value is stored as NULL and
+        // resolved to the built-in default at generation time.
+        'code_length',
+        'code_type',
+        'code_template',
+        // Per-rule reminder day offsets: empty/0 means "no reminder at this stage".
+        'reminder1_days',
+        'reminder2_days',
     ];
+
+    /**
+     * @return array all supported reminder timing bases
+     */
+    public static function reminderBases()
+    {
+        return [self::REMINDER_BASIS_AFTER_EMAIL, self::REMINDER_BASIS_BEFORE_EXPIRY];
+    }
 
     /**
      * @return array all supported discount type keys
@@ -234,6 +265,27 @@ class RuleRepository
         }
 
         return true;
+    }
+
+    /**
+     * Renumbers the shop's rules to a gapless 1..N sequence in their current
+     * order. Idempotent: only rows whose priority is already wrong are written,
+     * so calling it on an already-normalized list performs no writes. Heals data
+     * created before the priority step changed (e.g. old 10/20/30 values).
+     *
+     * @param int $idShop
+     *
+     * @return void
+     */
+    public function normalizePriorities($idShop)
+    {
+        $index = 0;
+        foreach ($this->findAllByShop($idShop) as $rule) {
+            ++$index;
+            if ((int) $rule['priority'] !== $index) {
+                $this->setPriority((int) $rule[self::PRIMARY_KEY], $index);
+            }
+        }
     }
 
     /**

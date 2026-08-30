@@ -51,6 +51,7 @@ class CartRuleAdapter
      *  - quantity        (int)    total uses (default 1)
      *  - quantity_per_user (int)  uses per customer (default 1)
      *  - name            (string) optional voucher name (defaults to the code)
+     *  - description     (string) optional back-office voucher description
      *
      * @param array $params
      *
@@ -78,6 +79,8 @@ class CartRuleAdapter
         $cartRule->code = $code;
         $cartRule->id_customer = $idCustomer;
         $cartRule->name = $this->buildLocalizedName($name);
+        // Description is a single (non-localized) back-office note on the voucher.
+        $cartRule->description = isset($params['description']) ? (string) $params['description'] : '';
         $cartRule->date_from = isset($params['date_from']) ? (string) $params['date_from'] : date('Y-m-d H:i:s');
         $cartRule->date_to = isset($params['date_to']) ? (string) $params['date_to'] : date('Y-m-d H:i:s');
         $cartRule->quantity = isset($params['quantity']) ? max(1, (int) $params['quantity']) : 1;

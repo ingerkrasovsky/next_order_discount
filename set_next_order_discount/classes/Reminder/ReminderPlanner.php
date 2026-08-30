@@ -29,9 +29,10 @@ if (!defined('_PS_VERSION_')) {
  * a deterministic correlation id, so re-running the planner never creates a
  * duplicate task: while a task is still pending the queue returns the existing
  * one, and once a reminder has actually been sent the candidate query excludes
- * the coupon (its reminder timestamp is set). The second reminder is only planned
- * after the first has been sent, keeping the two reminders ordered. When the
- * policy is disabled the planner does nothing.
+ * the coupon (its reminder timestamp is set). The two reminders are independent
+ * slots — each with its own day offset — so a rule may use either, both or
+ * neither. Whether a reminder is due, and its timing, is configured per rule and
+ * enforced by the candidate query, so the planner itself carries no policy.
  */
 class ReminderPlanner
 {
@@ -42,21 +43,17 @@ class ReminderPlanner
 
     private $candidateRepository;
     private $queueService;
-    private $policy;
 
     /**
      * @param ReminderCandidateRepository $candidateRepository
      * @param QueueService                $queueService
-     * @param ReminderPolicy              $policy
      */
     public function __construct(
         ReminderCandidateRepository $candidateRepository,
-        QueueService $queueService,
-        ReminderPolicy $policy
+        QueueService $queueService
     ) {
         $this->candidateRepository = $candidateRepository;
         $this->queueService = $queueService;
-        $this->policy = $policy;
     }
 
     /**
@@ -75,15 +72,10 @@ class ReminderPlanner
             'skipped' => 0,
         ];
 
-        if (!$this->policy->isEnabled()) {
-            return $summary;
-        }
-
         $batchSize = max(1, (int) $batchSize);
         $idShop = (int) $idShop;
 
         $firstDue = $this->candidateRepository->findDueForFirstReminder(
-            $this->policy->getFirstReminderDays(),
             $batchSize,
             $idShop
         );
@@ -96,7 +88,6 @@ class ReminderPlanner
         }
 
         $secondDue = $this->candidateRepository->findDueForSecondReminder(
-            $this->policy->getSecondReminderDays(),
             $batchSize,
             $idShop
         );

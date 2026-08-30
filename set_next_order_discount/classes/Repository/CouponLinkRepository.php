@@ -217,6 +217,33 @@ class CouponLinkRepository
     }
 
     /**
+     * Returns every coupon link issued for a source order (one per matched rule).
+     *
+     * @param int $idOrderSource
+     * @param int $idShop        optional shop filter (0 = any shop)
+     *
+     * @return array list of coupon link rows
+     */
+    public function findAllByOrderSource($idOrderSource, $idShop = 0)
+    {
+        $idOrderSource = (int) $idOrderSource;
+        $idShop = (int) $idShop;
+        if ($idOrderSource <= 0) {
+            return [];
+        }
+
+        $sql = 'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
+            . ' WHERE `id_order_source` = ' . $idOrderSource;
+        if ($idShop > 0) {
+            $sql .= ' AND `id_shop` = ' . $idShop;
+        }
+
+        $rows = Db::getInstance()->executeS($sql);
+
+        return is_array($rows) ? $rows : [];
+    }
+
+    /**
      * @param int $idCartRule
      *
      * @return array|null

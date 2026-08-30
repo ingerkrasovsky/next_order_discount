@@ -72,19 +72,28 @@ class CouponMailer
     /**
      * Sends the coupon email for one coupon link.
      *
-     * @param int $idCouponLink ps_snod_coupon_link primary key
+     * @param int  $idCouponLink ps_snod_coupon_link primary key
+     * @param bool $force        when true, resend even if the coupon was already
+     *                           emailed or has moved to a later/terminal state
+     *                           (manual back-office resend). The lifecycle status
+     *                           is never regressed — only `emailed_at` is refreshed
+     *                           for a coupon that is past the "created" stage.
      *
      * @return bool true when the email was sent (or was already sent), false on
      *              a missing/invalid record or a mail delivery failure
      */
-    public function sendForCouponLink($idCouponLink)
+    public function sendForCouponLink($idCouponLink, $force = false)
     {
         $link = $this->couponLinkRepository->findById((int) $idCouponLink);
         if ($link === null) {
-            return false;
+            // The coupon link no longer exists (e.g. deleted). There is nothing to
+            // send and never will be, so report success to drop a queued task
+            // cleanly instead of retrying/failing it forever. (The manual resend
+            // path checks existence before calling this, so it is unaffected.)
+            return true;
         }
 
-        if (!$this->isAwaitingEmail($link)) {
+        if (!$force && !$this->isAwaitingEmail($link)) {
             // Already emailed (idempotency), or no longer in a state that
             // warrants the coupon email (e.g. used, expired, canceled). There is
             // nothing to send, so the task is considered handled.
@@ -139,10 +148,14 @@ class CouponMailer
             return false;
         }
 
-        $this->couponLinkRepository->update((int) $link[CouponLinkRepository::PRIMARY_KEY], [
-            'status' => CouponLinkRepository::STATUS_EMAILED,
-            'emailed_at' => date('Y-m-d H:i:s'),
-        ]);
+        // Always record the latest send time. Advance the status to "emailed"
+        // only from "created" so a manual resend never regresses a coupon that
+        // has already moved on (reminded, used, expired, canceled).
+        $update = ['emailed_at' => date('Y-m-d H:i:s')];
+        if ((string) $link['status'] === CouponLinkRepository::STATUS_CREATED) {
+            $update['status'] = CouponLinkRepository::STATUS_EMAILED;
+        }
+        $this->couponLinkRepository->update((int) $link[CouponLinkRepository::PRIMARY_KEY], $update);
 
         return true;
     }

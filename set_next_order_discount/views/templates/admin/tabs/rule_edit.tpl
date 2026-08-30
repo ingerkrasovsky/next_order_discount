@@ -51,6 +51,22 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Voucher name' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <div class="col-lg-5">
+                        <input type="text" name="snod_rule_voucher_name" class="form-control" value="{$snod_rule_form.voucher_name|escape:'html':'UTF-8'}" maxlength="255" placeholder="{l s='Next Order Discount' d='Modules.Setnextorderdiscount.Admin'}">
+                        <p class="help-block">{l s='Name shown to the customer on the voucher. Leave empty to use the default "Next Order Discount".' d='Modules.Setnextorderdiscount.Admin'}</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Voucher description' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <div class="col-lg-5">
+                        <textarea name="snod_rule_voucher_description" class="form-control" rows="2" maxlength="255">{$snod_rule_form.voucher_description|escape:'html':'UTF-8'}</textarea>
+                        <p class="help-block">{l s='Optional description stored on the voucher (visible in the back office). Leave empty for none.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label class="control-label col-lg-3">{l s='Active' d='Modules.Setnextorderdiscount.Admin'}</label>
                     <div class="col-lg-5">
                         <span class="switch prestashop-switch fixed-width-lg">
@@ -118,6 +134,52 @@
                             <a class="slide-button btn"></a>
                         </span>
                         <p class="help-block">{l s='When enabled, no further rules are evaluated after this one matches (single coupon). Disable to allow additional matching rules to issue their own coupons.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Send reminders' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <div class="col-lg-5">
+                        <span class="switch prestashop-switch fixed-width-lg">
+                            <input type="radio" id="snod_rule_reminder_on" name="snod_rule_reminder_enabled" value="1" {if $snod_rule_form.reminder_enabled}checked{/if}>
+                            <label class="radioCheck" for="snod_rule_reminder_on"><i class="color_success"></i>{l s='Yes' d='Modules.Setnextorderdiscount.Admin'}</label>
+                            <input type="radio" id="snod_rule_reminder_off" name="snod_rule_reminder_enabled" value="0" {if !$snod_rule_form.reminder_enabled}checked{/if}>
+                            <label class="radioCheck" for="snod_rule_reminder_off"><i class="color_danger"></i>{l s='No' d='Modules.Setnextorderdiscount.Admin'}</label>
+                            <a class="slide-button btn"></a>
+                        </span>
+                        <p class="help-block">{l s='Remind the customer about their unused coupon by email. Reminders stop automatically once the coupon is used or expires.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Reminder timing' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <div class="col-lg-3">
+                        <select name="snod_rule_reminder_basis" class="form-control">
+                            {foreach from=$snod_reminder_bases item=basis}
+                                <option value="{$basis.id|escape:'html':'UTF-8'}" {if $snod_rule_form.reminder_basis == $basis.id}selected{/if}>
+                                    {$basis.name|escape:'html':'UTF-8'}
+                                </option>
+                            {/foreach}
+                        </select>
+                        <p class="help-block">{l s='Choose whether the day values below count from the coupon email, or backwards from the coupon expiry.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='First reminder (days)' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <div class="col-lg-3">
+                        <input type="text" name="snod_rule_reminder1_days" class="form-control" value="{$snod_rule_form.reminder1_days|escape:'html':'UTF-8'}" placeholder="1">
+                        <p class="help-block">{l s='Interpreted per the timing above. 0 or empty = this reminder is not sent.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Second reminder (days)' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <div class="col-lg-3">
+                        <input type="text" name="snod_rule_reminder2_days" class="form-control" value="{$snod_rule_form.reminder2_days|escape:'html':'UTF-8'}" placeholder="3">
+                        <p class="help-block">{l s='Interpreted per the timing above. 0 or empty = this reminder is not sent.' d='Modules.Setnextorderdiscount.Admin'}</p>
                     </div>
                 </div>
             </div>
@@ -224,30 +286,36 @@
             {* ===================== CODE ===================== *}
             <div class="tab-pane" id="snod-tab-code">
                 <p class="text-muted" style="margin-bottom:15px;">
-                    {l s='Override the coupon code format for this rule. Leave a field empty to use the global default.' d='Modules.Setnextorderdiscount.Admin'}
+                    {l s='Set the coupon code format for this rule. Leave a field empty to use the built-in default.' d='Modules.Setnextorderdiscount.Admin'}
                 </p>
 
                 <div class="form-group">
-                    <label class="control-label col-lg-3">{l s='Code prefix' d='Modules.Setnextorderdiscount.Admin'}</label>
-                    <div class="col-lg-3">
-                        <input type="text" name="snod_rule_code_prefix" class="form-control" value="{$snod_rule_form.code_prefix|escape:'html':'UTF-8'}" maxlength="20">
-                        <p class="help-block">{l s='Leave empty to use the global default.' d='Modules.Setnextorderdiscount.Admin'}</p>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="control-label col-lg-3">{l s='Random part length' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <label class="control-label col-lg-3">{l s='Key length' d='Modules.Setnextorderdiscount.Admin'}</label>
                     <div class="col-lg-3">
                         <input type="text" name="snod_rule_code_length" class="form-control" value="{$snod_rule_form.code_length|escape:'html':'UTF-8'}">
-                        <p class="help-block">{l s='Length of the random part (clamped between 4 and 32). Ignored when a mask is set.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                        <p class="help-block">{l s='Number of random characters in %key% (clamped between 4 and 32).' d='Modules.Setnextorderdiscount.Admin'}</p>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="control-label col-lg-3">{l s='Code mask' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <label class="control-label col-lg-3">{l s='Key type' d='Modules.Setnextorderdiscount.Admin'}</label>
                     <div class="col-lg-3">
-                        <input type="text" name="snod_rule_code_mask" class="form-control" value="{$snod_rule_form.code_mask|escape:'html':'UTF-8'}" maxlength="64">
-                        <p class="help-block">{l s='Optional pattern where each "#" becomes a random character; other characters are kept. Overrides prefix and length.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                        <select name="snod_rule_code_type" class="form-control">
+                            {foreach from=$snod_key_types item=keyType}
+                                <option value="{$keyType.id|intval}" {if (int)$snod_rule_form.code_type == $keyType.id}selected{/if}>
+                                    {$keyType.name|escape:'html':'UTF-8'}
+                                </option>
+                            {/foreach}
+                        </select>
+                        <p class="help-block">{l s='Character set used for the generated %key%.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Key template' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <div class="col-lg-3">
+                        <input type="text" name="snod_rule_code_template" class="form-control" value="{$snod_rule_form.code_template|escape:'html':'UTF-8'}" maxlength="64">
+                        <p class="help-block">{l s='Use %key% as a placeholder for the generated key. Example: NOD-%key% → NOD-AB12CD8X' d='Modules.Setnextorderdiscount.Admin'}</p>
                     </div>
                 </div>
             </div>

@@ -16,6 +16,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Setecom\NextOrderDiscount\Coupon\CouponCodeGenerator;
 use Setecom\NextOrderDiscount\Cron\CronRouter;
 use Setecom\NextOrderDiscount\Mail\DefaultEmailProvider;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
@@ -54,6 +55,25 @@ class NextOrderDiscountController extends ModuleAdminController
         $this->adminLink = $this->context->link->getAdminLink('NextOrderDiscount');
     }
 
+    /**
+     * Adds the "Add a rule" button to the page header toolbar, shown only on the
+     * Rules tab (mirrors the header-toolbar action used across the module suite).
+     *
+     * @return void
+     */
+    public function initPageHeaderToolbar()
+    {
+        if (Tools::getValue('tab', '') === 'rules') {
+            $this->page_header_toolbar_btn['new_rule'] = [
+                'href' => $this->adminLink . '&tab=rule_edit&id_rule=0',
+                'desc' => $this->trans('Add a rule', [], 'Modules.Setnextorderdiscount.Admin'),
+                'icon' => 'process-icon-new',
+            ];
+        }
+
+        parent::initPageHeaderToolbar();
+    }
+
     public function initContent()
     {
         if (Tools::getValue('ajax')) {
@@ -67,6 +87,18 @@ class NextOrderDiscountController extends ModuleAdminController
             if ($action === 'sendTestRuleEmail') {
                 $this->ajaxProcessSendTestRuleEmail();
             }
+            if ($action === 'resendCouponEmail') {
+                $this->ajaxProcessResendCouponEmail();
+            }
+            if ($action === 'sendReminderEmail') {
+                $this->ajaxProcessSendReminderEmail();
+            }
+            if ($action === 'installCron') {
+                $this->ajaxProcessInstallCron();
+            }
+            if ($action === 'removeCron') {
+                $this->ajaxProcessRemoveCron();
+            }
         }
 
         parent::initContent();
@@ -75,10 +107,10 @@ class NextOrderDiscountController extends ModuleAdminController
         $tabs = [
             'dashboard' => ['name' => $this->trans('Dashboard', [], $domain), 'url' => $this->adminLink . '&tab=dashboard', 'level' => 0],
             'rules' => ['name' => $this->trans('Rules', [], $domain), 'url' => $this->adminLink . '&tab=rules', 'level' => 0],
-            'settings' => ['name' => $this->trans('Settings', [], $domain), 'url' => $this->adminLink . '&tab=settings', 'level' => 0],
             'coupons' => ['name' => $this->trans('Coupons', [], $domain), 'url' => $this->adminLink . '&tab=coupons', 'level' => 0],
-            'logs' => ['name' => $this->trans('Logs', [], $domain), 'url' => $this->adminLink . '&tab=logs', 'level' => 0],
+            'settings' => ['name' => $this->trans('Settings', [], $domain), 'url' => $this->adminLink . '&tab=settings', 'level' => 0],
             'cron_tools' => ['name' => $this->trans('Cron/Tools', [], $domain), 'url' => $this->adminLink . '&tab=cron_tools', 'level' => 0],
+            'logs' => ['name' => $this->trans('Logs', [], $domain), 'url' => $this->adminLink . '&tab=logs', 'level' => 0],
             'rule_edit' => ['name' => $this->trans('Rule', [], $domain), 'url' => $this->adminLink . '&tab=rule_edit', 'level' => 1, 'parent' => 'rules'],
         ];
 
@@ -104,8 +136,11 @@ class NextOrderDiscountController extends ModuleAdminController
         }
 
         $modulePath = '/modules/' . $this->module->name;
-        $this->addCSS($modulePath . '/views/css/back.css');
-        $this->addJS($modulePath . '/views/js/back.js');
+        // Cache-buster keyed to the module version so CSS/JS changes are picked up
+        // by the browser without a manual hard refresh.
+        $assetVersion = '?v=' . $this->module->version;
+        $this->addCSS($modulePath . '/views/css/back.css' . $assetVersion, 'all', null, false);
+        $this->addJS($modulePath . '/views/js/back.js' . $assetVersion, false);
 
         $this->context->smarty->assign([
             'arTabs' => $tabs,
@@ -134,26 +169,45 @@ class NextOrderDiscountController extends ModuleAdminController
 
         if (!empty($errors)) {
             // Keep the submitted values so the merchant can fix them.
+            $submittedCancel = Tools::getValue('snod_cancel_statuses', []);
             $values = [
                 'snod_enabled' => $this->getSubmittedString('snod_enabled') === '1' ? 1 : 0,
                 'snod_debug_mode' => $this->getSubmittedString('snod_debug_mode') === '1' ? 1 : 0,
-                'snod_code_prefix' => $this->getSubmittedString('snod_code_prefix'),
-                'snod_code_length' => $this->getSubmittedString('snod_code_length'),
-                'snod_code_mask' => $this->getSubmittedString('snod_code_mask'),
+                'snod_log_retention_days' => (int) $this->getSubmittedString('snod_log_retention_days'),
+                'snod_cancel_statuses' => is_array($submittedCancel) ? array_map('intval', $submittedCancel) : [],
             ];
         } else {
             $values = [
                 'snod_enabled' => (int) Configuration::get('SNOD_ENABLED'),
                 'snod_debug_mode' => (int) Configuration::get('SNOD_DEBUG_MODE'),
-                'snod_code_prefix' => (string) Configuration::get('SNOD_CODE_PREFIX'),
-                'snod_code_length' => (string) Configuration::get('SNOD_CODE_LENGTH'),
-                'snod_code_mask' => (string) Configuration::get('SNOD_CODE_MASK'),
+                'snod_log_retention_days' => max(0, min(3650, (int) Configuration::get('SNOD_LOG_RETENTION_DAYS'))),
+                'snod_cancel_statuses' => $this->getConfiguredCancelStatuses(),
             ];
         }
 
         $values['snodErrors'] = $errors;
+        $values['snod_order_states'] = OrderState::getOrderStates((int) $this->context->language->id);
 
         $this->context->smarty->assign($values);
+    }
+
+    /**
+     * The configured order-state ids that void an issued coupon, mirroring the
+     * module's own resolution (default = Canceled + Refund when never saved).
+     *
+     * @return array int[]
+     */
+    private function getConfiguredCancelStatuses()
+    {
+        $raw = Configuration::get('SNOD_CANCEL_STATUSES');
+        if ($raw === false) {
+            $raw = implode(',', array_filter([
+                (int) Configuration::get('PS_OS_CANCELED'),
+                (int) Configuration::get('PS_OS_REFUND'),
+            ]));
+        }
+
+        return array_values(array_unique(array_filter(array_map('intval', array_filter(explode(',', (string) $raw), 'strlen')))));
     }
 
     /**
@@ -169,23 +223,24 @@ class NextOrderDiscountController extends ModuleAdminController
 
         $enabled = $this->getSubmittedString('snod_enabled') === '1' ? 1 : 0;
         $debugMode = $this->getSubmittedString('snod_debug_mode') === '1' ? 1 : 0;
-        $codePrefix = $this->getSubmittedString('snod_code_prefix');
-        $codeMask = $this->getSubmittedString('snod_code_mask');
 
-        $codeLengthRaw = trim($this->getSubmittedString('snod_code_length'));
-        if ($codeLengthRaw === '' || !ctype_digit($codeLengthRaw) || (int) $codeLengthRaw < 1) {
-            $errors[] = $this->trans('Code length must be a whole number greater than zero.', [], $domain);
-        }
+        // Cancellation statuses: keep only ids that are real order states.
+        $submittedCancel = Tools::getValue('snod_cancel_statuses', []);
+        $submittedCancel = is_array($submittedCancel) ? array_map('intval', $submittedCancel) : [];
+        $validStateIds = array_map(
+            function ($state) { return (int) $state['id_order_state']; },
+            OrderState::getOrderStates((int) $this->context->language->id)
+        );
+        $cancelStatuses = array_values(array_unique(array_filter($submittedCancel, function ($id) use ($validStateIds) {
+            return $id > 0 && in_array($id, $validStateIds, true);
+        })));
 
-        if (!empty($errors)) {
-            return $errors;
-        }
+        $retentionDays = max(0, min(3650, (int) $this->getSubmittedString('snod_log_retention_days')));
 
         Configuration::updateValue('SNOD_ENABLED', $enabled);
         Configuration::updateValue('SNOD_DEBUG_MODE', $debugMode);
-        Configuration::updateValue('SNOD_CODE_PREFIX', $codePrefix);
-        Configuration::updateValue('SNOD_CODE_LENGTH', (int) $codeLengthRaw);
-        Configuration::updateValue('SNOD_CODE_MASK', $codeMask);
+        Configuration::updateValue('SNOD_LOG_RETENTION_DAYS', $retentionDays);
+        Configuration::updateValue('SNOD_CANCEL_STATUSES', implode(',', $cancelStatuses));
 
         $this->context->smarty->assign(['updatedMessage' => true]);
 
@@ -263,7 +318,10 @@ class NextOrderDiscountController extends ModuleAdminController
             'SELECT cl.*,'
             . ' CONCAT(c.`firstname`, " ", c.`lastname`) AS customer_name,'
             . ' c.`email` AS customer_email,'
-            . ' r.`name` AS rule_name'
+            . ' r.`name` AS rule_name,'
+            . ' r.`reminder_enabled` AS rule_reminder_enabled,'
+            . ' r.`reminder1_days` AS rule_reminder1_days,'
+            . ' r.`reminder2_days` AS rule_reminder2_days'
             . ' FROM `' . _DB_PREFIX_ . 'snod_coupon_link` cl'
             . ' LEFT JOIN `' . _DB_PREFIX_ . 'customer` c ON c.`id_customer` = cl.`id_customer`'
             . ' LEFT JOIN `' . _DB_PREFIX_ . 'snod_rule` r ON r.`id_snod_rule` = cl.`id_snod_rule`'
@@ -331,6 +389,9 @@ class NextOrderDiscountController extends ModuleAdminController
             $this->handleRuleAction($repository, $ruleAction, $idRule, $idShop);
             Tools::redirectAdmin($this->adminLink . '&tab=rules');
         }
+
+        // Keep priorities as a gapless 1..N sequence (self-heals legacy values).
+        $repository->normalizePriorities($idShop);
 
         $presenter = $this->module->getRulePresenter();
         $statusNames = $this->getOrderStateNameMap();
@@ -426,12 +487,45 @@ class NextOrderDiscountController extends ModuleAdminController
             'snod_is_edit' => $idRule > 0,
             'snod_rule_form' => $form,
             'snod_order_states' => OrderState::getOrderStates((int) $this->context->language->id),
+            'snod_key_types' => $this->getKeyTypeOptions(),
+            'snod_reminder_bases' => $this->getReminderBasisOptions(),
             'snod_conditions' => $this->getRuleConditionBlocks($form),
             'snod_currency_sign' => $this->getCurrencySign(),
             'snod_languages' => $this->getFormLanguages(),
             'snod_email_types' => $this->getEmailTypeBlocks(),
             'snod_email_content' => $this->buildRuleEmailContent($idRule),
         ]);
+    }
+
+    /**
+     * Reminder-timing basis options for the rule form.
+     *
+     * @return array list of ['id' => string, 'name' => string]
+     */
+    private function getReminderBasisOptions()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+
+        return [
+            ['id' => RuleRepository::REMINDER_BASIS_AFTER_EMAIL, 'name' => $this->trans('Days after the coupon email', [], $domain)],
+            ['id' => RuleRepository::REMINDER_BASIS_BEFORE_EXPIRY, 'name' => $this->trans('Days before the coupon expires', [], $domain)],
+        ];
+    }
+
+    /**
+     * Key-type options for the rule form's coupon-code section.
+     *
+     * @return array list of ['id' => int, 'name' => string]
+     */
+    private function getKeyTypeOptions()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+
+        return [
+            ['id' => CouponCodeGenerator::TYPE_ALPHA, 'name' => $this->trans('Alphabetic (A-Z)', [], $domain)],
+            ['id' => CouponCodeGenerator::TYPE_NUMERIC, 'name' => $this->trans('Numeric (0-9)', [], $domain)],
+            ['id' => CouponCodeGenerator::TYPE_ALPHANUMERIC, 'name' => $this->trans('Alphanumeric (A-Z, 0-9)', [], $domain)],
+        ];
     }
 
     /**
@@ -523,6 +617,8 @@ class NextOrderDiscountController extends ModuleAdminController
 
         $input = [
             'name' => $this->getSubmittedString('snod_rule_name'),
+            'voucher_name' => $this->getSubmittedString('snod_rule_voucher_name'),
+            'voucher_description' => $this->getSubmittedString('snod_rule_voucher_description'),
             'active' => $this->getSubmittedString('snod_rule_active'),
             'stop_further' => $this->getSubmittedString('snod_rule_stop'),
             'discount_type' => $this->getSubmittedString('snod_rule_discount_type'),
@@ -535,10 +631,14 @@ class NextOrderDiscountController extends ModuleAdminController
             'date_to' => $this->getSubmittedString('snod_rule_date_to'),
             'customer_order_count_min' => $this->getSubmittedString('snod_rule_order_count_min'),
             'customer_order_count_max' => $this->getSubmittedString('snod_rule_order_count_max'),
+            'reminder_enabled' => $this->getSubmittedString('snod_rule_reminder_enabled'),
+            'reminder_basis' => $this->getSubmittedString('snod_rule_reminder_basis'),
+            'reminder1_days' => $this->getSubmittedString('snod_rule_reminder1_days'),
+            'reminder2_days' => $this->getSubmittedString('snod_rule_reminder2_days'),
             'status_ids' => is_array($statuses) ? $statuses : [],
-            'code_prefix' => $this->getSubmittedString('snod_rule_code_prefix'),
             'code_length' => $this->getSubmittedString('snod_rule_code_length'),
-            'code_mask' => $this->getSubmittedString('snod_rule_code_mask'),
+            'code_type' => $this->getSubmittedString('snod_rule_code_type'),
+            'code_template' => $this->getSubmittedString('snod_rule_code_template'),
             'email' => $this->readEmailInput(),
         ];
 
@@ -716,7 +816,7 @@ class NextOrderDiscountController extends ModuleAdminController
     public function crontoolsTab()
     {
         $domain = 'Modules.Setnextorderdiscount.Admin';
-        $cronToken = (string) Configuration::get('SNOD_CRON_TOKEN');
+        $cronToken = $this->module->getCronSecurityService()->getToken();
         $cronBaseUrl = $this->context->link->getModuleLink(
             $this->module->name,
             'cron',
@@ -729,25 +829,189 @@ class NextOrderDiscountController extends ModuleAdminController
             CronRouter::TASK_PLAN_REMINDERS => $this->trans('Plan coupon reminders', [], $domain),
             CronRouter::TASK_EXPIRE_COUPONS => $this->trans('Expire lapsed coupons', [], $domain),
         ];
+        // Recommended schedule + health thresholds (seconds) per task.
+        $meta = [
+            CronRouter::TASK_PROCESS_QUEUE => ['schedule' => $this->trans('every 5 minutes', [], $domain), 'cron' => '*/5 * * * *', 'warn' => 1200, 'danger' => 3600],
+            CronRouter::TASK_PLAN_REMINDERS => ['schedule' => $this->trans('every 30 minutes', [], $domain), 'cron' => '*/30 * * * *', 'warn' => 7200, 'danger' => 86400],
+            CronRouter::TASK_EXPIRE_COUPONS => ['schedule' => $this->trans('once a day', [], $domain), 'cron' => '0 3 * * *', 'warn' => 93600, 'danger' => 259200],
+        ];
 
         $lockRepository = new CronLockRepository();
         $tasks = [];
         foreach (CronRouter::availableTasks() as $task) {
+            $lastRunRaw = Configuration::get(CronRouter::lastRunKeyFor($task));
+            $lastRun = ($lastRunRaw && strpos((string) $lastRunRaw, '0000-00-00') !== 0) ? (string) $lastRunRaw : '';
             $tasks[] = [
                 'task' => $task,
                 'label' => isset($labels[$task]) ? $labels[$task] : $task,
                 'url' => $cronBaseUrl . '&task=' . urlencode($task),
                 'locked' => $lockRepository->isLocked(CronRouter::lockNameFor($task)),
+                'schedule' => $meta[$task]['schedule'],
+                'cron_expr' => $meta[$task]['cron'],
+                'last_run' => $lastRun,
+                'last_run_human' => $lastRun === '' ? '' : $this->humanizeAge(time() - strtotime($lastRun)),
+                'health' => $this->cronHealth($lastRun, $meta[$task]['warn'], $meta[$task]['danger']),
             ];
         }
 
+        $allUrl = $cronBaseUrl . '&task=' . CronRouter::TASK_ALL;
+
+        $installer = $this->module->getCronInstaller();
+
         $this->context->smarty->assign([
             'snod_cron_base_url' => $cronBaseUrl,
+            'snod_cron_all_url' => $allUrl,
+            'snod_cron_command_curl' => '*/5 * * * * curl -fsS "' . $allUrl . '" >/dev/null 2>&1',
+            'snod_cron_command_wget' => '*/5 * * * * wget -q -O /dev/null "' . $allUrl . '"',
             'snod_cron_tasks' => $tasks,
+            'snod_cron_env' => $this->detectCronEnvironment(),
+            'snod_cron_caps' => $installer->capabilities(),
+            'snod_cron_installed' => $installer->isInstalled(),
             'snod_queue_counts' => $this->getQueueCounts(),
             'snod_admin_link' => $this->adminLink,
             'snod_admin_token' => (string) $this->token,
         ]);
+    }
+
+    /**
+     * The full crontab line the auto-installer writes: the every-5-minutes
+     * combined-task call, using wget when the shell has no curl, otherwise curl.
+     * Built entirely server-side so no client input ever reaches the crontab.
+     *
+     * @return string
+     */
+    private function recommendedCronLine()
+    {
+        $allUrl = $this->context->link->getModuleLink(
+            $this->module->name,
+            'cron',
+            ['token' => $this->module->getCronSecurityService()->getToken(), 'task' => CronRouter::TASK_ALL],
+            true
+        );
+
+        $env = $this->detectCronEnvironment();
+        if ($env['curl_cli'] === false) {
+            return '*/5 * * * * wget -q -O /dev/null "' . $allUrl . '"';
+        }
+
+        return '*/5 * * * * curl -fsS "' . $allUrl . '" >/dev/null 2>&1';
+    }
+
+    /**
+     * AJAX: installs the module's crontab entry (best-effort, server-controlled
+     * command). The admin token is validated by the framework before this runs.
+     *
+     * @return void
+     */
+    public function ajaxProcessInstallCron()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+        $result = $this->module->getCronInstaller()->install($this->recommendedCronLine());
+        if (!empty($result['success'])) {
+            $this->respondJson(['success' => true, 'message' => $this->trans('Cron installed on this server.', [], $domain)]);
+        }
+
+        $this->respondJson([
+            'success' => false,
+            'error' => isset($result['reason']) ? (string) $result['reason'] : 'failed',
+            'message' => $this->trans('Could not install the cron on this server. Use the copy-paste line instead.', [], $domain),
+        ]);
+    }
+
+    /**
+     * AJAX: removes the module's crontab entry.
+     *
+     * @return void
+     */
+    public function ajaxProcessRemoveCron()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+        $ok = $this->module->getCronInstaller()->remove();
+
+        $this->respondJson([
+            'success' => (bool) $ok,
+            'message' => $ok
+                ? $this->trans('Cron removed from this server.', [], $domain)
+                : $this->trans('Could not remove the cron.', [], $domain),
+        ]);
+    }
+
+    /**
+     * Health verdict for a task from its last successful run and thresholds.
+     *
+     * @param string $lastRun 'Y-m-d H:i:s' or '' when never run
+     * @param int    $warn    age (s) above which the task is late
+     * @param int    $danger  age (s) above which the task is failing
+     *
+     * @return string 'never' | 'ok' | 'warn' | 'danger'
+     */
+    private function cronHealth($lastRun, $warn, $danger)
+    {
+        if ($lastRun === '') {
+            return 'never';
+        }
+
+        $age = time() - strtotime($lastRun);
+        if ($age <= (int) $warn) {
+            return 'ok';
+        }
+        if ($age <= (int) $danger) {
+            return 'warn';
+        }
+
+        return 'danger';
+    }
+
+    /**
+     * A coarse, translator-friendly "N units ago" string.
+     *
+     * @param int $seconds
+     *
+     * @return string
+     */
+    private function humanizeAge($seconds)
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+        $seconds = max(0, (int) $seconds);
+        if ($seconds < 60) {
+            return $this->trans('just now', [], $domain);
+        }
+        $minutes = (int) floor($seconds / 60);
+        if ($minutes < 60) {
+            return sprintf($this->trans('%d min ago', [], $domain), $minutes);
+        }
+        $hours = (int) floor($minutes / 60);
+        if ($hours < 48) {
+            return sprintf($this->trans('%d h ago', [], $domain), $hours);
+        }
+
+        return sprintf($this->trans('%d days ago', [], $domain), (int) floor($hours / 24));
+    }
+
+    /**
+     * Best-effort probe of what the server can do, so the tab can steer the
+     * merchant to a cron method that will actually work for them.
+     *
+     * @return array
+     */
+    private function detectCronEnvironment()
+    {
+        $disabled = array_map('trim', explode(',', (string) ini_get('disable_functions')));
+        $shellExec = function_exists('shell_exec') && !in_array('shell_exec', $disabled, true);
+
+        $curlCli = null; // unknown unless we can probe the shell
+        if ($shellExec) {
+            $probe = @shell_exec('command -v curl 2>/dev/null');
+            $curlCli = ($probe !== null && trim((string) $probe) !== '');
+        }
+
+        return [
+            'php_version' => PHP_VERSION,
+            'shell_exec' => $shellExec,
+            'curl_cli' => $curlCli, // true | false | null(unknown)
+            'curl_php' => function_exists('curl_init'),
+            'allow_url_fopen' => (bool) ini_get('allow_url_fopen'),
+        ];
     }
 
     /**
@@ -802,6 +1066,117 @@ class NextOrderDiscountController extends ModuleAdminController
         }
 
         return $counts;
+    }
+
+    /**
+     * AJAX: manually (re)sends the coupon email for one coupon link. The admin
+     * token is validated by the framework before this runs. The coupon must
+     * belong to the current shop context; delivery is forced, so an already-
+     * emailed or later-stage coupon can be resent on demand.
+     *
+     * @return void
+     */
+    public function ajaxProcessResendCouponEmail()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+        $idCouponLink = (int) Tools::getValue('id_coupon_link');
+        if ($idCouponLink <= 0) {
+            $this->respondJson(['success' => false, 'error' => 'invalid_request']);
+        }
+
+        $link = (new CouponLinkRepository())->findById($idCouponLink);
+        if ($link === null) {
+            $this->respondJson(['success' => false, 'error' => 'not_found']);
+        }
+
+        // Shop-scope guard: outside the "all shops" context, only coupons of the
+        // current shop may be resent.
+        $isAllShops = Shop::isFeatureActive() && Shop::getContext() == Shop::CONTEXT_ALL;
+        if (!$isAllShops && (int) $link['id_shop'] !== (int) $this->context->shop->id) {
+            $this->respondJson(['success' => false, 'error' => 'wrong_shop']);
+        }
+
+        // A terminal coupon (used, expired, canceled) can no longer be redeemed,
+        // so resending its email is pointless — refuse it.
+        if (in_array((string) $link['status'], [
+            CouponLinkRepository::STATUS_USED,
+            CouponLinkRepository::STATUS_EXPIRED,
+            CouponLinkRepository::STATUS_CANCELED,
+        ], true)) {
+            $this->respondJson([
+                'success' => false,
+                'error' => 'not_resendable',
+                'message' => $this->trans('This coupon can no longer be used, so its email cannot be resent.', [], $domain),
+            ]);
+        }
+
+        $sent = $this->module->getCouponMailer()->sendForCouponLink($idCouponLink, true);
+        if (!$sent) {
+            $this->respondJson([
+                'success' => false,
+                'error' => 'send_failed',
+                'message' => $this->trans('Could not send the email. Check the customer email address and your mail configuration.', [], $domain),
+            ]);
+        }
+
+        $this->respondJson([
+            'success' => true,
+            'message' => $this->trans('Coupon email sent.', [], $domain),
+        ]);
+    }
+
+    /**
+     * AJAX: manually sends reminder 1 or 2 for one coupon link. Token validated by
+     * the framework. The coupon must belong to the current shop and still be
+     * usable; the send is forced so an already-sent reminder can be resent.
+     *
+     * @return void
+     */
+    public function ajaxProcessSendReminderEmail()
+    {
+        $domain = 'Modules.Setnextorderdiscount.Admin';
+        $idCouponLink = (int) Tools::getValue('id_coupon_link');
+        $reminderNumber = ((int) Tools::getValue('reminder') === 2) ? 2 : 1;
+        if ($idCouponLink <= 0) {
+            $this->respondJson(['success' => false, 'error' => 'invalid_request']);
+        }
+
+        $link = (new CouponLinkRepository())->findById($idCouponLink);
+        if ($link === null) {
+            $this->respondJson(['success' => false, 'error' => 'not_found']);
+        }
+
+        $isAllShops = Shop::isFeatureActive() && Shop::getContext() == Shop::CONTEXT_ALL;
+        if (!$isAllShops && (int) $link['id_shop'] !== (int) $this->context->shop->id) {
+            $this->respondJson(['success' => false, 'error' => 'wrong_shop']);
+        }
+
+        // A reminder only makes sense while the coupon is still usable.
+        if (in_array((string) $link['status'], [
+            CouponLinkRepository::STATUS_USED,
+            CouponLinkRepository::STATUS_EXPIRED,
+            CouponLinkRepository::STATUS_CANCELED,
+        ], true)) {
+            $this->respondJson([
+                'success' => false,
+                'error' => 'not_remindable',
+                'message' => $this->trans('This coupon can no longer be used, so a reminder cannot be sent.', [], $domain),
+            ]);
+        }
+
+        $sent = $this->module->getReminderMailer()->sendReminder($idCouponLink, $reminderNumber, true);
+        if (!$sent) {
+            $this->respondJson([
+                'success' => false,
+                'error' => 'send_failed',
+                'message' => $this->trans('Could not send the reminder. Check the customer email address and your mail configuration.', [], $domain),
+            ]);
+        }
+
+        $this->respondJson([
+            'success' => true,
+            'message' => $this->trans('Reminder email sent.', [], $domain),
+        ]);
     }
 
     /**

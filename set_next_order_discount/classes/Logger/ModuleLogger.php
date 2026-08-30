@@ -115,6 +115,23 @@ class ModuleLogger
     }
 
     /**
+     * Deletes log entries older than the given number of days (0 = keep forever).
+     * Best-effort: a pruning failure never disrupts the caller.
+     *
+     * @param int $days
+     *
+     * @return void
+     */
+    public function pruneOlderThan($days)
+    {
+        try {
+            $this->repository->pruneOlderThan((int) $days);
+        } catch (Throwable $e) {
+            // Retention cleanup is best-effort.
+        }
+    }
+
+    /**
      * Persists a log entry when its level meets the configured threshold.
      *
      * @param string      $level

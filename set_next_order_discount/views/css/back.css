@@ -79,3 +79,75 @@
 .page-content .form-wrapper {
     overflow: visible;
 }
+
+/* ---------------------------------------------------------------------------
+ * Targeting badges (rules list) — colored pills, one per active condition.
+ * ------------------------------------------------------------------------- */
+.snod-targeting-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.snod-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 260px;
+    padding: 3px 9px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.snod-badge .material-icons {
+    font-size: 13px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.snod-badge-all {
+    color: #6c868e;
+    background: #f2f5f7;
+    border-color: #e0e6ea;
+}
+
+.snod-badge-include {
+    color: #1c7d96;
+    background: #e7f7fb;
+    border-color: #b9e6f0;
+}
+
+.snod-badge-exclude {
+    color: #9a5b00;
+    background: #fff3e0;
+    border-color: #ffe0b2;
+}
+
+.snod-badge-date {
+    color: #5b4a8a;
+    background: #efeafb;
+    border-color: #d8cdf2;
+}
+
+.snod-badge-success {
+    color: #2e7d32;
+    background: #e8f5e9;
+    border-color: #c8e6c9;
+}
+
+.snod-badge-danger {
+    color: #c62828;
+    background: #fdecea;
+    border-color: #f5c6cb;
+}
+
+/* Keep the row action buttons on one line (mirrors the points module table). */
+#snod-rules-table td .btn-group {
+    white-space: nowrap;
+}

@@ -12,7 +12,7 @@
  * @license   Commercial License
  *}
 
-<div class="panel">
+<div class="panel page-content">
     <h3><i class="icon icon-dashboard"></i> {l s='Coupon funnel' d='Modules.Setnextorderdiscount.Admin'}</h3>
     <div class="row">
         {foreach from=$snod_funnel item=step}
@@ -37,10 +37,10 @@
 
 <div class="panel">
     <h3><i class="icon icon-tasks"></i> {l s='Dispatch queue' d='Modules.Setnextorderdiscount.Admin'}</h3>
-    <ul class="list-inline">
-        <li><span class="label label-default">{l s='Pending' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.pending|intval}</span></li>
-        <li><span class="label label-info">{l s='Processing' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.processing|intval}</span></li>
-        <li><span class="label label-success">{l s='Done' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.done|intval}</span></li>
-        <li><span class="label label-danger">{l s='Failed' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.failed|intval}</span></li>
-    </ul>
+    <div class="snod-targeting-badges">
+        <span class="snod-badge snod-badge-all"><i class="material-icons">schedule</i>{l s='Pending' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.pending|intval}</span>
+        <span class="snod-badge snod-badge-include"><i class="material-icons">autorenew</i>{l s='Processing' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.processing|intval}</span>
+        <span class="snod-badge snod-badge-success"><i class="material-icons">check_circle</i>{l s='Done' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.done|intval}</span>
+        <span class="snod-badge snod-badge-danger"><i class="material-icons">error</i>{l s='Failed' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.failed|intval}</span>
+    </div>
 </div>

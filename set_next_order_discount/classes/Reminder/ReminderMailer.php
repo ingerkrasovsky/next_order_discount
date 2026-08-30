@@ -80,13 +80,16 @@ class ReminderMailer
     /**
      * Sends the reminder for one coupon link.
      *
-     * @param int $idCouponLink   ps_snod_coupon_link primary key
-     * @param int $reminderNumber 1 for the first reminder, 2 for the second
+     * @param int  $idCouponLink   ps_snod_coupon_link primary key
+     * @param int  $reminderNumber 1 for the first reminder, 2 for the second
+     * @param bool $force          when true, resend even if this stage was already
+     *                             recorded (manual back-office send). The coupon
+     *                             must still be usable and not expired.
      *
      * @return bool true when sent (or nothing needed to be sent), false on a
      *              missing/invalid record or a mail delivery failure
      */
-    public function sendReminder($idCouponLink, $reminderNumber)
+    public function sendReminder($idCouponLink, $reminderNumber, $force = false)
     {
         $reminderNumber = ((int) $reminderNumber === 2) ? 2 : 1;
 
@@ -95,7 +98,7 @@ class ReminderMailer
             return false;
         }
 
-        if (!$this->isRemindable($link, $reminderNumber)) {
+        if (!$this->isRemindable($link, $reminderNumber, $force)) {
             // Coupon no longer usable or this reminder already recorded: nothing
             // to send, so the task is considered handled.
             return true;
@@ -261,7 +264,7 @@ class ReminderMailer
      *
      * @return bool
      */
-    private function isRemindable(array $link, $reminderNumber)
+    private function isRemindable(array $link, $reminderNumber, $force = false)
     {
         $status = isset($link['status']) ? (string) $link['status'] : '';
         if (in_array($status, [
@@ -274,6 +277,11 @@ class ReminderMailer
 
         if (!$this->isStillValid($link)) {
             return false;
+        }
+
+        // A manual (forced) send ignores whether this stage was already recorded.
+        if ($force) {
+            return true;
         }
 
         $column = $reminderNumber === 2 ? 'second_reminder_at' : 'first_reminder_at';

@@ -15,6 +15,7 @@
 
 namespace Setecom\NextOrderDiscount\Cron;
 
+use Configuration;
 use Setecom\NextOrderDiscount\Coupon\CouponLifecycleManager;
 use Setecom\NextOrderDiscount\Logger\ModuleLogger;
 use Setecom\NextOrderDiscount\Queue\QueueWorker;
@@ -39,6 +40,18 @@ class CronRouter
     public const TASK_PROCESS_QUEUE = 'process_queue';
     public const TASK_PLAN_REMINDERS = 'plan_reminders';
     public const TASK_EXPIRE_COUPONS = 'expire_coupons';
+
+    /**
+     * Meta task that runs every real task in sequence, so a single cron entry can
+     * drive the whole module.
+     */
+    public const TASK_ALL = 'all';
+
+    /**
+     * Prefix of the Configuration key that stores each task's last successful run
+     * timestamp (used by the Cron/Tools health check).
+     */
+    public const LASTRUN_PREFIX = 'SNOD_CRON_LASTRUN_';
 
     /**
      * Lock lifetime for a task run, in seconds.
@@ -103,6 +116,18 @@ class CronRouter
     }
 
     /**
+     * The Configuration key holding a task's last successful run timestamp.
+     *
+     * @param string $task
+     *
+     * @return string
+     */
+    public static function lastRunKeyFor($task)
+    {
+        return self::LASTRUN_PREFIX . (string) $task;
+    }
+
+    /**
      * Runs one named task under its lock.
      *
      * @param string $task   one of the TASK_* constants
@@ -118,6 +143,11 @@ class CronRouter
     {
         $task = (string) $task;
         $idShop = (int) $idShop;
+
+        if ($task === self::TASK_ALL) {
+            return $this->runAll($idShop);
+        }
+
         $correlationId = $this->buildCorrelationId($task);
 
         if (!in_array($task, self::availableTasks(), true)) {
@@ -135,6 +165,7 @@ class CronRouter
 
         try {
             $result = $this->dispatch($task, $idShop);
+            $this->recordLastRun($task);
             $this->log(ModuleLogger::LEVEL_INFO, 'Cron task completed', ['task' => $task, 'result' => $result], $correlationId);
 
             return ['success' => true, 'task' => $task, 'result' => $result];
@@ -144,6 +175,47 @@ class CronRouter
             return ['success' => false, 'error' => 'exception', 'task' => $task];
         } finally {
             $this->lockManager->release($lockName);
+        }
+    }
+
+    /**
+     * Runs every real task in sequence (the `all` meta task). Each sub-task keeps
+     * its own lock and last-run bookkeeping. A locked sub-task is not treated as a
+     * failure (another run holds it); only an actual error makes the batch fail.
+     *
+     * @param int $idShop
+     *
+     * @return array ['success' => bool, 'task' => 'all', 'results' => [task => result]]
+     */
+    private function runAll($idShop)
+    {
+        $results = [];
+        $success = true;
+        foreach (self::availableTasks() as $task) {
+            $result = $this->run($task, $idShop);
+            $results[$task] = $result;
+            if (empty($result['success']) && empty($result['locked'])) {
+                $success = false;
+            }
+        }
+
+        return ['success' => $success, 'task' => self::TASK_ALL, 'results' => $results];
+    }
+
+    /**
+     * Records a task's last successful run timestamp for the health check.
+     * Best-effort: a bookkeeping failure must never affect the task outcome.
+     *
+     * @param string $task
+     *
+     * @return void
+     */
+    private function recordLastRun($task)
+    {
+        try {
+            Configuration::updateValue(self::lastRunKeyFor($task), date('Y-m-d H:i:s'));
+        } catch (Throwable $e) {
+            // Ignored on purpose: see method docblock.
         }
     }
 
@@ -190,9 +262,31 @@ class CronRouter
             case self::TASK_PLAN_REMINDERS:
                 return $this->reminderPlanner->plan(ReminderPlanner::DEFAULT_BATCH_SIZE, $idShop);
             case self::TASK_EXPIRE_COUPONS:
-                return $this->lifecycleManager->expireDueCoupons(CouponLifecycleManager::DEFAULT_BATCH_SIZE, $idShop);
+                $summary = $this->lifecycleManager->expireDueCoupons(CouponLifecycleManager::DEFAULT_BATCH_SIZE, $idShop);
+                // Piggyback log retention on the daily maintenance task.
+                $this->pruneLogs();
+
+                return $summary;
         }
 
         return [];
+    }
+
+    /**
+     * Deletes log entries older than the configured retention window
+     * (SNOD_LOG_RETENTION_DAYS; 0 = keep forever). Best-effort.
+     *
+     * @return void
+     */
+    private function pruneLogs()
+    {
+        if ($this->logger === null) {
+            return;
+        }
+
+        $days = (int) Configuration::get('SNOD_LOG_RETENTION_DAYS');
+        if ($days > 0) {
+            $this->logger->pruneOlderThan($days);
+        }
     }
 }

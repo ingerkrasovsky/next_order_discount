@@ -34,8 +34,11 @@ if (!defined('SNOD_AUTOLOAD_REGISTERED')) {
 }
 
 use Setecom\NextOrderDiscount\Coupon\CartRuleAdapter;
+use Setecom\NextOrderDiscount\Coupon\CouponCancellationService;
 use Setecom\NextOrderDiscount\Coupon\CouponGenerationService;
 use Setecom\NextOrderDiscount\Coupon\CouponLifecycleManager;
+use Setecom\NextOrderDiscount\Coupon\CouponRedemptionService;
+use Setecom\NextOrderDiscount\Cron\CronInstaller;
 use Setecom\NextOrderDiscount\Cron\CronRouter;
 use Setecom\NextOrderDiscount\Cron\CronSecurityService;
 use Setecom\NextOrderDiscount\Cron\LockManager;
@@ -50,7 +53,6 @@ use Setecom\NextOrderDiscount\Queue\ReminderEmailHandler;
 use Setecom\NextOrderDiscount\Reminder\ReminderCandidateRepository;
 use Setecom\NextOrderDiscount\Reminder\ReminderMailer;
 use Setecom\NextOrderDiscount\Reminder\ReminderPlanner;
-use Setecom\NextOrderDiscount\Reminder\ReminderPolicy;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
 use Setecom\NextOrderDiscount\Repository\CronLockRepository;
 use Setecom\NextOrderDiscount\Repository\DispatchQueueRepository;
@@ -126,6 +128,14 @@ class set_next_order_discount extends Module
 
     public function uninstall()
     {
+        // Best-effort: drop the managed crontab entry so no stale cron line is
+        // left pointing at a removed module. Never blocks uninstall.
+        try {
+            $this->getCronInstaller()->remove();
+        } catch (Exception $e) {
+            // Ignored: uninstall must proceed regardless.
+        }
+
         $uninstallSqlResult = include dirname(__FILE__) . '/sql/uninstall.php';
         if (!$uninstallSqlResult) {
             return false;
@@ -172,6 +182,9 @@ class set_next_order_discount extends Module
             ? $params['orderStatus']
             : null;
 
+        // Record redemption first: an order that applied one of our coupons has,
+        // at this point, its order_cart_rule rows written.
+        $this->processOrderForRedemption($params['order']);
         $this->processOrderForCoupon($params['order'], $orderState);
     }
 
@@ -200,6 +213,18 @@ class set_next_order_discount extends Module
             ? $params['newOrderStatus']
             : null;
 
+        // A reversed source order (canceled/refunded) voids the reward it issued:
+        // cancel its coupon and issue nothing new for it.
+        if ($this->isCancellationState($orderState, $order)) {
+            $this->processOrderCancellation($order, $orderState);
+
+            return;
+        }
+
+        // Safety net for orders whose vouchers were attached after validation
+        // (e.g. edited in the back office): redemption is idempotent, so a coupon
+        // already marked used here is skipped.
+        $this->processOrderForRedemption($order);
         $this->processOrderForCoupon($order, $orderState);
     }
 
@@ -228,7 +253,146 @@ class set_next_order_discount extends Module
                 $this->buildOrderContext($order, $orderState)
             );
         } catch (Exception $e) {
-            // A coupon must never break checkout or order status updates.
+            // A coupon must never break checkout or order status updates. Still
+            // record the failure so a silently-swallowed error is diagnosable.
+            $this->logHookException('generation', $order, $e);
+        }
+    }
+
+    /**
+     * Shared entry point for coupon redemption. When an order applies one of our
+     * coupons, mark the corresponding link as used. Wrapped so redemption can
+     * never disrupt order processing.
+     *
+     * @param Order $order
+     *
+     * @return void
+     */
+    private function processOrderForRedemption(Order $order)
+    {
+        try {
+            if (!Validate::isLoadedObject($order)) {
+                return;
+            }
+
+            if (!$this->isModuleEnabledForShop((int) $order->id_shop)) {
+                return;
+            }
+
+            $cartRuleIds = $this->getOrderCartRuleIds($order);
+            if (empty($cartRuleIds)) {
+                return;
+            }
+
+            $this->getCouponRedemptionService()->markCartRulesUsed($cartRuleIds, (int) $order->id);
+        } catch (Exception $e) {
+            // Redemption must never break checkout or order status updates.
+            $this->logHookException('redemption', $order, $e);
+        }
+    }
+
+    /**
+     * Shared entry point for coupon cancellation. When a source order is reversed
+     * (canceled/refunded), void the coupon(s) it issued. Wrapped so cancellation
+     * can never disrupt order status updates.
+     *
+     * @param Order           $order
+     * @param OrderState|null $orderState
+     *
+     * @return void
+     */
+    private function processOrderCancellation(Order $order, $orderState)
+    {
+        try {
+            if (!Validate::isLoadedObject($order)) {
+                return;
+            }
+
+            if (!$this->isModuleEnabledForShop((int) $order->id_shop)) {
+                return;
+            }
+
+            $idOrderState = ($orderState instanceof OrderState && Validate::isLoadedObject($orderState))
+                ? (int) $orderState->id
+                : (int) $order->current_state;
+
+            $this->getCouponCancellationService()->cancelForOrderSource(
+                (int) $order->id,
+                $idOrderState,
+                (int) $order->id_shop
+            );
+        } catch (Exception $e) {
+            // Cancellation must never break order status updates.
+            $this->logHookException('cancellation', $order, $e);
+        }
+    }
+
+    /**
+     * Whether the given order state voids any reward the order issued. The set of
+     * "cancelling" states is a merchant setting (SNOD_CANCEL_STATUSES), defaulting
+     * to the store's Canceled and Refunded states.
+     *
+     * @param OrderState|null $orderState
+     * @param Order           $order
+     *
+     * @return bool
+     */
+    private function isCancellationState($orderState, Order $order)
+    {
+        $idOrderState = ($orderState instanceof OrderState && Validate::isLoadedObject($orderState))
+            ? (int) $orderState->id
+            : (int) $order->current_state;
+        if ($idOrderState <= 0) {
+            return false;
+        }
+
+        return in_array($idOrderState, $this->getCancellationStateIds(), true);
+    }
+
+    /**
+     * Cart rule ids applied to the order (the vouchers used at checkout).
+     *
+     * @param Order $order
+     *
+     * @return array id_cart_rule values
+     */
+    private function getOrderCartRuleIds(Order $order)
+    {
+        $ids = [];
+        foreach ($order->getCartRules() as $row) {
+            if (isset($row['id_cart_rule']) && (int) $row['id_cart_rule'] > 0) {
+                $ids[] = (int) $row['id_cart_rule'];
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Best-effort structured log of an otherwise-swallowed hook exception, so a
+     * generation or redemption failure never disappears without a trace.
+     *
+     * @param string    $stage 'generation' or 'redemption'
+     * @param Order     $order
+     * @param Exception $e
+     *
+     * @return void
+     */
+    private function logHookException($stage, Order $order, Exception $e)
+    {
+        try {
+            $this->getModuleLogger()->error(
+                'Coupon ' . $stage . ' failed',
+                [
+                    'id_order' => (int) $order->id,
+                    'id_shop' => (int) $order->id_shop,
+                    'exception' => $e->getMessage(),
+                ],
+                'order:' . (int) $order->id,
+                'coupon'
+            );
+        } catch (Exception $ignored) {
+            // Logging is strictly best-effort.
         }
     }
 
@@ -424,6 +588,69 @@ class set_next_order_discount extends Module
             new CartRuleAdapter(),
             new CouponLinkRepository(),
             new QueueService(new DispatchQueueRepository()),
+            $this->getModuleLogger(),
+            new CouponMailer(
+                new CouponLinkRepository(),
+                new MailTemplateResolver(),
+                new RuleEmailRepository()
+            )
+        );
+    }
+
+    /**
+     * Factory for the coupon mailer. Public so the admin controller can trigger
+     * a manual resend of a coupon email.
+     *
+     * @return CouponMailer
+     */
+    public function getCouponMailer()
+    {
+        return new CouponMailer(
+            new CouponLinkRepository(),
+            new MailTemplateResolver(),
+            new RuleEmailRepository()
+        );
+    }
+
+    /**
+     * Factory for the reminder mailer. Public so the admin controller can trigger
+     * a manual send of a reminder email.
+     *
+     * @return ReminderMailer
+     */
+    public function getReminderMailer()
+    {
+        return new ReminderMailer(
+            new CouponLinkRepository(),
+            new RuleEmailRepository()
+        );
+    }
+
+    /**
+     * Factory for the coupon redemption service (marks issued coupons as used
+     * when they are applied to a new order).
+     *
+     * @return CouponRedemptionService
+     */
+    private function getCouponRedemptionService()
+    {
+        return new CouponRedemptionService(
+            new CouponLinkRepository(),
+            $this->getModuleLogger()
+        );
+    }
+
+    /**
+     * Factory for the coupon cancellation service (voids coupons issued for a
+     * source order that was later canceled or refunded).
+     *
+     * @return CouponCancellationService
+     */
+    private function getCouponCancellationService()
+    {
+        return new CouponCancellationService(
+            new CouponLinkRepository(),
+            new CartRuleAdapter(),
             $this->getModuleLogger()
         );
     }
@@ -480,15 +707,31 @@ class set_next_order_discount extends Module
     }
 
     /**
-     * Structured module logger, with the minimum level taken from configuration.
+     * Factory for the best-effort crontab installer. Public so the admin
+     * controller can probe capabilities and install/remove the cron entry.
+     *
+     * @return CronInstaller
+     */
+    public function getCronInstaller()
+    {
+        return new CronInstaller($this->getModuleLogger());
+    }
+
+    /**
+     * Structured module logger. Debug mode lowers the minimum level to DEBUG
+     * (verbose); otherwise the level comes from SNOD_LOG_LEVEL (default INFO).
      *
      * @return ModuleLogger
      */
     public function getModuleLogger()
     {
-        $level = (string) Configuration::get('SNOD_LOG_LEVEL');
-        if ($level === '') {
-            $level = ModuleLogger::LEVEL_INFO;
+        if ((int) Configuration::get('SNOD_DEBUG_MODE') === 1) {
+            $level = ModuleLogger::LEVEL_DEBUG;
+        } else {
+            $level = (string) Configuration::get('SNOD_LOG_LEVEL');
+            if ($level === '') {
+                $level = ModuleLogger::LEVEL_INFO;
+            }
         }
 
         return new ModuleLogger(new LogRepository(), $level);
@@ -524,8 +767,7 @@ class set_next_order_discount extends Module
 
         $planner = new ReminderPlanner(
             new ReminderCandidateRepository(),
-            $queueService,
-            ReminderPolicy::fromConfiguration($this->getCurrentShopId())
+            $queueService
         );
 
         $lifecycleManager = new CouponLifecycleManager($couponLinkRepository, new CartRuleAdapter());
@@ -562,12 +804,48 @@ class set_next_order_discount extends Module
         return [
             'SNOD_ENABLED' => 0,
             'SNOD_DEBUG_MODE' => 0,
-            'SNOD_CODE_PREFIX' => 'NOD',
-            'SNOD_CODE_LENGTH' => 12,
-            'SNOD_CODE_MASK' => '',
             'SNOD_CRON_TOKEN' => $this->generateCronToken(),
             'SNOD_LOG_LEVEL' => ModuleLogger::LEVEL_INFO,
+            'SNOD_LOG_RETENTION_DAYS' => 30,
+            'SNOD_CANCEL_STATUSES' => $this->getDefaultCancelStatusesCsv(),
         ];
+    }
+
+    /**
+     * Default set of order states that void an issued coupon, as a CSV of state
+     * ids: the store's Canceled and Refunded states. The merchant can extend or
+     * change this in the module settings.
+     *
+     * @return string
+     */
+    private function getDefaultCancelStatusesCsv()
+    {
+        $ids = array_filter([
+            (int) Configuration::get('PS_OS_CANCELED'),
+            (int) Configuration::get('PS_OS_REFUND'),
+        ]);
+
+        return implode(',', $ids);
+    }
+
+    /**
+     * The configured order-state ids that void an issued coupon. Reads the
+     * merchant setting; when the setting was never saved it falls back to the
+     * defaults, but an explicitly-empty setting means "never cancel".
+     *
+     * @return array int[] state ids
+     */
+    private function getCancellationStateIds()
+    {
+        $raw = Configuration::get('SNOD_CANCEL_STATUSES');
+        if ($raw === false) {
+            // Never configured (e.g. legacy install): use the defaults.
+            $raw = $this->getDefaultCancelStatusesCsv();
+        }
+
+        $ids = array_filter(array_map('intval', array_filter(explode(',', (string) $raw), 'strlen')));
+
+        return array_values(array_unique($ids));
     }
 
     /**
@@ -593,9 +871,15 @@ class set_next_order_discount extends Module
      */
     private function getAllConfigurationKeys()
     {
+        $lastRunKeys = [];
+        foreach (CronRouter::availableTasks() as $task) {
+            $lastRunKeys[] = CronRouter::lastRunKeyFor($task);
+        }
+
         return array_merge(
             array_keys($this->getDefaultConfigurationValues()),
-            ['SNOD_DISCOUNT_TYPE', 'SNOD_DISCOUNT_VALUE', 'SNOD_VALIDITY_DAYS', 'SNOD_MIN_ORDER_AMOUNT', 'SNOD_TARGET_STATUSES']
+            ['SNOD_DISCOUNT_TYPE', 'SNOD_DISCOUNT_VALUE', 'SNOD_VALIDITY_DAYS', 'SNOD_MIN_ORDER_AMOUNT', 'SNOD_TARGET_STATUSES', 'SNOD_CODE_PREFIX', 'SNOD_CODE_LENGTH', 'SNOD_CODE_MASK'],
+            $lastRunKeys
         );
     }
 

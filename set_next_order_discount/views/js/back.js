@@ -245,8 +245,135 @@
         });
     }
 
+    function initCouponResend() {
+        var root = document.getElementById('snod-coupons');
+        if (!root) {
+            return;
+        }
+
+        var ajaxUrl = root.getAttribute('data-ajax-url');
+
+        function bind(button, buildUrl) {
+            button.addEventListener('click', function () {
+                var cell = button.closest('td');
+                var result = cell ? cell.querySelector('.snod-resend-result') : null;
+                var originalHtml = button.innerHTML;
+
+                button.disabled = true;
+                button.innerHTML = '…';
+                if (result) {
+                    result.innerHTML = '';
+                }
+
+                fetch(buildUrl(button), {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(function (response) {
+                        return response.json().catch(function () { return null; });
+                    })
+                    .then(function (res) {
+                        if (result) {
+                            if (res && res.success) {
+                                result.innerHTML = '<span class="text-success">✔ ' + escapeHtml(res.message || 'sent') + '</span>';
+                            } else {
+                                var msg = (res && (res.message || res.error)) ? (res.message || res.error) : 'failed';
+                                result.innerHTML = '<span class="text-danger">✘ ' + escapeHtml(msg) + '</span>';
+                            }
+                        }
+                    })
+                    .catch(function () {
+                        if (result) {
+                            result.innerHTML = '<span class="text-danger">✘ error</span>';
+                        }
+                    })
+                    .then(function () {
+                        button.disabled = false;
+                        button.innerHTML = originalHtml;
+                    });
+            });
+        }
+
+        Array.prototype.forEach.call(root.querySelectorAll('.snod-resend-coupon'), function (button) {
+            bind(button, function (b) {
+                return ajaxUrl + '&ajax=1&action=resendCouponEmail&id_coupon_link=' + encodeURIComponent(b.getAttribute('data-id'));
+            });
+        });
+
+        Array.prototype.forEach.call(root.querySelectorAll('.snod-send-reminder'), function (button) {
+            bind(button, function (b) {
+                return ajaxUrl + '&ajax=1&action=sendReminderEmail&id_coupon_link=' + encodeURIComponent(b.getAttribute('data-id')) +
+                    '&reminder=' + encodeURIComponent(b.getAttribute('data-reminder'));
+            });
+        });
+    }
+
+    function initCronInstall() {
+        var root = document.getElementById('snod-cron-tools');
+        var box = document.getElementById('snod-cron-install-box');
+        if (!root || !box) {
+            return;
+        }
+
+        var ajaxUrl = root.getAttribute('data-ajax-url');
+        var result = box.querySelector('.snod-cron-install-result');
+
+        function run(action, button) {
+            var originalHtml = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '…';
+            if (result) {
+                result.innerHTML = '';
+            }
+
+            fetch(ajaxUrl + '&ajax=1&action=' + action, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(function (response) {
+                    return response.json().catch(function () { return null; });
+                })
+                .then(function (res) {
+                    if (res && res.success) {
+                        if (result) {
+                            result.innerHTML = '<span class="text-success">✔ ' + escapeHtml(res.message || 'done') + '</span>';
+                        }
+                        // Reload so the panel reflects the new installed state.
+                        setTimeout(function () { window.location.reload(); }, 700);
+                        return;
+                    }
+                    var msg = (res && (res.message || res.error)) ? (res.message || res.error) : 'failed';
+                    if (result) {
+                        result.innerHTML = '<span class="text-danger">✘ ' + escapeHtml(msg) + '</span>';
+                    }
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                })
+                .catch(function () {
+                    if (result) {
+                        result.innerHTML = '<span class="text-danger">✘ error</span>';
+                    }
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                });
+        }
+
+        var installBtn = box.querySelector('.snod-cron-install');
+        if (installBtn) {
+            installBtn.addEventListener('click', function () { run('installCron', installBtn); });
+        }
+        var removeBtn = box.querySelector('.snod-cron-remove');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function () { run('removeCron', removeBtn); });
+        }
+    }
+
     ready(initCronTools);
     ready(initRuleEmailTabs);
     ready(initPreviewModal);
     ready(initRuleEmailActions);
+    ready(initCouponResend);
+    ready(initCronInstall);
 })();

@@ -17,6 +17,7 @@ namespace Setecom\NextOrderDiscount\Coupon;
 use Configuration;
 use Exception;
 use Setecom\NextOrderDiscount\Logger\ModuleLogger;
+use Setecom\NextOrderDiscount\Mail\CouponMailer;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
 use Setecom\NextOrderDiscount\Rule\RuleMatcher;
 use Setecom\NextOrderDiscount\Queue\QueueService;
@@ -49,6 +50,7 @@ class CouponGenerationService
     private $couponLinkRepository;
     private $queueService;
     private $logger;
+    private $couponMailer;
 
     /**
      * @param RuleMatcher          $ruleMatcher
@@ -56,19 +58,25 @@ class CouponGenerationService
      * @param CouponLinkRepository $couponLinkRepository
      * @param QueueService         $queueService
      * @param ModuleLogger|null    $logger               optional structured logger
+     * @param CouponMailer|null    $couponMailer         optional mailer for immediate
+     *                                                   delivery; when set the coupon
+     *                                                   email is sent right away and the
+     *                                                   queue is only a retry fallback
      */
     public function __construct(
         RuleMatcher $ruleMatcher,
         CartRuleAdapter $cartRuleAdapter,
         CouponLinkRepository $couponLinkRepository,
         QueueService $queueService,
-        ModuleLogger $logger = null
+        ModuleLogger $logger = null,
+        CouponMailer $couponMailer = null
     ) {
         $this->ruleMatcher = $ruleMatcher;
         $this->cartRuleAdapter = $cartRuleAdapter;
         $this->couponLinkRepository = $couponLinkRepository;
         $this->queueService = $queueService;
         $this->logger = $logger;
+        $this->couponMailer = $couponMailer;
     }
 
     /**
@@ -150,9 +158,9 @@ class CouponGenerationService
 
         try {
             $generator = new CouponCodeGenerator($idShop, [
-                'prefix' => isset($rule['code_prefix']) ? (string) $rule['code_prefix'] : '',
                 'length' => isset($rule['code_length']) ? (int) $rule['code_length'] : 0,
-                'mask' => isset($rule['code_mask']) ? (string) $rule['code_mask'] : '',
+                'type' => isset($rule['code_type']) ? (int) $rule['code_type'] : 0,
+                'template' => isset($rule['code_template']) ? (string) $rule['code_template'] : '',
             ]);
             $code = $generator->generate();
             if ($code === '') {
@@ -163,12 +171,18 @@ class CouponGenerationService
             $validTo = date('Y-m-d H:i:s', strtotime('+' . $this->validityDays($rule) . ' days'));
             $idCurrency = $this->resolveCurrency($context);
 
+            // Voucher name: the rule's own value overrides the localized default.
+            $voucherName = (isset($rule['voucher_name']) && trim((string) $rule['voucher_name']) !== '')
+                ? (string) $rule['voucher_name']
+                : (isset($context['voucher_name']) ? (string) $context['voucher_name'] : '');
+
             $idCartRule = $this->cartRuleAdapter->create([
                 'code' => $code,
                 'id_customer' => $idCustomer,
                 'id_shop' => $idShop,
                 'id_currency' => $idCurrency,
-                'name' => isset($context['voucher_name']) ? (string) $context['voucher_name'] : '',
+                'name' => $voucherName,
+                'description' => isset($rule['voucher_description']) ? (string) $rule['voucher_description'] : '',
                 'discount_type' => (string) $rule['discount_type'],
                 'discount_value' => $rule['discount_value'],
                 'minimum_amount' => $rule['next_order_min_amount'],
@@ -213,8 +227,8 @@ class CouponGenerationService
                 ]);
             }
 
-            // Hand off the email to the queue so the hook returns immediately.
-            $this->enqueueCouponEmail($idLink, $idShop, $idCustomer, $code);
+            // Deliver the coupon email immediately (queue is the retry fallback).
+            $this->dispatchCouponEmail($idLink, $idShop, $idCustomer, $code);
 
             return [
                 'success' => true,
@@ -272,10 +286,10 @@ class CouponGenerationService
      */
     private function existingResult($idRule, array $existing)
     {
-        // Self-heal: if a prior run issued the coupon but failed to queue its
-        // email, enqueue it now. Deduplication by correlation id keeps this a
-        // no-op once the email task exists.
-        $this->enqueueCouponEmail(
+        // Self-heal: if a prior run issued the coupon but never delivered its
+        // email, deliver it now (immediate send, or re-queue). The mailer is
+        // idempotent, so an already-emailed coupon is left untouched.
+        $this->dispatchCouponEmail(
             (int) $existing['id_snod_coupon_link'],
             isset($existing['id_shop']) ? (int) $existing['id_shop'] : 0,
             isset($existing['id_customer']) ? (int) $existing['id_customer'] : 0,
@@ -293,9 +307,15 @@ class CouponGenerationService
     }
 
     /**
-     * Best-effort enqueue of the coupon email task. Queuing must never roll back
-     * or fail an already-issued coupon, so any error here is swallowed; the
-     * coupon still exists and can be re-detected on a later pass.
+     * Delivers the coupon email. When a mailer is wired the email is sent
+     * immediately so the customer receives the coupon right after checkout; the
+     * queue is used only as a retry fallback when that immediate send fails
+     * (e.g. a transient SMTP error). Without a mailer it falls back to the queue
+     * entirely (cron delivery).
+     *
+     * Delivery is strictly best-effort: it must never roll back or fail an
+     * already-issued coupon, so any error is swallowed and the coupon can still
+     * be re-detected and emailed on a later pass.
      *
      * @param int    $idCouponLink
      * @param int    $idShop
@@ -304,9 +324,16 @@ class CouponGenerationService
      *
      * @return void
      */
-    private function enqueueCouponEmail($idCouponLink, $idShop, $idCustomer, $code)
+    private function dispatchCouponEmail($idCouponLink, $idShop, $idCustomer, $code)
     {
         try {
+            if ($this->couponMailer !== null && $this->couponMailer->sendForCouponLink((int) $idCouponLink)) {
+                // Sent (or already sent) — no cron round-trip needed.
+                return;
+            }
+
+            // No mailer, or the immediate send failed: hand off to the queue so a
+            // later cron pass retries delivery.
             $this->queueService->enqueueCouponEmail((int) $idCouponLink, (int) $idShop, [
                 'id_customer' => (int) $idCustomer,
                 'coupon_code' => (string) $code,

@@ -56,31 +56,17 @@
 
             <div class="form-group">
                 <label class="control-label col-lg-3">
-                    {l s='Code prefix' d='Modules.Setnextorderdiscount.Admin'}
+                    {l s='Cancel coupon on order statuses' d='Modules.Setnextorderdiscount.Admin'}
                 </label>
-                <div class="col-lg-3">
-                    <input type="text" name="snod_code_prefix" class="form-control" value="{$snod_code_prefix|escape:'html':'UTF-8'}" maxlength="20">
-                    <p class="help-block">{l s='Prefix before the random part (letters and digits). Leave empty for none.' d='Modules.Setnextorderdiscount.Admin'}</p>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Random part length' d='Modules.Setnextorderdiscount.Admin'}
-                </label>
-                <div class="col-lg-3">
-                    <input type="text" name="snod_code_length" class="form-control" value="{$snod_code_length|escape:'html':'UTF-8'}">
-                    <p class="help-block">{l s='Length of the random part (clamped between 4 and 32). Ignored when a mask is set.' d='Modules.Setnextorderdiscount.Admin'}</p>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="control-label col-lg-3">
-                    {l s='Code mask' d='Modules.Setnextorderdiscount.Admin'}
-                </label>
-                <div class="col-lg-3">
-                    <input type="text" name="snod_code_mask" class="form-control" value="{$snod_code_mask|escape:'html':'UTF-8'}" placeholder="NOD-####-####">
-                    <p class="help-block">{l s='Optional pattern where each "#" becomes a random character; other characters are kept. Overrides prefix and length.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                <div class="col-lg-5">
+                    <select name="snod_cancel_statuses[]" class="form-control" multiple size="8">
+                        {foreach from=$snod_order_states item=orderState}
+                            <option value="{$orderState.id_order_state|intval}" {if in_array($orderState.id_order_state, $snod_cancel_statuses)}selected{/if}>
+                                {$orderState.name|escape:'html':'UTF-8'}
+                            </option>
+                        {/foreach}
+                    </select>
+                    <p class="help-block">{l s='When the order that issued a coupon moves to one of these statuses, that coupon is voided (deactivated and marked canceled) and no new coupon is issued for it. Defaults to Canceled and Refunded. Leave empty to never auto-cancel. Hold Ctrl/Cmd to select several.' d='Modules.Setnextorderdiscount.Admin'}</p>
                 </div>
             </div>
 
@@ -99,6 +85,19 @@
                         <a class="slide-button btn"></a>
                     </span>
                     <p class="help-block">{l s='Enables verbose logging for troubleshooting. Keep disabled in production.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label col-lg-3">
+                    {l s='Keep logs for' d='Modules.Setnextorderdiscount.Admin'}
+                </label>
+                <div class="col-lg-2">
+                    <div class="input-group">
+                        <input type="number" name="snod_log_retention_days" class="form-control" min="0" max="3650" step="1" value="{$snod_log_retention_days|intval}">
+                        <span class="input-group-addon">{l s='days' d='Modules.Setnextorderdiscount.Admin'}</span>
+                    </div>
+                    <p class="help-block">{l s='Older log entries are deleted automatically (during cron). Set 0 to keep logs forever.' d='Modules.Setnextorderdiscount.Admin'}</p>
                 </div>
             </div>
 

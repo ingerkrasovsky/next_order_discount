@@ -15,6 +15,7 @@
 namespace Setecom\NextOrderDiscount\Rule;
 
 use Tools;
+use Setecom\NextOrderDiscount\Coupon\CouponCodeGenerator;
 use Setecom\NextOrderDiscount\Repository\RuleEmailRepository;
 use Setecom\NextOrderDiscount\Repository\RuleRepository;
 
@@ -123,6 +124,8 @@ class RuleFormHandler
     {
         $values = [
             'name' => '',
+            'voucher_name' => '',
+            'voucher_description' => '',
             'active' => 1,
             'stop_further' => 1,
             'discount_type' => RuleRepository::DISCOUNT_PERCENT,
@@ -135,10 +138,14 @@ class RuleFormHandler
             'date_to' => '',
             'customer_order_count_min' => '0',
             'customer_order_count_max' => '0',
+            'reminder_enabled' => 0,
+            'reminder_basis' => RuleRepository::REMINDER_BASIS_AFTER_EMAIL,
+            'reminder1_days' => '',
+            'reminder2_days' => '',
             'status_ids' => [],
-            'code_prefix' => '',
-            'code_length' => '',
-            'code_mask' => '',
+            'code_length' => (string) CouponCodeGenerator::DEFAULT_LENGTH,
+            'code_type' => (string) CouponCodeGenerator::DEFAULT_TYPE,
+            'code_template' => CouponCodeGenerator::DEFAULT_TEMPLATE,
         ];
 
         foreach (RuleConditionSchema::modeTypes() as $type) {
@@ -160,6 +167,8 @@ class RuleFormHandler
 
         $values = [
             'name' => (string) $rule['name'],
+            'voucher_name' => isset($rule['voucher_name']) ? (string) $rule['voucher_name'] : '',
+            'voucher_description' => isset($rule['voucher_description']) ? (string) $rule['voucher_description'] : '',
             'active' => (int) $rule['active'],
             'stop_further' => (int) $rule['stop_further'],
             'discount_type' => (string) $rule['discount_type'],
@@ -172,14 +181,28 @@ class RuleFormHandler
             'date_to' => RuleValueFormatter::dateColumnToInput($rule['date_to']),
             'customer_order_count_min' => (int) $rule['customer_order_count_min'],
             'customer_order_count_max' => (int) $rule['customer_order_count_max'],
+            'reminder_enabled' => (int) $rule['reminder_enabled'],
+            'reminder_basis' => (isset($rule['reminder_basis']) && (string) $rule['reminder_basis'] !== '')
+                ? (string) $rule['reminder_basis']
+                : RuleRepository::REMINDER_BASIS_AFTER_EMAIL,
+            'reminder1_days' => (isset($rule['reminder1_days']) && (int) $rule['reminder1_days'] > 0)
+                ? (string) (int) $rule['reminder1_days']
+                : '',
+            'reminder2_days' => (isset($rule['reminder2_days']) && (int) $rule['reminder2_days'] > 0)
+                ? (string) (int) $rule['reminder2_days']
+                : '',
             'status_ids' => isset($conditions[RuleConditionSchema::TYPE_STATUS])
                 ? $conditions[RuleConditionSchema::TYPE_STATUS]
                 : [],
-            'code_prefix' => isset($rule['code_prefix']) ? (string) $rule['code_prefix'] : '',
             'code_length' => (isset($rule['code_length']) && (int) $rule['code_length'] > 0)
                 ? (string) (int) $rule['code_length']
-                : '',
-            'code_mask' => isset($rule['code_mask']) ? (string) $rule['code_mask'] : '',
+                : (string) CouponCodeGenerator::DEFAULT_LENGTH,
+            'code_type' => (isset($rule['code_type']) && (int) $rule['code_type'] > 0)
+                ? (string) (int) $rule['code_type']
+                : (string) CouponCodeGenerator::DEFAULT_TYPE,
+            'code_template' => (isset($rule['code_template']) && (string) $rule['code_template'] !== '')
+                ? (string) $rule['code_template']
+                : CouponCodeGenerator::DEFAULT_TEMPLATE,
         ];
 
         foreach (RuleConditionSchema::modeTypes() as $type) {
@@ -200,6 +223,8 @@ class RuleFormHandler
     {
         $values = [
             'name' => $this->str($input, 'name'),
+            'voucher_name' => $this->str($input, 'voucher_name'),
+            'voucher_description' => $this->str($input, 'voucher_description'),
             'active' => $this->str($input, 'active') === '1' ? 1 : 0,
             'stop_further' => $this->str($input, 'stop_further') === '1' ? 1 : 0,
             'discount_type' => $this->str($input, 'discount_type'),
@@ -212,10 +237,14 @@ class RuleFormHandler
             'date_to' => $this->str($input, 'date_to'),
             'customer_order_count_min' => $this->str($input, 'customer_order_count_min'),
             'customer_order_count_max' => $this->str($input, 'customer_order_count_max'),
+            'reminder_enabled' => $this->str($input, 'reminder_enabled') === '1' ? 1 : 0,
+            'reminder_basis' => $this->str($input, 'reminder_basis'),
+            'reminder1_days' => $this->str($input, 'reminder1_days'),
+            'reminder2_days' => $this->str($input, 'reminder2_days'),
             'status_ids' => $this->intList(isset($input['status_ids']) ? $input['status_ids'] : []),
-            'code_prefix' => $this->str($input, 'code_prefix'),
             'code_length' => $this->str($input, 'code_length'),
-            'code_mask' => $this->str($input, 'code_mask'),
+            'code_type' => $this->str($input, 'code_type'),
+            'code_template' => $this->str($input, 'code_template'),
         ];
 
         foreach (RuleConditionSchema::modeTypes() as $type) {
@@ -245,6 +274,10 @@ class RuleFormHandler
             $name = Tools::substr($name, 0, self::NAME_MAX_LENGTH);
         }
         $data['name'] = $name;
+
+        // Customer-facing voucher name/description (optional; empty = default).
+        $data['voucher_name'] = Tools::substr(trim($this->str($input, 'voucher_name')), 0, 255);
+        $data['voucher_description'] = Tools::substr(trim($this->str($input, 'voucher_description')), 0, 255);
 
         $type = $this->str($input, 'discount_type');
         if (!in_array($type, RuleRepository::discountTypes(), true)) {
@@ -290,6 +323,16 @@ class RuleFormHandler
         $data['customer_order_count_min'] = $countMin;
         $data['customer_order_count_max'] = $countMax;
 
+        // Per-rule reminders: whether to remind, and how many days after the
+        // coupon email each reminder goes out (0/empty = that reminder is off).
+        $data['reminder_enabled'] = $this->str($input, 'reminder_enabled') === '1' ? 1 : 0;
+        $basis = $this->str($input, 'reminder_basis');
+        $data['reminder_basis'] = in_array($basis, RuleRepository::reminderBases(), true)
+            ? $basis
+            : RuleRepository::REMINDER_BASIS_AFTER_EMAIL;
+        $data['reminder1_days'] = $this->nonNegativeInt($input, 'reminder1_days');
+        $data['reminder2_days'] = $this->nonNegativeInt($input, 'reminder2_days');
+
         $from = $this->date($input, 'date_from', false);
         $to = $this->date($input, 'date_to', true);
         if ($from !== null && $to !== null && $from > $to) {
@@ -301,12 +344,12 @@ class RuleFormHandler
         $data['active'] = $this->str($input, 'active') === '1' ? 1 : 0;
         $data['stop_further'] = $this->str($input, 'stop_further') === '1' ? 1 : 0;
 
-        // Per-rule coupon code overrides. Empty values mean "use the global
-        // default from Settings", so they are stored empty/zero and resolved at
+        // Per-rule coupon code settings. Empty/invalid values mean "use the
+        // built-in default", so they are stored empty/zero (NULL) and resolved at
         // generation time; the values are sanitized, never hard-rejected.
-        $data['code_prefix'] = $this->sanitizeCodePrefix($this->str($input, 'code_prefix'));
         $data['code_length'] = $this->codeLength($this->str($input, 'code_length'));
-        $data['code_mask'] = $this->sanitizeCodeMask($this->str($input, 'code_mask'));
+        $data['code_type'] = $this->sanitizeCodeType($this->str($input, 'code_type'));
+        $data['code_template'] = $this->sanitizeCodeTemplate($this->str($input, 'code_template'));
 
         // Mode columns for the list conditions that the submitted form manages
         // (a type absent from the input is left untouched, never reset).
@@ -447,31 +490,38 @@ class RuleFormHandler
     /**
      * @param string $raw
      *
-     * @return string sanitized prefix (A-Z0-9, <=20); '' means "use global"
+     * @return int key type (1=A-Z, 2=0-9, 3=A-Z+0-9), or 0 to use the default
      */
-    private function sanitizeCodePrefix($raw)
+    private function sanitizeCodeType($raw)
     {
-        $prefix = preg_replace('/[^A-Z0-9]/', '', Tools::strtoupper(trim((string) $raw)));
+        $type = (int) trim((string) $raw);
 
-        return is_string($prefix) ? Tools::substr($prefix, 0, 20) : '';
+        return in_array($type, [
+            CouponCodeGenerator::TYPE_ALPHA,
+            CouponCodeGenerator::TYPE_NUMERIC,
+            CouponCodeGenerator::TYPE_ALPHANUMERIC,
+        ], true) ? $type : 0;
     }
 
     /**
      * @param string $raw
      *
-     * @return string sanitized mask (A-Z0-9#_-, <=64); '' means "use global"
+     * @return string sanitized template (keeps "%key%", <=64); '' means "use default"
      */
-    private function sanitizeCodeMask($raw)
+    private function sanitizeCodeTemplate($raw)
     {
-        $mask = preg_replace('/[^A-Z0-9#_\-]/', '', Tools::strtoupper(trim((string) $raw)));
+        $raw = trim((string) $raw);
+        if ($raw === '') {
+            return '';
+        }
 
-        return is_string($mask) ? Tools::substr($mask, 0, 64) : '';
+        return Tools::substr(CouponCodeGenerator::sanitizeTemplate($raw), 0, 64);
     }
 
     /**
      * @param string $raw
      *
-     * @return int random-part length, or 0 to use the global default
+     * @return int key length, or 0 to use the default
      */
     private function codeLength($raw)
     {

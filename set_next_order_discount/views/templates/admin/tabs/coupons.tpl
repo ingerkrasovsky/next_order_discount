@@ -12,7 +12,7 @@
  * @license   Commercial License
  *}
 
-<div class="panel">
+<div class="panel page-content" id="snod-coupons" data-ajax-url="{$AdminLink|escape:'html':'UTF-8'}">
     <div class="panel-heading">
         <i class="icon-ticket"></i>
         {l s='Coupons' d='Modules.Setnextorderdiscount.Admin'}
@@ -61,6 +61,7 @@
                     <th>{l s='Status' d='Modules.Setnextorderdiscount.Admin'}</th>
                     <th>{l s='Valid until' d='Modules.Setnextorderdiscount.Admin'}</th>
                     <th>{l s='Generated' d='Modules.Setnextorderdiscount.Admin'}</th>
+                    <th class="text-right">{l s='Actions' d='Modules.Setnextorderdiscount.Admin'}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -89,17 +90,56 @@
                             {assign var=statusCode value=$coupon.status}
                             {assign var=statusLabel value=$snod_coupon_status_labels[$statusCode]|default:$statusCode}
                             {if $statusCode == 'used'}
-                                <span class="label label-success">{$statusLabel|escape:'html':'UTF-8'}</span>
+                                <span class="snod-badge snod-badge-success"><i class="material-icons">check_circle</i>{$statusLabel|escape:'html':'UTF-8'}</span>
                             {elseif $statusCode == 'expired' || $statusCode == 'canceled'}
-                                <span class="label label-danger">{$statusLabel|escape:'html':'UTF-8'}</span>
+                                <span class="snod-badge snod-badge-danger"><i class="material-icons">block</i>{$statusLabel|escape:'html':'UTF-8'}</span>
                             {elseif $statusCode == 'emailed' || $statusCode == 'reminded'}
-                                <span class="label label-info">{$statusLabel|escape:'html':'UTF-8'}</span>
+                                <span class="snod-badge snod-badge-include"><i class="material-icons">mail</i>{$statusLabel|escape:'html':'UTF-8'}</span>
                             {else}
-                                <span class="label label-default">{$statusLabel|escape:'html':'UTF-8'}</span>
+                                <span class="snod-badge snod-badge-all"><i class="material-icons">schedule</i>{$statusLabel|escape:'html':'UTF-8'}</span>
+                            {/if}
+                            {if $coupon.first_reminder_at || $coupon.second_reminder_at}
+                                {if $coupon.first_reminder_at}
+                                    <span class="snod-badge snod-badge-date" title="{l s='Reminder 1 sent' d='Modules.Setnextorderdiscount.Admin'}: {$coupon.first_reminder_at|escape:'html':'UTF-8'}"><i class="material-icons">notifications</i>1</span>
+                                {/if}
+                                {if $coupon.second_reminder_at}
+                                    <span class="snod-badge snod-badge-date" title="{l s='Reminder 2 sent' d='Modules.Setnextorderdiscount.Admin'}: {$coupon.second_reminder_at|escape:'html':'UTF-8'}"><i class="material-icons">notifications</i>2</span>
+                                {/if}
                             {/if}
                         </td>
                         <td>{if $coupon.valid_to}{$coupon.valid_to|escape:'html':'UTF-8'}{else}<span class="text-muted">&mdash;</span>{/if}</td>
                         <td>{if $coupon.generated_at}{$coupon.generated_at|escape:'html':'UTF-8'}{else}<span class="text-muted">&mdash;</span>{/if}</td>
+                        <td class="text-right" style="white-space:nowrap;">
+                            {if $coupon.status != 'used' && $coupon.status != 'expired' && $coupon.status != 'canceled'}
+                                <div class="btn-group" role="group">
+                                    <button type="button"
+                                            class="btn btn-default btn-sm snod-resend-coupon"
+                                            data-id="{$coupon.id_snod_coupon_link|intval}"
+                                            title="{l s='Send the coupon email to the customer again' d='Modules.Setnextorderdiscount.Admin'}">
+                                        <i class="material-icons">mail</i> {l s='Resend' d='Modules.Setnextorderdiscount.Admin'}
+                                    </button>
+                                    {if $coupon.rule_reminder_enabled && $coupon.rule_reminder1_days > 0}
+                                        <button type="button"
+                                                class="btn btn-default btn-sm snod-send-reminder"
+                                                data-id="{$coupon.id_snod_coupon_link|intval}" data-reminder="1"
+                                                title="{l s='Send reminder 1 to the customer now' d='Modules.Setnextorderdiscount.Admin'}">
+                                            <i class="material-icons">notifications</i> 1
+                                        </button>
+                                    {/if}
+                                    {if $coupon.rule_reminder_enabled && $coupon.rule_reminder2_days > 0}
+                                        <button type="button"
+                                                class="btn btn-default btn-sm snod-send-reminder"
+                                                data-id="{$coupon.id_snod_coupon_link|intval}" data-reminder="2"
+                                                title="{l s='Send reminder 2 to the customer now' d='Modules.Setnextorderdiscount.Admin'}">
+                                            <i class="material-icons">notifications</i> 2
+                                        </button>
+                                    {/if}
+                                </div>
+                                <span class="snod-resend-result" style="margin-left:6px;"></span>
+                            {else}
+                                <span class="text-muted">&mdash;</span>
+                            {/if}
+                        </td>
                     </tr>
                 {/foreach}
                 </tbody>
