@@ -84,7 +84,7 @@
                 <div class="form-group">
                     <label class="control-label col-lg-3">{l s='Discount type' d='Modules.Setnextorderdiscount.Admin'}</label>
                     <div class="col-lg-3">
-                        <select name="snod_rule_discount_type" class="form-control">
+                        <select name="snod_rule_discount_type" class="form-control" id="snod-discount-type" data-currency-sign="{$snod_currency_sign|escape:'html':'UTF-8'}">
                             <option value="percent" {if $snod_rule_form.discount_type == 'percent'}selected{/if}>{l s='Percentage (%)' d='Modules.Setnextorderdiscount.Admin'}</option>
                             <option value="amount" {if $snod_rule_form.discount_type == 'amount'}selected{/if}>{l s='Fixed amount' d='Modules.Setnextorderdiscount.Admin'}</option>
                             <option value="free_shipping" {if $snod_rule_form.discount_type == 'free_shipping'}selected{/if}>{l s='Free shipping' d='Modules.Setnextorderdiscount.Admin'}</option>
@@ -92,12 +92,12 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="snod-discount-value-group">
                     <label class="control-label col-lg-3">{l s='Discount value' d='Modules.Setnextorderdiscount.Admin'}</label>
                     <div class="col-lg-3">
                         <div class="input-group">
                             <input type="text" name="snod_rule_discount_value" class="form-control" value="{$snod_rule_form.discount_value|escape:'html':'UTF-8'}">
-                            <span class="input-group-addon">{if $snod_rule_form.discount_type == 'amount' && $snod_currency_sign != ''}{$snod_currency_sign|escape:'html':'UTF-8'}{else}%{/if}</span>
+                            <span class="input-group-addon" id="snod-discount-value-addon">{if $snod_rule_form.discount_type == 'amount' && $snod_currency_sign != ''}{$snod_currency_sign|escape:'html':'UTF-8'}{else}%{/if}</span>
                         </div>
                         <p class="help-block">{l s='Ignored for free shipping. Percentage is capped at 100.' d='Modules.Setnextorderdiscount.Admin'}</p>
                     </div>
@@ -204,17 +204,19 @@
                     <div class="form-group">
                         <label class="control-label col-lg-3">{$cond.label|escape:'html':'UTF-8'}</label>
                         <div class="col-lg-5">
-                            <select name="snod_rule_{$cond.type|escape:'html':'UTF-8'}_mode" class="form-control" style="margin-bottom:6px;">
+                            <select name="snod_rule_{$cond.type|escape:'html':'UTF-8'}_mode" class="form-control snod-cond-mode" style="margin-bottom:6px;">
                                 <option value="all" {if $cond.mode == 'all'}selected{/if}>{l s='All (no restriction)' d='Modules.Setnextorderdiscount.Admin'}</option>
                                 <option value="include" {if $cond.mode == 'include'}selected{/if}>{l s='Only the selected' d='Modules.Setnextorderdiscount.Admin'}</option>
                                 <option value="exclude" {if $cond.mode == 'exclude'}selected{/if}>{l s='All except the selected' d='Modules.Setnextorderdiscount.Admin'}</option>
                             </select>
-                            <select name="snod_rule_{$cond.type|escape:'html':'UTF-8'}_ids[]" class="form-control" multiple size="6">
-                                {foreach from=$cond.list item=entity}
-                                    <option value="{$entity.id|intval}" {if in_array($entity.id, $cond.ids)}selected{/if}>{$entity.name|escape:'html':'UTF-8'}</option>
-                                {/foreach}
-                            </select>
-                            <p class="help-block">{l s='Restrict this rule by the selected items. "All" ignores the list.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                            <div class="snod-cond-list-wrap">
+                                <select name="snod_rule_{$cond.type|escape:'html':'UTF-8'}_ids[]" class="form-control" multiple size="6">
+                                    {foreach from=$cond.list item=entity}
+                                        <option value="{$entity.id|intval}" {if in_array($entity.id, $cond.ids)}selected{/if}>{$entity.name|escape:'html':'UTF-8'}</option>
+                                    {/foreach}
+                                </select>
+                                <p class="help-block">{l s='Restrict this rule by the selected items. "All" ignores the list.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                            </div>
                         </div>
                     </div>
                 {/foreach}
@@ -323,7 +325,7 @@
             {* ===================== EMAIL ===================== *}
             <div class="tab-pane" id="snod-tab-email" data-ajax-url="{$AdminLink|escape:'html':'UTF-8'}">
                 <p class="text-muted" style="margin-bottom:15px;">
-                    {l s='Each rule has its own email content, pre-filled with the default template. Placeholders (coupon_code, coupon_value, valid_to, minimum_amount, customer_firstname, shop_name) are replaced when the email is sent.' d='Modules.Setnextorderdiscount.Admin'}
+                    {l s='Each rule has its own email content, pre-filled with the default template. The placeholders listed under each field are replaced with real values when the email is sent.' d='Modules.Setnextorderdiscount.Admin'}
                 </p>
 
                 {foreach from=$snod_email_types item=etype}
@@ -347,6 +349,15 @@
                                     <div class="form-group">
                                         <label>{l s='HTML content' d='Modules.Setnextorderdiscount.Admin'}</label>
                                         <textarea name="snod_email[{$etype.type|escape:'html':'UTF-8'}][html][{$lang.id_lang|intval}]" class="form-control snod-email-html" rows="14" style="font-family:monospace;">{$snod_email_content[$etype.type][$lang.id_lang].html|escape:'html':'UTF-8'}</textarea>
+                                        <div class="help-block snod-ph-hint" style="margin-top:8px;">
+                                            <span class="text-muted">{l s='Available placeholders (click to insert):' d='Modules.Setnextorderdiscount.Admin'}</span>
+                                            <span class="snod-ph-chips">
+                                                {assign var=snod_placeholders value=['coupon_code', 'coupon_value', 'valid_to', 'minimum_amount', 'customer_firstname', 'customer_lastname', 'customer_fullname', 'customer_title', 'customer_email', 'shop_name', 'shop_logo']}
+                                                {foreach from=$snod_placeholders item=snod_ph}
+                                                    <a href="#" class="snod-ph-chip" data-ph="{ldelim}{$snod_ph}{rdelim}" title="{l s='Insert into the content above' d='Modules.Setnextorderdiscount.Admin'}"><code>{ldelim}{$snod_ph}{rdelim}</code></a>
+                                                {/foreach}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             {/foreach}

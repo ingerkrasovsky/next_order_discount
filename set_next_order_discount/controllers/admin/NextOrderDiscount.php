@@ -1286,6 +1286,10 @@ class NextOrderDiscountController extends ModuleAdminController
             '{valid_to}' => date($format, strtotime('+30 days')),
             '{shop_name}' => (string) Configuration::get('PS_SHOP_NAME', null, null, (int) $this->context->shop->id),
             '{customer_firstname}' => 'Alex',
+            '{customer_lastname}' => 'Morgan',
+            '{customer_fullname}' => 'Alex Morgan',
+            '{customer_title}' => 'Mr',
+            '{customer_email}' => 'alex.morgan@example.com',
             '{minimum_amount}' => '—',
         ];
     }

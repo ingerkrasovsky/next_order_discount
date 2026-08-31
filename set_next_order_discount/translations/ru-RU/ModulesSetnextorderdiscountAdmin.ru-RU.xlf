@@ -202,9 +202,17 @@
         <source>Done</source>
         <target>Готово</target>
       </trans-unit>
-      <trans-unit id="e37156eedf058580dc9606b742794ef401aae98b">
-        <source>Each rule has its own email content, pre-filled with the default template. Placeholders (coupon_code, coupon_value, valid_to, minimum_amount, customer_firstname, shop_name) are replaced when the email is sent.</source>
-        <target>У каждого правила своё письмо, предзаполненное дефолтным шаблоном. Плейсхолдеры (coupon_code, coupon_value, valid_to, minimum_amount, customer_firstname, shop_name) подставляются при отправке письма.</target>
+      <trans-unit id="5ac04cb36f089a954843df32f8348e3bee058239">
+        <source>Each rule has its own email content, pre-filled with the default template. The placeholders listed under each field are replaced with real values when the email is sent.</source>
+        <target>У каждого правила своё письмо, предзаполненное дефолтным шаблоном. Плейсхолдеры, перечисленные под каждым полем, подставляются реальными значениями при отправке письма.</target>
+      </trans-unit>
+      <trans-unit id="ad5cfd4c1823687be1a99015bcbb8a4705523b4e">
+        <source>Available placeholders (click to insert):</source>
+        <target>Доступные плейсхолдеры (нажмите, чтобы вставить):</target>
+      </trans-unit>
+      <trans-unit id="f5cf79da719b1508a3906905bcce693935677df8">
+        <source>Insert into the content above</source>
+        <target>Вставить в поле выше</target>
       </trans-unit>
       <trans-unit id="5301648dcf6b53cefc9ed52999aaa92d4603cae0">
         <source>Edit</source>

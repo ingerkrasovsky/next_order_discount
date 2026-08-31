@@ -370,8 +370,86 @@
         }
     }
 
+    function initRuleForm() {
+        // --- Discount type → Discount value visibility + addon sign ---
+        var discountType = document.getElementById('snod-discount-type');
+        var valueGroup = document.getElementById('snod-discount-value-group');
+        var valueAddon = document.getElementById('snod-discount-value-addon');
+
+        if (discountType && valueGroup) {
+            var currencySign = discountType.getAttribute('data-currency-sign') || '';
+
+            var syncDiscountValue = function () {
+                var type = discountType.value;
+                // Free shipping ignores the discount value entirely — hide the field.
+                valueGroup.style.display = (type === 'free_shipping') ? 'none' : '';
+                if (valueAddon) {
+                    valueAddon.textContent = (type === 'amount' && currencySign !== '') ? currencySign : '%';
+                }
+            };
+
+            discountType.addEventListener('change', syncDiscountValue);
+            syncDiscountValue();
+        }
+
+        // --- Condition mode → show the list only when not "All" ---
+        var modeSelects = document.querySelectorAll('.snod-cond-mode');
+        Array.prototype.forEach.call(modeSelects, function (modeSelect) {
+            var wrap = modeSelect.parentNode.querySelector('.snod-cond-list-wrap');
+            if (!wrap) {
+                return;
+            }
+            var syncMode = function () {
+                wrap.style.display = (modeSelect.value === 'all') ? 'none' : '';
+            };
+            modeSelect.addEventListener('change', syncMode);
+            syncMode();
+        });
+    }
+
+    function insertAtCursor(textarea, text) {
+        textarea.focus();
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        if (typeof start === 'number' && typeof end === 'number') {
+            var value = textarea.value;
+            textarea.value = value.slice(0, start) + text + value.slice(end);
+            var caret = start + text.length;
+            textarea.selectionStart = caret;
+            textarea.selectionEnd = caret;
+        } else {
+            textarea.value += text;
+        }
+    }
+
+    function initEmailPlaceholders() {
+        var chips = document.querySelectorAll('.snod-ph-chip');
+        if (!chips.length) {
+            return;
+        }
+
+        Array.prototype.forEach.call(chips, function (chip) {
+            chip.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                var placeholder = chip.getAttribute('data-ph');
+                if (!placeholder) {
+                    return;
+                }
+
+                var pane = chip.closest('.snod-email-lang');
+                var textarea = pane ? pane.querySelector('.snod-email-html') : null;
+                if (textarea) {
+                    insertAtCursor(textarea, placeholder);
+                }
+            });
+        });
+    }
+
     ready(initCronTools);
+    ready(initRuleForm);
     ready(initRuleEmailTabs);
+    ready(initEmailPlaceholders);
     ready(initPreviewModal);
     ready(initRuleEmailActions);
     ready(initCouponResend);

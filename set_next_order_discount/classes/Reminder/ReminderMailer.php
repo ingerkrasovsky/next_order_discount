@@ -428,8 +428,37 @@ class ReminderMailer
             '{coupon_value}' => $this->formatCouponValue($cartRule, $currency, $iso),
             '{valid_to}' => $this->formatDate(isset($link['valid_to']) ? $link['valid_to'] : null, $idLang),
             '{customer_firstname}' => \Tools::safeOutput((string) $customer->firstname),
+            '{customer_lastname}' => \Tools::safeOutput((string) $customer->lastname),
+            '{customer_fullname}' => \Tools::safeOutput(trim($customer->firstname . ' ' . $customer->lastname)),
+            '{customer_title}' => $this->resolveCustomerTitle($customer, $idLang),
+            '{customer_email}' => \Tools::safeOutput((string) $customer->email),
             '{minimum_amount}' => $this->formatMinimumAmount($cartRule, $currency),
         ];
+    }
+
+    /**
+     * Resolves the localized social title (e.g. "Mr", "Mrs") for the customer,
+     * returning an empty string when no gender is set. The value is escaped as a
+     * defense-in-depth measure before it reaches the raw HTML substitution.
+     *
+     * @param \Customer $customer
+     * @param int $idLang
+     *
+     * @return string
+     */
+    private function resolveCustomerTitle(\Customer $customer, $idLang)
+    {
+        $idGender = (int) $customer->id_gender;
+        if ($idGender <= 0) {
+            return '';
+        }
+
+        $gender = new \Gender($idGender, (int) $idLang);
+        if (!\Validate::isLoadedObject($gender)) {
+            return '';
+        }
+
+        return \Tools::safeOutput((string) $gender->name);
     }
 
     /**

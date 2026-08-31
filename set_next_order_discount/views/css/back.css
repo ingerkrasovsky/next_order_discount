@@ -151,3 +151,30 @@
 #snod-rules-table td .btn-group {
     white-space: nowrap;
 }
+
+/* Placeholder hint chips below the email HTML content field. */
+.snod-ph-hint .snod-ph-chips {
+    display: inline;
+}
+
+.snod-ph-chip {
+    display: inline-block;
+    margin: 3px 4px 0 0;
+    text-decoration: none;
+}
+
+.snod-ph-chip code {
+    color: #3d4d6a;
+    background: #eef1f7;
+    border: 1px solid #d6ddea;
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.snod-ph-chip:hover code,
+.snod-ph-chip:focus code {
+    background: #e0e6f2;
+    border-color: #b9c4da;
+}
