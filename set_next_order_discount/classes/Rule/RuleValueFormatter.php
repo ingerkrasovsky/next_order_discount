@@ -14,8 +14,6 @@
  */
 namespace Setecom\NextOrderDiscount\Rule;
 
-use Tools;
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -56,6 +54,6 @@ class RuleValueFormatter
             return '';
         }
 
-        return Tools::substr($value, 0, 10);
+        return \Tools::substr($value, 0, 10);
     }
 }

@@ -12,13 +12,10 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Queue;
 
-use InvalidArgumentException;
 use Setecom\NextOrderDiscount\Logger\ModuleLogger;
 use Setecom\NextOrderDiscount\Repository\DispatchQueueRepository;
-use Throwable;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -68,25 +65,23 @@ class QueueWorker
     private $logger;
 
     /**
-     * @param DispatchQueueRepository     $repository
-     * @param QueueRetryPolicy            $retryPolicy
-     * @param QueueTaskHandlerInterface[] $handlers    map of task_type => handler
-     * @param ModuleLogger|null           $logger      optional structured logger
+     * @param DispatchQueueRepository $repository
+     * @param QueueRetryPolicy $retryPolicy
+     * @param QueueTaskHandlerInterface[] $handlers map of task_type => handler
+     * @param ModuleLogger|null $logger optional structured logger
      *
-     * @throws InvalidArgumentException when a handler does not implement the
-     *                                  QueueTaskHandlerInterface contract
+     * @throws \InvalidArgumentException when a handler does not implement the
+     *                                   QueueTaskHandlerInterface contract
      */
     public function __construct(
         DispatchQueueRepository $repository,
         QueueRetryPolicy $retryPolicy,
         array $handlers = [],
-        ModuleLogger $logger = null
+        ?ModuleLogger $logger = null,
     ) {
         foreach ($handlers as $type => $handler) {
             if (!$handler instanceof QueueTaskHandlerInterface) {
-                throw new InvalidArgumentException(
-                    'Handler for task type "' . (string) $type . '" must implement QueueTaskHandlerInterface.'
-                );
+                throw new \InvalidArgumentException('Handler for task type "' . (string) $type . '" must implement QueueTaskHandlerInterface.');
             }
         }
 
@@ -100,7 +95,7 @@ class QueueWorker
      * Processes one batch of due tasks.
      *
      * @param int $batchSize maximum number of tasks to process
-     * @param int $idShop    optional shop filter (0 = any shop)
+     * @param int $idShop optional shop filter (0 = any shop)
      *
      * @return array summary counters: fetched, done, retried, failed, errors
      */
@@ -123,7 +118,7 @@ class QueueWorker
                 if (isset($summary[$outcome])) {
                     ++$summary[$outcome];
                 }
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 // A failure in the queue bookkeeping itself must never abort the
                 // remaining tasks in the batch.
                 ++$summary['errors'];
@@ -160,7 +155,7 @@ class QueueWorker
         $error = '';
         try {
             $succeeded = (bool) $this->handlers[$type]->handle($task);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $succeeded = false;
             $error = $e->getMessage();
         }
@@ -192,8 +187,8 @@ class QueueWorker
      *
      * @param string $level
      * @param string $message
-     * @param array  $task
-     * @param array  $extra additional context
+     * @param array $task
+     * @param array $extra additional context
      *
      * @return void
      */
@@ -216,8 +211,8 @@ class QueueWorker
      * Applies the retry policy to a failed task: reschedule with backoff while
      * attempts remain, otherwise move it to `failed` with its last error.
      *
-     * @param int    $id
-     * @param array  $task
+     * @param int $id
+     * @param array $task
      * @param string $error
      *
      * @return string 'retried' or 'failed'

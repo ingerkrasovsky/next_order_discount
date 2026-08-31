@@ -12,7 +12,6 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Reminder;
 
 use Setecom\NextOrderDiscount\Queue\QueueService;
@@ -46,11 +45,11 @@ class ReminderPlanner
 
     /**
      * @param ReminderCandidateRepository $candidateRepository
-     * @param QueueService                $queueService
+     * @param QueueService $queueService
      */
     public function __construct(
         ReminderCandidateRepository $candidateRepository,
-        QueueService $queueService
+        QueueService $queueService,
     ) {
         $this->candidateRepository = $candidateRepository;
         $this->queueService = $queueService;
@@ -60,7 +59,7 @@ class ReminderPlanner
      * Plans the reminders due right now.
      *
      * @param int $batchSize maximum coupons per reminder stage
-     * @param int $idShop    optional shop filter (0 = any shop)
+     * @param int $idShop optional shop filter (0 = any shop)
      *
      * @return array summary counters: first_planned, second_planned, skipped
      */
@@ -77,7 +76,7 @@ class ReminderPlanner
 
         $firstDue = $this->candidateRepository->findDueForFirstReminder(
             $batchSize,
-            $idShop
+            $idShop,
         );
         foreach ($firstDue as $coupon) {
             if ($this->enqueueReminder(QueueService::TASK_REMINDER_1, $coupon)) {
@@ -89,7 +88,7 @@ class ReminderPlanner
 
         $secondDue = $this->candidateRepository->findDueForSecondReminder(
             $batchSize,
-            $idShop
+            $idShop,
         );
         foreach ($secondDue as $coupon) {
             if ($this->enqueueReminder(QueueService::TASK_REMINDER_2, $coupon)) {
@@ -106,7 +105,7 @@ class ReminderPlanner
      * Enqueues one reminder task for a coupon, idempotently.
      *
      * @param string $taskType QueueService::TASK_REMINDER_1 or _2
-     * @param array  $coupon   a snod_coupon_link row
+     * @param array $coupon a snod_coupon_link row
      *
      * @return bool whether a task is now queued for this coupon/stage
      */
@@ -125,7 +124,7 @@ class ReminderPlanner
             $taskType,
             ['id_snod_coupon_link' => $idCouponLink],
             $idShop,
-            QueueService::correlationFor($taskType, $idCouponLink)
+            QueueService::correlationFor($taskType, $idCouponLink),
         );
 
         return $taskId > 0;

@@ -12,12 +12,9 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Logger;
 
-use Context;
 use Setecom\NextOrderDiscount\Repository\LogRepository;
-use Throwable;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -54,7 +51,7 @@ class ModuleLogger
 
     /**
      * @param LogRepository $repository
-     * @param string        $minLevel minimum level to persist (defaults to info)
+     * @param string $minLevel minimum level to persist (defaults to info)
      */
     public function __construct(LogRepository $repository, $minLevel = self::LEVEL_INFO)
     {
@@ -63,10 +60,10 @@ class ModuleLogger
     }
 
     /**
-     * @param string      $message
-     * @param array       $context
+     * @param string $message
+     * @param array $context
      * @param string|null $correlationId
-     * @param string      $channel
+     * @param string $channel
      *
      * @return void
      */
@@ -76,10 +73,10 @@ class ModuleLogger
     }
 
     /**
-     * @param string      $message
-     * @param array       $context
+     * @param string $message
+     * @param array $context
      * @param string|null $correlationId
-     * @param string      $channel
+     * @param string $channel
      *
      * @return void
      */
@@ -89,10 +86,10 @@ class ModuleLogger
     }
 
     /**
-     * @param string      $message
-     * @param array       $context
+     * @param string $message
+     * @param array $context
      * @param string|null $correlationId
-     * @param string      $channel
+     * @param string $channel
      *
      * @return void
      */
@@ -102,10 +99,10 @@ class ModuleLogger
     }
 
     /**
-     * @param string      $message
-     * @param array       $context
+     * @param string $message
+     * @param array $context
      * @param string|null $correlationId
-     * @param string      $channel
+     * @param string $channel
      *
      * @return void
      */
@@ -126,7 +123,7 @@ class ModuleLogger
     {
         try {
             $this->repository->pruneOlderThan((int) $days);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             // Retention cleanup is best-effort.
         }
     }
@@ -134,11 +131,11 @@ class ModuleLogger
     /**
      * Persists a log entry when its level meets the configured threshold.
      *
-     * @param string      $level
-     * @param string      $message
-     * @param array       $context
+     * @param string $level
+     * @param string $message
+     * @param array $context
      * @param string|null $correlationId
-     * @param string      $channel
+     * @param string $channel
      *
      * @return void
      */
@@ -157,14 +154,14 @@ class ModuleLogger
                 'context_json' => empty($context) ? null : $this->encodeContext($context),
                 'correlation_id' => ($correlationId === null || $correlationId === '') ? null : (string) $correlationId,
             ]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             // Logging must never break the operation it observes.
         }
     }
 
     /**
      * @param string $level
-     * @param int    $default
+     * @param int $default
      *
      * @return int
      */
@@ -180,12 +177,7 @@ class ModuleLogger
      */
     private function currentShopId()
     {
-        $context = Context::getContext();
-        if ($context !== null && isset($context->shop) && (int) $context->shop->id > 0) {
-            return (int) $context->shop->id;
-        }
-
-        return 0;
+        return max(0, (int) \Shop::getContextShopID(true));
     }
 
     /**

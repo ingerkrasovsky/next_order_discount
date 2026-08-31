@@ -14,7 +14,6 @@
  */
 namespace Setecom\NextOrderDiscount\Rule;
 
-use Tools;
 use Setecom\NextOrderDiscount\Coupon\CouponCodeGenerator;
 use Setecom\NextOrderDiscount\Repository\RuleEmailRepository;
 use Setecom\NextOrderDiscount\Repository\RuleRepository;
@@ -49,7 +48,7 @@ class RuleFormHandler
     private $emailRepository;
 
     /**
-     * @param RuleRepository      $repository
+     * @param RuleRepository $repository
      * @param RuleEmailRepository $emailRepository
      */
     public function __construct(RuleRepository $repository, RuleEmailRepository $emailRepository)
@@ -61,10 +60,10 @@ class RuleFormHandler
     /**
      * Validates and persists the form.
      *
-     * @param array $input       raw form values (see form value keys)
-     * @param int   $idShop
-     * @param int   $idRule      0 for a new rule
-     * @param int   $idShopGroup
+     * @param array $input raw form values (see form value keys)
+     * @param int $idShop
+     * @param int $idRule 0 for a new rule
+     * @param int $idShopGroup
      *
      * @return array 'errors' => string[] (codes), 'id_rule' => int
      */
@@ -101,7 +100,7 @@ class RuleFormHandler
         $this->repository->setConditions(
             $idRule,
             RuleConditionSchema::TYPE_STATUS,
-            $this->intList(isset($input['status_ids']) ? $input['status_ids'] : [])
+            $this->intList(isset($input['status_ids']) ? $input['status_ids'] : []),
         );
 
         // Persist the list conditions present in the input (all/include/exclude
@@ -271,13 +270,13 @@ class RuleFormHandler
         if ($name === '') {
             $errors[] = self::ERR_NAME_REQUIRED;
         } else {
-            $name = Tools::substr($name, 0, self::NAME_MAX_LENGTH);
+            $name = \Tools::substr($name, 0, self::NAME_MAX_LENGTH);
         }
         $data['name'] = $name;
 
         // Customer-facing voucher name/description (optional; empty = default).
-        $data['voucher_name'] = Tools::substr(trim($this->str($input, 'voucher_name')), 0, 255);
-        $data['voucher_description'] = Tools::substr(trim($this->str($input, 'voucher_description')), 0, 255);
+        $data['voucher_name'] = \Tools::substr(trim($this->str($input, 'voucher_name')), 0, 255);
+        $data['voucher_description'] = \Tools::substr(trim($this->str($input, 'voucher_description')), 0, 255);
 
         $type = $this->str($input, 'discount_type');
         if (!in_array($type, RuleRepository::discountTypes(), true)) {
@@ -359,7 +358,7 @@ class RuleFormHandler
                 continue;
             }
             $data[RuleConditionSchema::modeColumn($type)] = RuleConditionSchema::normalizeMode(
-                $this->str($input, $modeKey)
+                $this->str($input, $modeKey),
             );
         }
 
@@ -367,7 +366,7 @@ class RuleFormHandler
     }
 
     /**
-     * @param array  $input
+     * @param array $input
      * @param string $key
      *
      * @return string scalar value ('' for missing/array)
@@ -382,7 +381,7 @@ class RuleFormHandler
     }
 
     /**
-     * @param array  $input
+     * @param array $input
      * @param string $key
      *
      * @return float non-negative decimal (0 on empty/invalid)
@@ -398,7 +397,7 @@ class RuleFormHandler
     }
 
     /**
-     * @param array  $input
+     * @param array $input
      * @param string $key
      *
      * @return int non-negative integer (0 on empty/invalid)
@@ -427,9 +426,9 @@ class RuleFormHandler
     }
 
     /**
-     * @param array  $input
+     * @param array $input
      * @param string $key
-     * @param bool   $endOfDay
+     * @param bool $endOfDay
      *
      * @return string|null 'Y-m-d H:i:s' or null
      */
@@ -454,7 +453,7 @@ class RuleFormHandler
      * left untouched. Empty content is stored as-is; the mailer falls back to the
      * shipped default template when a language has no usable content.
      *
-     * @param int   $idRule
+     * @param int $idRule
      * @param array $input
      *
      * @return void
@@ -480,7 +479,7 @@ class RuleFormHandler
                 if ($idLang <= 0) {
                     continue;
                 }
-                $subject = isset($subjects[$idLang]) ? Tools::substr((string) $subjects[$idLang], 0, 255) : '';
+                $subject = isset($subjects[$idLang]) ? \Tools::substr((string) $subjects[$idLang], 0, 255) : '';
                 $html = isset($htmls[$idLang]) ? (string) $htmls[$idLang] : '';
                 $this->emailRepository->save($idRule, $type, $idLang, $subject, $html);
             }
@@ -515,7 +514,7 @@ class RuleFormHandler
             return '';
         }
 
-        return Tools::substr(CouponCodeGenerator::sanitizeTemplate($raw), 0, 64);
+        return \Tools::substr(CouponCodeGenerator::sanitizeTemplate($raw), 0, 64);
     }
 
     /**

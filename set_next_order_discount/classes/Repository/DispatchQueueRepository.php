@@ -14,8 +14,6 @@
  */
 namespace Setecom\NextOrderDiscount\Repository;
 
-use Db;
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -78,21 +76,21 @@ class DispatchQueueRepository
         if (!isset($row['attempts'])) {
             $row['attempts'] = 0;
         }
-        if (!isset($row['available_at']) || $row['available_at'] === null || $row['available_at'] === '') {
+        if (!isset($row['available_at']) || $row['available_at'] === '') {
             $row['available_at'] = $now;
         }
         $row['created_at'] = $now;
         $row['updated_at'] = $now;
 
-        if (!Db::getInstance()->insert(self::TABLE_NAME, $row, true)) {
+        if (!\Db::getInstance()->insert(self::TABLE_NAME, $row, true)) {
             return 0;
         }
 
-        return (int) Db::getInstance()->Insert_ID();
+        return (int) \Db::getInstance()->Insert_ID();
     }
 
     /**
-     * @param int   $id
+     * @param int $id
      * @param array $data associative array keyed by column name
      *
      * @return bool
@@ -111,12 +109,12 @@ class DispatchQueueRepository
 
         $row['updated_at'] = date('Y-m-d H:i:s');
 
-        return (bool) Db::getInstance()->update(
+        return (bool) \Db::getInstance()->update(
             self::TABLE_NAME,
             $row,
             self::PRIMARY_KEY . ' = ' . $id,
             0,
-            true
+            true,
         );
     }
 
@@ -124,8 +122,8 @@ class DispatchQueueRepository
      * Moves a task to a new status. Marks processed_at when done and stores an
      * optional error message.
      *
-     * @param int         $id
-     * @param string      $status
+     * @param int $id
+     * @param string $status
      * @param string|null $error
      *
      * @return bool
@@ -158,7 +156,7 @@ class DispatchQueueRepository
             return false;
         }
 
-        return (bool) Db::getInstance()->update(
+        return (bool) \Db::getInstance()->update(
             self::TABLE_NAME,
             [
                 'attempts' => ['type' => 'sql', 'value' => '`attempts` + 1'],
@@ -166,7 +164,7 @@ class DispatchQueueRepository
             ],
             self::PRIMARY_KEY . ' = ' . $id,
             0,
-            false
+            false,
         );
     }
 
@@ -182,9 +180,9 @@ class DispatchQueueRepository
             return null;
         }
 
-        $row = Db::getInstance()->getRow(
+        $row = \Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
-            . ' WHERE `' . self::PRIMARY_KEY . '` = ' . $id
+            . ' WHERE `' . self::PRIMARY_KEY . '` = ' . $id,
         );
 
         return is_array($row) && !empty($row) ? $row : null;
@@ -205,9 +203,9 @@ class DispatchQueueRepository
             return null;
         }
 
-        $row = Db::getInstance()->getRow(
+        $row = \Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
-            . ' WHERE `correlation_id` = "' . pSQL($correlationId) . '"'
+            . ' WHERE `correlation_id` = "' . pSQL($correlationId) . '"',
         );
 
         return is_array($row) && !empty($row) ? $row : null;
@@ -237,7 +235,7 @@ class DispatchQueueRepository
         $sql .= ' ORDER BY `available_at` ASC, `' . self::PRIMARY_KEY . '` ASC'
             . ' LIMIT ' . $limit;
 
-        $rows = Db::getInstance()->executeS($sql);
+        $rows = \Db::getInstance()->executeS($sql);
 
         return is_array($rows) ? $rows : [];
     }
@@ -254,9 +252,9 @@ class DispatchQueueRepository
             return false;
         }
 
-        return (bool) Db::getInstance()->delete(
+        return (bool) \Db::getInstance()->delete(
             self::TABLE_NAME,
-            self::PRIMARY_KEY . ' = ' . $id
+            self::PRIMARY_KEY . ' = ' . $id,
         );
     }
 
@@ -282,7 +280,7 @@ class DispatchQueueRepository
 
     /**
      * @param string $column
-     * @param mixed  $value
+     * @param mixed $value
      *
      * @return int|string|null
      */

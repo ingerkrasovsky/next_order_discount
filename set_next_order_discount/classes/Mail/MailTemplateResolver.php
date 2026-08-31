@@ -12,10 +12,8 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Mail;
 
-use Configuration;
 use Language;
 
 if (!defined('_PS_VERSION_')) {
@@ -146,13 +144,13 @@ class MailTemplateResolver
     {
         $candidates = [];
 
-        $customerIso = $idLang > 0 ? (string) Language::getIsoById($idLang) : '';
+        $customerIso = $idLang > 0 ? (string) \Language::getIsoById($idLang) : '';
         if ($customerIso !== '') {
             $candidates[] = $customerIso;
         }
 
-        $defaultLangId = (int) Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
-        $defaultIso = $defaultLangId > 0 ? (string) Language::getIsoById($defaultLangId) : '';
+        $defaultLangId = (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
+        $defaultIso = $defaultLangId > 0 ? (string) \Language::getIsoById($defaultLangId) : '';
         if ($defaultIso !== '') {
             $candidates[] = $defaultIso;
         }

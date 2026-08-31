@@ -12,10 +12,8 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Reminder;
 
-use Db;
 use Setecom\NextOrderDiscount\Repository\RuleRepository;
 
 if (!defined('_PS_VERSION_')) {
@@ -52,7 +50,7 @@ class ReminderCandidateRepository
     /**
      * Coupons due for their first reminder.
      *
-     * @param int $limit  maximum rows to return
+     * @param int $limit maximum rows to return
      * @param int $idShop optional shop filter (0 = any shop)
      *
      * @return array
@@ -63,14 +61,14 @@ class ReminderCandidateRepository
             'cl.`first_reminder_at` IS NULL',
             'reminder1_days',
             $limit,
-            $idShop
+            $idShop,
         );
     }
 
     /**
      * Coupons due for their second reminder (independent of the first).
      *
-     * @param int $limit  maximum rows to return
+     * @param int $limit maximum rows to return
      * @param int $idShop optional shop filter (0 = any shop)
      *
      * @return array
@@ -81,7 +79,7 @@ class ReminderCandidateRepository
             'cl.`second_reminder_at` IS NULL',
             'reminder2_days',
             $limit,
-            $idShop
+            $idShop,
         );
     }
 
@@ -89,9 +87,9 @@ class ReminderCandidateRepository
      * Runs the shared reminder-candidate query for one stage.
      *
      * @param string $stagePredicate SQL fragment gating the reminder stage
-     * @param string $daysColumn     the rule column holding this stage's offset
-     * @param int    $limit
-     * @param int    $idShop
+     * @param string $daysColumn the rule column holding this stage's offset
+     * @param int $limit
+     * @param int $idShop
      *
      * @return array
      */
@@ -127,7 +125,7 @@ class ReminderCandidateRepository
         $sql .= ' ORDER BY cl.`valid_to` ASC, cl.`' . self::PRIMARY_KEY . '` ASC'
             . ' LIMIT ' . $limit;
 
-        $rows = Db::getInstance()->executeS($sql);
+        $rows = \Db::getInstance()->executeS($sql);
 
         return is_array($rows) ? $rows : [];
     }

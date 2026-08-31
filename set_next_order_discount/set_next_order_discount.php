@@ -89,18 +89,18 @@ class set_next_order_discount extends Module
         $this->displayName = $this->trans(
             'Next Order Discount',
             [],
-            'Modules.Setnextorderdiscount.Admin'
+            'Modules.Setnextorderdiscount.Admin',
         );
         $this->description = $this->trans(
             'Automatically creates a personal discount coupon after a successful order and manages its full lifecycle.',
             [],
-            'Modules.Setnextorderdiscount.Admin'
+            'Modules.Setnextorderdiscount.Admin',
         );
 
         $this->confirmUninstall = $this->trans(
             'Are you sure you want to uninstall Next Order Discount?',
             [],
-            'Modules.Setnextorderdiscount.Admin'
+            'Modules.Setnextorderdiscount.Admin',
         );
     }
 
@@ -233,8 +233,8 @@ class set_next_order_discount extends Module
      * is disabled, then delegates to the generation service. Wrapped so a coupon
      * error can never disrupt order processing.
      *
-     * @param Order            $order
-     * @param OrderState|null  $orderState
+     * @param Order $order
+     * @param OrderState|null $orderState
      *
      * @return void
      */
@@ -250,7 +250,7 @@ class set_next_order_discount extends Module
             }
 
             $this->getCouponGenerationService()->generateForOrderContext(
-                $this->buildOrderContext($order, $orderState)
+                $this->buildOrderContext($order, $orderState),
             );
         } catch (Exception $e) {
             // A coupon must never break checkout or order status updates. Still
@@ -296,7 +296,7 @@ class set_next_order_discount extends Module
      * (canceled/refunded), void the coupon(s) it issued. Wrapped so cancellation
      * can never disrupt order status updates.
      *
-     * @param Order           $order
+     * @param Order $order
      * @param OrderState|null $orderState
      *
      * @return void
@@ -319,7 +319,7 @@ class set_next_order_discount extends Module
             $this->getCouponCancellationService()->cancelForOrderSource(
                 (int) $order->id,
                 $idOrderState,
-                (int) $order->id_shop
+                (int) $order->id_shop,
             );
         } catch (Exception $e) {
             // Cancellation must never break order status updates.
@@ -333,7 +333,7 @@ class set_next_order_discount extends Module
      * to the store's Canceled and Refunded states.
      *
      * @param OrderState|null $orderState
-     * @param Order           $order
+     * @param Order $order
      *
      * @return bool
      */
@@ -372,8 +372,8 @@ class set_next_order_discount extends Module
      * Best-effort structured log of an otherwise-swallowed hook exception, so a
      * generation or redemption failure never disappears without a trace.
      *
-     * @param string    $stage 'generation' or 'redemption'
-     * @param Order     $order
+     * @param string $stage 'generation' or 'redemption'
+     * @param Order $order
      * @param Exception $e
      *
      * @return void
@@ -389,7 +389,7 @@ class set_next_order_discount extends Module
                     'exception' => $e->getMessage(),
                 ],
                 'order:' . (int) $order->id,
-                'coupon'
+                'coupon',
             );
         } catch (Exception $ignored) {
             // Logging is strictly best-effort.
@@ -399,7 +399,7 @@ class set_next_order_discount extends Module
     /**
      * Builds the order context array consumed by the generation service.
      *
-     * @param Order           $order
+     * @param Order $order
      * @param OrderState|null $orderState
      *
      * @return array
@@ -516,7 +516,7 @@ class set_next_order_discount extends Module
 
         $rows = Db::getInstance()->executeS(
             'SELECT DISTINCT `id_category` FROM `' . _DB_PREFIX_ . 'category_product`'
-            . ' WHERE `id_product` IN (' . implode(',', array_map('intval', $productIds)) . ')'
+            . ' WHERE `id_product` IN (' . implode(',', array_map('intval', $productIds)) . ')',
         );
 
         return $this->columnAsInts($rows, 'id_category');
@@ -536,14 +536,14 @@ class set_next_order_discount extends Module
         $rows = Db::getInstance()->executeS(
             'SELECT DISTINCT `id_manufacturer` FROM `' . _DB_PREFIX_ . 'product`'
             . ' WHERE `id_manufacturer` > 0'
-            . ' AND `id_product` IN (' . implode(',', array_map('intval', $productIds)) . ')'
+            . ' AND `id_product` IN (' . implode(',', array_map('intval', $productIds)) . ')',
         );
 
         return $this->columnAsInts($rows, 'id_manufacturer');
     }
 
     /**
-     * @param mixed  $rows
+     * @param mixed $rows
      * @param string $column
      *
      * @return array
@@ -592,8 +592,8 @@ class set_next_order_discount extends Module
             new CouponMailer(
                 new CouponLinkRepository(),
                 new MailTemplateResolver(),
-                new RuleEmailRepository()
-            )
+                new RuleEmailRepository(),
+            ),
         );
     }
 
@@ -608,7 +608,7 @@ class set_next_order_discount extends Module
         return new CouponMailer(
             new CouponLinkRepository(),
             new MailTemplateResolver(),
-            new RuleEmailRepository()
+            new RuleEmailRepository(),
         );
     }
 
@@ -622,7 +622,7 @@ class set_next_order_discount extends Module
     {
         return new ReminderMailer(
             new CouponLinkRepository(),
-            new RuleEmailRepository()
+            new RuleEmailRepository(),
         );
     }
 
@@ -636,7 +636,7 @@ class set_next_order_discount extends Module
     {
         return new CouponRedemptionService(
             new CouponLinkRepository(),
-            $this->getModuleLogger()
+            $this->getModuleLogger(),
         );
     }
 
@@ -651,7 +651,7 @@ class set_next_order_discount extends Module
         return new CouponCancellationService(
             new CouponLinkRepository(),
             new CartRuleAdapter(),
-            $this->getModuleLogger()
+            $this->getModuleLogger(),
         );
     }
 
@@ -755,7 +755,7 @@ class set_next_order_discount extends Module
         $reminderHandler = new ReminderEmailHandler(new ReminderMailer($couponLinkRepository, $ruleEmailRepository));
         $handlers = [
             QueueService::TASK_COUPON_EMAIL => new CouponEmailHandler(
-                new CouponMailer($couponLinkRepository, new MailTemplateResolver(), $ruleEmailRepository)
+                new CouponMailer($couponLinkRepository, new MailTemplateResolver(), $ruleEmailRepository),
             ),
             QueueService::TASK_REMINDER_1 => $reminderHandler,
             QueueService::TASK_REMINDER_2 => $reminderHandler,
@@ -767,7 +767,7 @@ class set_next_order_discount extends Module
 
         $planner = new ReminderPlanner(
             new ReminderCandidateRepository(),
-            $queueService
+            $queueService,
         );
 
         $lifecycleManager = new CouponLifecycleManager($couponLinkRepository, new CartRuleAdapter());
@@ -777,20 +777,8 @@ class set_next_order_discount extends Module
             $worker,
             $planner,
             $lifecycleManager,
-            $logger
+            $logger,
         );
-    }
-
-    /**
-     * @return int|null the current shop id, or null when not in a single-shop context
-     */
-    private function getCurrentShopId()
-    {
-        if (isset($this->context->shop) && (int) $this->context->shop->id > 0) {
-            return (int) $this->context->shop->id;
-        }
-
-        return null;
     }
 
     /**
@@ -843,7 +831,9 @@ class set_next_order_discount extends Module
             $raw = $this->getDefaultCancelStatusesCsv();
         }
 
-        $ids = array_filter(array_map('intval', array_filter(explode(',', (string) $raw), 'strlen')));
+        $ids = array_filter(array_map('intval', array_filter(explode(',', (string) $raw), static function ($v) {
+            return $v !== '';
+        })));
 
         return array_values(array_unique($ids));
     }
@@ -879,7 +869,7 @@ class set_next_order_discount extends Module
         return array_merge(
             array_keys($this->getDefaultConfigurationValues()),
             ['SNOD_DISCOUNT_TYPE', 'SNOD_DISCOUNT_VALUE', 'SNOD_VALIDITY_DAYS', 'SNOD_MIN_ORDER_AMOUNT', 'SNOD_TARGET_STATUSES', 'SNOD_CODE_PREFIX', 'SNOD_CODE_LENGTH', 'SNOD_CODE_MASK'],
-            $lastRunKeys
+            $lastRunKeys,
         );
     }
 
@@ -930,7 +920,7 @@ class set_next_order_discount extends Module
     private function installTab()
     {
         $tabId = (int) Db::getInstance()->getValue(
-            'SELECT `id_tab` FROM `' . _DB_PREFIX_ . 'tab` WHERE `class_name` = \'NextOrderDiscount\''
+            'SELECT `id_tab` FROM `' . _DB_PREFIX_ . 'tab` WHERE `class_name` = \'NextOrderDiscount\'',
         );
         if (!$tabId) {
             $tabId = null;
@@ -943,7 +933,7 @@ class set_next_order_discount extends Module
             $tab->name[$lang['id_lang']] = $this->l('Next Order Discount');
         }
         $tab->id_parent = (int) Db::getInstance()->getValue(
-            'SELECT `id_tab` FROM `' . _DB_PREFIX_ . 'tab` WHERE `class_name` = \'AdminCatalog\''
+            'SELECT `id_tab` FROM `' . _DB_PREFIX_ . 'tab` WHERE `class_name` = \'AdminCatalog\'',
         );
         $tab->module = $this->name;
 
@@ -953,7 +943,7 @@ class set_next_order_discount extends Module
     private function uninstallTab()
     {
         $tabId = (int) Db::getInstance()->getValue(
-            'SELECT `id_tab` FROM `' . _DB_PREFIX_ . 'tab` WHERE `class_name` = \'NextOrderDiscount\''
+            'SELECT `id_tab` FROM `' . _DB_PREFIX_ . 'tab` WHERE `class_name` = \'NextOrderDiscount\'',
         );
         if (!$tabId) {
             return true;

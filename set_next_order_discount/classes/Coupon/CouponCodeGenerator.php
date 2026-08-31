@@ -15,7 +15,6 @@
 namespace Setecom\NextOrderDiscount\Coupon;
 
 use Db;
-use Exception;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -63,18 +62,15 @@ class CouponCodeGenerator
         self::TYPE_ALPHANUMERIC => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
     ];
 
-    private $idShop;
     private $overrides;
 
     /**
-     * @param int   $idShop    shop scope (kept for signature compatibility)
      * @param array $overrides per-rule settings: 'length' (int), 'type' (int),
      *                         'template' (string). Empty/invalid values fall back
      *                         to the DEFAULT_* constants.
      */
-    public function __construct($idShop = 0, array $overrides = [])
+    public function __construct(array $overrides = [])
     {
-        $this->idShop = (int) $idShop;
         $this->overrides = $overrides;
     }
 
@@ -130,24 +126,24 @@ class CouponCodeGenerator
 
         // Note: Db::getValue() delegates to getRow(), which already appends
         // "LIMIT 1", so no explicit LIMIT is added here (that would double it).
-        $existsInCartRules = (int) Db::getInstance()->getValue(
+        $existsInCartRules = (int) \Db::getInstance()->getValue(
             'SELECT `id_cart_rule` FROM `' . _DB_PREFIX_ . 'cart_rule`'
-            . ' WHERE `code` = "' . $escaped . '"'
+            . ' WHERE `code` = "' . $escaped . '"',
         );
         if ($existsInCartRules > 0) {
             return true;
         }
 
-        $existsInLinks = (int) Db::getInstance()->getValue(
+        $existsInLinks = (int) \Db::getInstance()->getValue(
             'SELECT `id_snod_coupon_link` FROM `' . _DB_PREFIX_ . 'snod_coupon_link`'
-            . ' WHERE `coupon_code` = "' . $escaped . '"'
+            . ' WHERE `coupon_code` = "' . $escaped . '"',
         );
 
         return $existsInLinks > 0;
     }
 
     /**
-     * @param int    $length
+     * @param int $length
      * @param string $alphabet
      *
      * @return string a random key of the given length over the alphabet
@@ -176,7 +172,7 @@ class CouponCodeGenerator
     {
         try {
             return random_int($min, $max);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return mt_rand($min, $max);
         }
     }

@@ -1,0 +1,22 @@
+# Prevent directory listing of the module files.
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+
+# Deny direct web access to the module's PHP files (they are only ever included
+# by PrestaShop, never requested directly).
+
+# Apache 2.2
+<IfModule !mod_authz_core.c>
+    <Files *.php>
+    order allow,deny
+    deny from all
+    </Files>
+</IfModule>
+
+# Apache 2.4
+<IfModule mod_authz_core.c>
+    <Files *.php>
+    Require all denied
+    </Files>
+</IfModule>

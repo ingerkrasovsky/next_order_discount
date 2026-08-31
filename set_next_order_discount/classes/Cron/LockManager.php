@@ -12,7 +12,6 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Cron;
 
 use Setecom\NextOrderDiscount\Repository\CronLockRepository;
@@ -43,7 +42,7 @@ class LockManager
 
     /**
      * @param CronLockRepository $repository
-     * @param string|null        $ownerToken explicit owner token (generated when null)
+     * @param string|null $ownerToken explicit owner token (generated when null)
      */
     public function __construct(CronLockRepository $repository, $ownerToken = null)
     {
@@ -57,7 +56,7 @@ class LockManager
      * Attempts to acquire the named lock for this manager's owner token.
      *
      * @param string $lockName
-     * @param int    $ttlSeconds
+     * @param int $ttlSeconds
      *
      * @return bool
      */

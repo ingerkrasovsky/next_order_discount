@@ -12,7 +12,6 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Repository;
 
 use Db;
@@ -70,19 +69,19 @@ class LogRepository
         }
         $row['created_at'] = date('Y-m-d H:i:s');
 
-        if (!Db::getInstance()->insert(self::TABLE_NAME, $row, true)) {
+        if (!\Db::getInstance()->insert(self::TABLE_NAME, $row, true)) {
             return 0;
         }
 
-        return (int) Db::getInstance()->Insert_ID();
+        return (int) \Db::getInstance()->Insert_ID();
     }
 
     /**
      * Returns the most recent entries matching the filters, newest first.
      *
      * @param array $filters supported: level, channel, correlation_id, id_shop
-     * @param int   $limit
-     * @param int   $offset
+     * @param int $limit
+     * @param int $offset
      *
      * @return array
      */
@@ -96,7 +95,7 @@ class LogRepository
             . ' ORDER BY `' . self::PRIMARY_KEY . '` DESC'
             . ' LIMIT ' . $offset . ', ' . $limit;
 
-        $rows = Db::getInstance()->executeS($sql);
+        $rows = \Db::getInstance()->executeS($sql);
 
         return is_array($rows) ? $rows : [];
     }
@@ -110,9 +109,9 @@ class LogRepository
      */
     public function countRecent(array $filters)
     {
-        return (int) Db::getInstance()->getValue(
+        return (int) \Db::getInstance()->getValue(
             'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
-            . ' WHERE ' . $this->buildWhere($filters)
+            . ' WHERE ' . $this->buildWhere($filters),
         );
     }
 
@@ -123,8 +122,8 @@ class LogRepository
      */
     public function clear()
     {
-        return (bool) Db::getInstance()->execute(
-            'DELETE FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
+        return (bool) \Db::getInstance()->execute(
+            'DELETE FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`',
         );
     }
 
@@ -143,9 +142,9 @@ class LogRepository
             return true;
         }
 
-        return (bool) Db::getInstance()->execute(
+        return (bool) \Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
-            . ' WHERE `created_at` < DATE_SUB(NOW(), INTERVAL ' . $days . ' DAY)'
+            . ' WHERE `created_at` < DATE_SUB(NOW(), INTERVAL ' . $days . ' DAY)',
         );
     }
 
@@ -196,7 +195,7 @@ class LogRepository
 
     /**
      * @param string $column
-     * @param mixed  $value
+     * @param mixed $value
      *
      * @return int|string|null
      */

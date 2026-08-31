@@ -12,7 +12,6 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Mail;
 
 use Language;
@@ -65,7 +64,7 @@ class DefaultEmailProvider
      * Default subject and HTML for one email type in one language.
      *
      * @param string $emailType
-     * @param int    $idLang
+     * @param int $idLang
      *
      * @return array ['subject' => string, 'html' => string]
      */
@@ -137,7 +136,7 @@ class DefaultEmailProvider
      */
     private function isoOf($idLang)
     {
-        $iso = $idLang > 0 ? (string) Language::getIsoById($idLang) : '';
+        $iso = $idLang > 0 ? (string) \Language::getIsoById($idLang) : '';
 
         return $iso !== '' ? $iso : self::FALLBACK_ISO;
     }

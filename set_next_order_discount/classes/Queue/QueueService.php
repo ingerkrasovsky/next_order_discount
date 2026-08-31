@@ -63,11 +63,11 @@ class QueueService
      * correlation id already exists (including a concurrent insert winning the
      * unique-index race), its id is returned instead of creating a duplicate.
      *
-     * @param string      $taskType     one of the TASK_* constants
-     * @param array       $payload      JSON-serializable task payload
-     * @param int         $idShop
+     * @param string $taskType one of the TASK_* constants
+     * @param array $payload JSON-serializable task payload
+     * @param int $idShop
      * @param string|null $correlationId deterministic key; auto-generated when null
-     * @param string|null $availableAt  'Y-m-d H:i:s' delay; defaults to now
+     * @param string|null $availableAt 'Y-m-d H:i:s' delay; defaults to now
      *
      * @return int the task id (existing or new), or 0 on rejection/failure
      */
@@ -117,9 +117,9 @@ class QueueService
      * The coupon link id keys the correlation, so repeated order hooks never
      * queue a second email for the same coupon.
      *
-     * @param int   $idCouponLink ps_snod_coupon_link primary key
-     * @param int   $idShop
-     * @param array $payload      extra fields (id_customer, coupon_code, ...)
+     * @param int $idCouponLink ps_snod_coupon_link primary key
+     * @param int $idShop
+     * @param array $payload extra fields (id_customer, coupon_code, ...)
      *
      * @return int
      */
@@ -136,7 +136,7 @@ class QueueService
             self::TASK_COUPON_EMAIL,
             $payload,
             $idShop,
-            self::correlationFor(self::TASK_COUPON_EMAIL, $idCouponLink)
+            self::correlationFor(self::TASK_COUPON_EMAIL, $idCouponLink),
         );
     }
 
@@ -174,7 +174,7 @@ class QueueService
     }
 
     /**
-     * @param int         $id
+     * @param int $id
      * @param string|null $error
      *
      * @return bool
@@ -193,7 +193,7 @@ class QueueService
      */
     public function decodePayload(array $task)
     {
-        if (!isset($task['payload_json']) || $task['payload_json'] === '' || $task['payload_json'] === null) {
+        if (!isset($task['payload_json']) || $task['payload_json'] === '') {
             return [];
         }
 
@@ -206,7 +206,7 @@ class QueueService
      * Builds the deterministic correlation id for a keyed task.
      *
      * @param string $taskType
-     * @param int    $key
+     * @param int $key
      *
      * @return string
      */

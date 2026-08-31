@@ -204,12 +204,12 @@
                     <div class="form-group">
                         <label class="control-label col-lg-3">{$cond.label|escape:'html':'UTF-8'}</label>
                         <div class="col-lg-5">
-                            <select name="snod_rule_{$cond.type}_mode" class="form-control" style="margin-bottom:6px;">
+                            <select name="snod_rule_{$cond.type|escape:'html':'UTF-8'}_mode" class="form-control" style="margin-bottom:6px;">
                                 <option value="all" {if $cond.mode == 'all'}selected{/if}>{l s='All (no restriction)' d='Modules.Setnextorderdiscount.Admin'}</option>
                                 <option value="include" {if $cond.mode == 'include'}selected{/if}>{l s='Only the selected' d='Modules.Setnextorderdiscount.Admin'}</option>
                                 <option value="exclude" {if $cond.mode == 'exclude'}selected{/if}>{l s='All except the selected' d='Modules.Setnextorderdiscount.Admin'}</option>
                             </select>
-                            <select name="snod_rule_{$cond.type}_ids[]" class="form-control" multiple size="6">
+                            <select name="snod_rule_{$cond.type|escape:'html':'UTF-8'}_ids[]" class="form-control" multiple size="6">
                                 {foreach from=$cond.list item=entity}
                                     <option value="{$entity.id|intval}" {if in_array($entity.id, $cond.ids)}selected{/if}>{$entity.name|escape:'html':'UTF-8'}</option>
                                 {/foreach}

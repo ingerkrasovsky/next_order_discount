@@ -91,9 +91,9 @@ class RuleMatcher
     }
 
     /**
-     * @param array  $rule
-     * @param array  $context
-     * @param array  $contextValues
+     * @param array $rule
+     * @param array $context
+     * @param array $contextValues
      * @param string $now
      *
      * @return bool
@@ -183,7 +183,7 @@ class RuleMatcher
     }
 
     /**
-     * @param array  $rule
+     * @param array $rule
      * @param string $now 'Y-m-d H:i:s'
      *
      * @return bool
@@ -258,7 +258,7 @@ class RuleMatcher
     }
 
     /**
-     * @param array  $rule
+     * @param array $rule
      * @param string $type
      *
      * @return array integer condition ids

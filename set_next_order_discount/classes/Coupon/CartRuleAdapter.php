@@ -15,12 +15,8 @@
 namespace Setecom\NextOrderDiscount\Coupon;
 
 use CartRule;
-use Configuration;
-use Db;
 use Language;
 use Shop;
-use Validate;
-use Exception;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -67,7 +63,7 @@ class CartRuleAdapter
 
         $idCurrency = isset($params['id_currency']) ? (int) $params['id_currency'] : 0;
         if ($idCurrency <= 0) {
-            $idCurrency = (int) Configuration::get('PS_CURRENCY_DEFAULT');
+            $idCurrency = (int) \Configuration::get('PS_CURRENCY_DEFAULT');
         }
 
         $name = isset($params['name']) ? trim((string) $params['name']) : '';
@@ -75,7 +71,7 @@ class CartRuleAdapter
             $name = $code;
         }
 
-        $cartRule = new CartRule();
+        $cartRule = new \CartRule();
         $cartRule->code = $code;
         $cartRule->id_customer = $idCustomer;
         $cartRule->name = $this->buildLocalizedName($name);
@@ -86,12 +82,12 @@ class CartRuleAdapter
         $cartRule->quantity = isset($params['quantity']) ? max(1, (int) $params['quantity']) : 1;
         $cartRule->quantity_per_user = isset($params['quantity_per_user']) ? max(1, (int) $params['quantity_per_user']) : 1;
         $cartRule->priority = 1;
-        $cartRule->partial_use = 1;
-        $cartRule->highlight = 1;
-        $cartRule->active = 1;
-        $cartRule->free_shipping = 0;
+        $cartRule->partial_use = true;
+        $cartRule->highlight = true;
+        $cartRule->active = true;
+        $cartRule->free_shipping = false;
         $cartRule->reduction_product = 0;
-        $cartRule->reduction_exclude_special = 0;
+        $cartRule->reduction_exclude_special = false;
 
         $this->applyReduction($cartRule, $params, $idCurrency);
         $this->applyMinimumAmount($cartRule, $params, $idCurrency);
@@ -105,7 +101,7 @@ class CartRuleAdapter
             if (!$cartRule->add()) {
                 return 0;
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return 0;
         }
 
@@ -131,28 +127,28 @@ class CartRuleAdapter
             return false;
         }
 
-        $cartRule = new CartRule($idCartRule);
-        if (!Validate::isLoadedObject($cartRule)) {
+        $cartRule = new \CartRule($idCartRule);
+        if (!\Validate::isLoadedObject($cartRule)) {
             return false;
         }
 
-        $cartRule->active = 0;
+        $cartRule->active = false;
 
         try {
             return (bool) $cartRule->update();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return false;
         }
     }
 
     /**
-     * @param CartRule $cartRule
-     * @param array    $params
-     * @param int      $idCurrency
+     * @param \CartRule $cartRule
+     * @param array $params
+     * @param int $idCurrency
      *
      * @return void
      */
-    private function applyReduction(CartRule $cartRule, array $params, $idCurrency)
+    private function applyReduction(\CartRule $cartRule, array $params, $idCurrency)
     {
         $type = isset($params['discount_type']) ? (string) $params['discount_type'] : 'percent';
         $value = isset($params['discount_value'])
@@ -161,18 +157,18 @@ class CartRuleAdapter
         $value = max(0.0, $value);
 
         if ($type === 'free_shipping') {
-            $cartRule->free_shipping = 1;
+            $cartRule->free_shipping = true;
             $cartRule->reduction_percent = 0;
             $cartRule->reduction_amount = 0;
             $cartRule->reduction_currency = 0;
-            $cartRule->reduction_tax = 0;
+            $cartRule->reduction_tax = false;
 
             return;
         }
 
         if ($type === 'amount') {
             $cartRule->reduction_amount = $value;
-            $cartRule->reduction_tax = isset($params['reduction_tax']) ? (int) (bool) $params['reduction_tax'] : 1;
+            $cartRule->reduction_tax = isset($params['reduction_tax']) ? (bool) $params['reduction_tax'] : true;
             $cartRule->reduction_currency = (int) $idCurrency;
             $cartRule->reduction_percent = 0;
 
@@ -182,17 +178,17 @@ class CartRuleAdapter
         $cartRule->reduction_percent = min(100.0, $value);
         $cartRule->reduction_amount = 0;
         $cartRule->reduction_currency = 0;
-        $cartRule->reduction_tax = 0;
+        $cartRule->reduction_tax = false;
     }
 
     /**
-     * @param CartRule $cartRule
-     * @param array    $params
-     * @param int      $idCurrency
+     * @param \CartRule $cartRule
+     * @param array $params
+     * @param int $idCurrency
      *
      * @return void
      */
-    private function applyMinimumAmount(CartRule $cartRule, array $params, $idCurrency)
+    private function applyMinimumAmount(\CartRule $cartRule, array $params, $idCurrency)
     {
         $minimum = isset($params['minimum_amount'])
             ? (float) str_replace(',', '.', (string) $params['minimum_amount'])
@@ -200,17 +196,17 @@ class CartRuleAdapter
 
         if ($minimum <= 0.0) {
             $cartRule->minimum_amount = 0;
-            $cartRule->minimum_amount_tax = 0;
+            $cartRule->minimum_amount_tax = false;
             $cartRule->minimum_amount_currency = 0;
-            $cartRule->minimum_amount_shipping = 0;
+            $cartRule->minimum_amount_shipping = false;
 
             return;
         }
 
         $cartRule->minimum_amount = $minimum;
-        $cartRule->minimum_amount_tax = isset($params['minimum_amount_tax']) ? (int) (bool) $params['minimum_amount_tax'] : 1;
+        $cartRule->minimum_amount_tax = isset($params['minimum_amount_tax']) ? (bool) $params['minimum_amount_tax'] : true;
         $cartRule->minimum_amount_currency = (int) $idCurrency;
-        $cartRule->minimum_amount_shipping = 0;
+        $cartRule->minimum_amount_shipping = false;
     }
 
     /**
@@ -223,7 +219,7 @@ class CartRuleAdapter
     private function buildLocalizedName($name)
     {
         $localized = [];
-        foreach (Language::getLanguages(false) as $language) {
+        foreach (\Language::getLanguages(false) as $language) {
             $localized[(int) $language['id_lang']] = $name;
         }
 
@@ -241,13 +237,13 @@ class CartRuleAdapter
      */
     private function ensureShopAssociation($idCartRule, $idShop)
     {
-        if (!Shop::isFeatureActive()) {
+        if (!\Shop::isFeatureActive()) {
             return;
         }
 
-        Db::getInstance()->execute(
+        \Db::getInstance()->execute(
             'INSERT IGNORE INTO `' . _DB_PREFIX_ . 'cart_rule_shop` (`id_cart_rule`, `id_shop`)'
-            . ' VALUES (' . (int) $idCartRule . ', ' . (int) $idShop . ')'
+            . ' VALUES (' . (int) $idCartRule . ', ' . (int) $idShop . ')',
         );
     }
 }

@@ -12,12 +12,9 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Coupon;
 
-use RuntimeException;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
-use Throwable;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -48,11 +45,11 @@ class CouponLifecycleManager
 
     /**
      * @param CouponLinkRepository $couponLinkRepository
-     * @param CartRuleAdapter      $cartRuleAdapter
+     * @param CartRuleAdapter $cartRuleAdapter
      */
     public function __construct(
         CouponLinkRepository $couponLinkRepository,
-        CartRuleAdapter $cartRuleAdapter
+        CartRuleAdapter $cartRuleAdapter,
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->cartRuleAdapter = $cartRuleAdapter;
@@ -62,7 +59,7 @@ class CouponLifecycleManager
      * Expires every coupon whose validity has lapsed.
      *
      * @param int $batchSize maximum coupons to expire in this sweep
-     * @param int $idShop    optional shop filter (0 = any shop)
+     * @param int $idShop optional shop filter (0 = any shop)
      *
      * @return array summary counters: expired, deactivated, skipped, errors
      */
@@ -89,7 +86,7 @@ class CouponLifecycleManager
                 if ($deactivated) {
                     ++$summary['deactivated'];
                 }
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 // One coupon's failure must never abort the rest of the sweep.
                 ++$summary['errors'];
             }
@@ -106,7 +103,7 @@ class CouponLifecycleManager
      * @return bool whether the coupon was expired by this call (false when it was
      *              missing or already terminal)
      *
-     * @throws RuntimeException when the expiry cannot be persisted
+     * @throws \RuntimeException when the expiry cannot be persisted
      */
     public function expire($idCouponLink)
     {
@@ -152,7 +149,7 @@ class CouponLifecycleManager
             'expired_at' => date('Y-m-d H:i:s'),
         ]);
         if (!$persisted) {
-            throw new RuntimeException('Failed to persist the expiry of coupon link ' . $idLink . '.');
+            throw new \RuntimeException('Failed to persist the expiry of coupon link ' . $idLink . '.');
         }
 
         return $deactivated;

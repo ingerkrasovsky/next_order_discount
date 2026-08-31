@@ -14,8 +14,6 @@
  */
 namespace Setecom\NextOrderDiscount\Repository;
 
-use Db;
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -36,7 +34,7 @@ class CronLockRepository
      *
      * @param string $lockName
      * @param string $ownerToken caller-unique token identifying the holder
-     * @param int    $ttlSeconds lifetime of the lock in seconds
+     * @param int $ttlSeconds lifetime of the lock in seconds
      *
      * @return bool true if the lock is now held by $ownerToken
      */
@@ -61,7 +59,7 @@ class CronLockRepository
             . ' `updated_at` = IF(`locked_until` < NOW(), VALUES(`updated_at`), `updated_at`),'
             . ' `locked_until` = IF(`locked_until` < NOW(), VALUES(`locked_until`), `locked_until`)';
 
-        if (!Db::getInstance()->execute($sql)) {
+        if (!\Db::getInstance()->execute($sql)) {
             return false;
         }
 
@@ -73,7 +71,7 @@ class CronLockRepository
      *
      * @param string $lockName
      * @param string $ownerToken
-     * @param int    $ttlSeconds new lifetime in seconds from now
+     * @param int $ttlSeconds new lifetime in seconds from now
      *
      * @return bool true if the lock was actually extended
      */
@@ -93,11 +91,11 @@ class CronLockRepository
             . ' AND `owner_token` = "' . $token . '"'
             . ' AND `locked_until` >= NOW()';
 
-        if (!Db::getInstance()->execute($sql)) {
+        if (!\Db::getInstance()->execute($sql)) {
             return false;
         }
 
-        return Db::getInstance()->Affected_Rows() > 0;
+        return \Db::getInstance()->Affected_Rows() > 0;
     }
 
     /**
@@ -117,10 +115,10 @@ class CronLockRepository
             return false;
         }
 
-        return (bool) Db::getInstance()->execute(
+        return (bool) \Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
             . ' WHERE `lock_name` = "' . $name . '"'
-            . ' AND `owner_token` = "' . $token . '"'
+            . ' AND `owner_token` = "' . $token . '"',
         );
     }
 
@@ -136,10 +134,10 @@ class CronLockRepository
             return false;
         }
 
-        return (bool) Db::getInstance()->getValue(
+        return (bool) \Db::getInstance()->getValue(
             'SELECT 1 FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
             . ' WHERE `lock_name` = "' . $name . '"'
-            . ' AND `locked_until` >= NOW()'
+            . ' AND `locked_until` >= NOW()',
         );
     }
 
@@ -158,11 +156,11 @@ class CronLockRepository
             return false;
         }
 
-        return (bool) Db::getInstance()->getValue(
+        return (bool) \Db::getInstance()->getValue(
             'SELECT 1 FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
             . ' WHERE `lock_name` = "' . $name . '"'
             . ' AND `owner_token` = "' . $token . '"'
-            . ' AND `locked_until` >= NOW()'
+            . ' AND `locked_until` >= NOW()',
         );
     }
 
@@ -178,9 +176,9 @@ class CronLockRepository
             return null;
         }
 
-        $row = Db::getInstance()->getRow(
+        $row = \Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
-            . ' WHERE `lock_name` = "' . $name . '"'
+            . ' WHERE `lock_name` = "' . $name . '"',
         );
 
         return is_array($row) && !empty($row) ? $row : null;
@@ -193,9 +191,9 @@ class CronLockRepository
      */
     public function purgeExpired()
     {
-        return (bool) Db::getInstance()->execute(
+        return (bool) \Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
-            . ' WHERE `locked_until` < NOW()'
+            . ' WHERE `locked_until` < NOW()',
         );
     }
 }

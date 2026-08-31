@@ -95,17 +95,17 @@ class CouponLinkRepository
         $row['created_at'] = $now;
         $row['updated_at'] = $now;
 
-        if (!Db::getInstance()->insert(self::TABLE_NAME, $row, true)) {
+        if (!\Db::getInstance()->insert(self::TABLE_NAME, $row, true)) {
             return 0;
         }
 
-        return (int) Db::getInstance()->Insert_ID();
+        return (int) \Db::getInstance()->Insert_ID();
     }
 
     /**
      * Updates an existing coupon link row.
      *
-     * @param int   $id
+     * @param int $id
      * @param array $data associative array keyed by column name
      *
      * @return bool
@@ -124,19 +124,19 @@ class CouponLinkRepository
 
         $row['updated_at'] = date('Y-m-d H:i:s');
 
-        return (bool) Db::getInstance()->update(
+        return (bool) \Db::getInstance()->update(
             self::TABLE_NAME,
             $row,
             self::PRIMARY_KEY . ' = ' . $id,
             0,
-            true
+            true,
         );
     }
 
     /**
      * Convenience helper to move a coupon to a new lifecycle status.
      *
-     * @param int    $id
+     * @param int $id
      * @param string $status
      *
      * @return bool
@@ -158,9 +158,9 @@ class CouponLinkRepository
             return null;
         }
 
-        $row = Db::getInstance()->getRow(
+        $row = \Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
-            . ' WHERE `' . self::PRIMARY_KEY . '` = ' . $id
+            . ' WHERE `' . self::PRIMARY_KEY . '` = ' . $id,
         );
 
         return is_array($row) && !empty($row) ? $row : null;
@@ -180,10 +180,10 @@ class CouponLinkRepository
         $idShop = (int) $idShop;
         $idOrderSource = (int) $idOrderSource;
 
-        $row = Db::getInstance()->getRow(
+        $row = \Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
             . ' WHERE `id_shop` = ' . $idShop
-            . ' AND `id_order_source` = ' . $idOrderSource
+            . ' AND `id_order_source` = ' . $idOrderSource,
         );
 
         return is_array($row) && !empty($row) ? $row : null;
@@ -206,11 +206,11 @@ class CouponLinkRepository
         $idOrderSource = (int) $idOrderSource;
         $idRule = (int) $idRule;
 
-        $row = Db::getInstance()->getRow(
+        $row = \Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
             . ' WHERE `id_shop` = ' . $idShop
             . ' AND `id_order_source` = ' . $idOrderSource
-            . ' AND `id_snod_rule` = ' . $idRule
+            . ' AND `id_snod_rule` = ' . $idRule,
         );
 
         return is_array($row) && !empty($row) ? $row : null;
@@ -220,7 +220,7 @@ class CouponLinkRepository
      * Returns every coupon link issued for a source order (one per matched rule).
      *
      * @param int $idOrderSource
-     * @param int $idShop        optional shop filter (0 = any shop)
+     * @param int $idShop optional shop filter (0 = any shop)
      *
      * @return array list of coupon link rows
      */
@@ -238,7 +238,7 @@ class CouponLinkRepository
             $sql .= ' AND `id_shop` = ' . $idShop;
         }
 
-        $rows = Db::getInstance()->executeS($sql);
+        $rows = \Db::getInstance()->executeS($sql);
 
         return is_array($rows) ? $rows : [];
     }
@@ -255,9 +255,9 @@ class CouponLinkRepository
             return null;
         }
 
-        $row = Db::getInstance()->getRow(
+        $row = \Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
-            . ' WHERE `id_cart_rule` = ' . $idCartRule
+            . ' WHERE `id_cart_rule` = ' . $idCartRule,
         );
 
         return is_array($row) && !empty($row) ? $row : null;
@@ -280,12 +280,12 @@ class CouponLinkRepository
         $limit = max(1, (int) $limit);
         $offset = max(0, (int) $offset);
 
-        $rows = Db::getInstance()->executeS(
+        $rows = \Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
             . ' WHERE `id_shop` = ' . $idShop
             . ' AND `id_customer` = ' . $idCustomer
             . ' ORDER BY `' . self::PRIMARY_KEY . '` DESC'
-            . ' LIMIT ' . $offset . ', ' . $limit
+            . ' LIMIT ' . $offset . ', ' . $limit,
         );
 
         return is_array($rows) ? $rows : [];
@@ -325,7 +325,7 @@ class CouponLinkRepository
         $sql .= ' ORDER BY `valid_to` ASC, `' . self::PRIMARY_KEY . '` ASC'
             . ' LIMIT ' . $limit;
 
-        $rows = Db::getInstance()->executeS($sql);
+        $rows = \Db::getInstance()->executeS($sql);
 
         return is_array($rows) ? $rows : [];
     }
@@ -345,7 +345,7 @@ class CouponLinkRepository
         $idShop = (int) $idShop;
         $where = $idShop > 0 ? ' WHERE `id_shop` = ' . $idShop : '';
 
-        $row = Db::getInstance()->getRow(
+        $row = \Db::getInstance()->getRow(
             'SELECT'
             . ' COUNT(*) AS `generated`,'
             . ' SUM(`emailed_at` IS NOT NULL) AS `emailed`,'
@@ -353,7 +353,7 @@ class CouponLinkRepository
             . ' SUM(`used_at` IS NOT NULL OR `status` = "' . pSQL(self::STATUS_USED) . '") AS `used`,'
             . ' SUM(`expired_at` IS NOT NULL OR `status` = "' . pSQL(self::STATUS_EXPIRED) . '") AS `expired`,'
             . ' SUM(`status` = "' . pSQL(self::STATUS_CANCELED) . '") AS `canceled`'
-            . ' FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`' . $where
+            . ' FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`' . $where,
         );
 
         $keys = ['generated', 'emailed', 'reminded', 'used', 'expired', 'canceled'];
@@ -377,9 +377,9 @@ class CouponLinkRepository
             return false;
         }
 
-        return (bool) Db::getInstance()->delete(
+        return (bool) \Db::getInstance()->delete(
             self::TABLE_NAME,
-            self::PRIMARY_KEY . ' = ' . $id
+            self::PRIMARY_KEY . ' = ' . $id,
         );
     }
 
@@ -407,7 +407,7 @@ class CouponLinkRepository
 
     /**
      * @param string $column
-     * @param mixed  $value
+     * @param mixed $value
      *
      * @return int|string|null
      */

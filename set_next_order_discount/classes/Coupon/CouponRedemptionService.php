@@ -16,7 +16,6 @@ namespace Setecom\NextOrderDiscount\Coupon;
 
 use Setecom\NextOrderDiscount\Logger\ModuleLogger;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
-use Throwable;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -55,11 +54,11 @@ class CouponRedemptionService
 
     /**
      * @param CouponLinkRepository $couponLinkRepository
-     * @param ModuleLogger|null    $logger               optional structured logger
+     * @param ModuleLogger|null $logger optional structured logger
      */
     public function __construct(
         CouponLinkRepository $couponLinkRepository,
-        ModuleLogger $logger = null
+        ?ModuleLogger $logger = null,
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->logger = $logger;
@@ -68,8 +67,8 @@ class CouponRedemptionService
     /**
      * Marks every module-issued coupon among the given cart rules as used.
      *
-     * @param array $cartRuleIds  id_cart_rule values applied to the order
-     * @param int   $idOrderUsed  the order that redeemed the coupon(s)
+     * @param array $cartRuleIds id_cart_rule values applied to the order
+     * @param int $idOrderUsed the order that redeemed the coupon(s)
      *
      * @return array summary counters: used, skipped, errors
      */
@@ -82,7 +81,7 @@ class CouponRedemptionService
             try {
                 $outcome = $this->redeemCartRule($idCartRule, $idOrderUsed);
                 ++$summary[$outcome];
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 // One coupon's failure must never abort the rest or break checkout.
                 ++$summary['errors'];
             }
@@ -136,7 +135,7 @@ class CouponRedemptionService
      * any existing keys. Best-effort: unreadable metadata is replaced.
      *
      * @param array $link
-     * @param int   $idOrderUsed
+     * @param int $idOrderUsed
      *
      * @return string JSON metadata
      */
@@ -159,8 +158,8 @@ class CouponRedemptionService
 
     /**
      * @param array $link
-     * @param int   $idLink
-     * @param int   $idOrderUsed
+     * @param int $idLink
+     * @param int $idOrderUsed
      *
      * @return void
      */
@@ -180,7 +179,7 @@ class CouponRedemptionService
                 'id_order_used' => (int) $idOrderUsed,
             ],
             'order:' . (int) $idOrderUsed,
-            self::LOG_CHANNEL
+            self::LOG_CHANNEL,
         );
     }
 

@@ -145,15 +145,15 @@ class RuleRepository
         $row['created_at'] = $now;
         $row['updated_at'] = $now;
 
-        if (!Db::getInstance()->insert(self::TABLE_NAME, $row, true)) {
+        if (!\Db::getInstance()->insert(self::TABLE_NAME, $row, true)) {
             return 0;
         }
 
-        return (int) Db::getInstance()->Insert_ID();
+        return (int) \Db::getInstance()->Insert_ID();
     }
 
     /**
-     * @param int   $id
+     * @param int $id
      * @param array $data associative array keyed by column name
      *
      * @return bool
@@ -172,12 +172,12 @@ class RuleRepository
 
         $row['updated_at'] = date('Y-m-d H:i:s');
 
-        return (bool) Db::getInstance()->update(
+        return (bool) \Db::getInstance()->update(
             self::TABLE_NAME,
             $row,
             self::PRIMARY_KEY . ' = ' . $id,
             0,
-            true
+            true,
         );
     }
 
@@ -196,14 +196,14 @@ class RuleRepository
             return false;
         }
 
-        return (bool) Db::getInstance()->delete(
+        return (bool) \Db::getInstance()->delete(
             self::TABLE_NAME,
-            self::PRIMARY_KEY . ' = ' . $id
+            self::PRIMARY_KEY . ' = ' . $id,
         );
     }
 
     /**
-     * @param int  $id
+     * @param int $id
      * @param bool $active
      *
      * @return bool
@@ -228,8 +228,8 @@ class RuleRepository
      * Moves a rule one position up/down among the shop's rules by renumbering
      * priorities in the new order (robust against duplicate/gapped priorities).
      *
-     * @param int    $idShop
-     * @param int    $idRule
+     * @param int $idShop
+     * @param int $idRule
      * @param string $direction 'up' or 'down'
      *
      * @return bool true if the order changed
@@ -312,9 +312,9 @@ class RuleRepository
             return null;
         }
 
-        $row = Db::getInstance()->getRow(
+        $row = \Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
-            . ' WHERE `' . self::PRIMARY_KEY . '` = ' . $id
+            . ' WHERE `' . self::PRIMARY_KEY . '` = ' . $id,
         );
 
         if (!is_array($row) || empty($row)) {
@@ -329,7 +329,7 @@ class RuleRepository
     /**
      * Lists rules for a shop ordered by priority, each with its conditions.
      *
-     * @param int  $idShop
+     * @param int $idShop
      * @param bool $activeOnly
      *
      * @return array
@@ -344,7 +344,7 @@ class RuleRepository
         }
         $sql .= ' ORDER BY `priority` ASC, `' . self::PRIMARY_KEY . '` ASC';
 
-        $rows = Db::getInstance()->executeS($sql);
+        $rows = \Db::getInstance()->executeS($sql);
         if (!is_array($rows)) {
             return [];
         }
@@ -364,8 +364,8 @@ class RuleRepository
      */
     public function countByShop($idShop)
     {
-        return (int) Db::getInstance()->getValue(
-            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '` WHERE `id_shop` = ' . (int) $idShop
+        return (int) \Db::getInstance()->getValue(
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '` WHERE `id_shop` = ' . (int) $idShop,
         );
     }
 
@@ -379,18 +379,18 @@ class RuleRepository
      */
     public function hasActiveProductConditions($idShop)
     {
-        return (bool) Db::getInstance()->getValue(
+        return (bool) \Db::getInstance()->getValue(
             'SELECT 1 FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
             . ' WHERE `id_shop` = ' . (int) $idShop
             . ' AND `active` = 1'
-            . ' AND (`category_mode` <> "all" OR `manufacturer_mode` <> "all")'
+            . ' AND (`category_mode` <> "all" OR `manufacturer_mode` <> "all")',
         );
     }
 
     /**
      * Returns the selected entity ids for one condition type of a rule.
      *
-     * @param int    $idRule
+     * @param int $idRule
      * @param string $type a RuleConditionSchema type
      *
      * @return array list of ids
@@ -403,9 +403,9 @@ class RuleRepository
         }
 
         $column = RuleConditionSchema::column($type);
-        $rows = Db::getInstance()->executeS(
+        $rows = \Db::getInstance()->executeS(
             'SELECT `' . bqSQL($column) . '` FROM `' . _DB_PREFIX_ . bqSQL(RuleConditionSchema::table($type)) . '`'
-            . ' WHERE `id_snod_rule` = ' . $idRule
+            . ' WHERE `id_snod_rule` = ' . $idRule,
         );
         if (!is_array($rows)) {
             return [];
@@ -437,9 +437,9 @@ class RuleRepository
     /**
      * Replaces the selected entity ids for one condition type of a rule.
      *
-     * @param int    $idRule
+     * @param int $idRule
      * @param string $type
-     * @param array  $ids
+     * @param array $ids
      *
      * @return bool
      */
@@ -453,10 +453,10 @@ class RuleRepository
         $table = RuleConditionSchema::table($type);
         $column = RuleConditionSchema::column($type);
 
-        Db::getInstance()->delete($table, 'id_snod_rule = ' . $idRule);
+        \Db::getInstance()->delete($table, 'id_snod_rule = ' . $idRule);
 
         foreach ($this->uniquePositiveInts($ids) as $id) {
-            $inserted = Db::getInstance()->insert($table, [
+            $inserted = \Db::getInstance()->insert($table, [
                 'id_snod_rule' => $idRule,
                 $column => $id,
             ]);
@@ -510,7 +510,7 @@ class RuleRepository
 
     /**
      * @param string $column
-     * @param mixed  $value
+     * @param mixed $value
      *
      * @return int|float|string|null
      */

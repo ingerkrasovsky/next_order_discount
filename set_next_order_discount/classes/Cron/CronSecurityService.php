@@ -12,12 +12,9 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Cron;
 
 use Configuration;
-use Db;
-use Throwable;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -49,13 +46,13 @@ class CronSecurityService
      */
     public function getToken()
     {
-        $global = Configuration::getGlobalValue(self::CONFIG_TOKEN);
+        $global = \Configuration::getGlobalValue(self::CONFIG_TOKEN);
         if (is_string($global) && $global !== '') {
             return $global;
         }
 
         // Context-scoped value (works in the back office / a shop context).
-        $scoped = Configuration::get(self::CONFIG_TOKEN);
+        $scoped = \Configuration::get(self::CONFIG_TOKEN);
         if ($scoped !== false && (string) $scoped !== '') {
             $this->promoteToGlobal((string) $scoped);
 
@@ -85,8 +82,8 @@ class CronSecurityService
     private function promoteToGlobal($token)
     {
         try {
-            Configuration::updateGlobalValue(self::CONFIG_TOKEN, (string) $token);
-        } catch (Throwable $e) {
+            \Configuration::updateGlobalValue(self::CONFIG_TOKEN, (string) $token);
+        } catch (\Throwable $e) {
             // Ignored on purpose: the returned token is still usable this request.
         }
     }
@@ -97,12 +94,12 @@ class CronSecurityService
     private function readAnyStoredToken()
     {
         try {
-            $value = Db::getInstance()->getValue(
+            $value = \Db::getInstance()->getValue(
                 'SELECT `value` FROM `' . _DB_PREFIX_ . 'configuration`'
                 . ' WHERE `name` = "' . pSQL(self::CONFIG_TOKEN) . '" AND `value` <> ""'
-                . ' ORDER BY `id_shop` DESC'
+                . ' ORDER BY `id_shop` DESC',
             );
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return '';
         }
 
@@ -110,7 +107,7 @@ class CronSecurityService
     }
 
     /**
-     * @param string $providedToken token supplied by the caller
+     * @param mixed $providedToken token supplied by the caller (raw request value)
      *
      * @return bool whether the supplied token matches the configured one
      */

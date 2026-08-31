@@ -12,11 +12,9 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Cron;
 
 use Setecom\NextOrderDiscount\Logger\ModuleLogger;
-use Throwable;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -48,7 +46,7 @@ class CronInstaller
     /**
      * @param ModuleLogger|null $logger optional structured logger
      */
-    public function __construct(ModuleLogger $logger = null)
+    public function __construct(?ModuleLogger $logger = null)
     {
         $this->logger = $logger;
     }
@@ -57,11 +55,11 @@ class CronInstaller
      * Probes whether a crontab entry can be installed on this server.
      *
      * @return array {
-     *   available: bool,  // all of the below are satisfied
-     *   shell_exec: bool, // PHP may run shell commands
-     *   crontab: bool,    // the crontab binary exists
-     *   reason: string    // 'ok' | 'shell_exec_blocked' | 'no_crontab' | 'crontab_denied'
-     * }
+     *               available: bool,  // all of the below are satisfied
+     *               shell_exec: bool, // PHP may run shell commands
+     *               crontab: bool,    // the crontab binary exists
+     *               reason: string    // 'ok' | 'shell_exec_blocked' | 'no_crontab' | 'crontab_denied'
+     *               }
      */
     public function capabilities()
     {
@@ -123,7 +121,7 @@ class CronInstaller
             $this->log(ModuleLogger::LEVEL_INFO, 'Cron installed to crontab', ['line' => (string) $cronLine]);
 
             return ['success' => true, 'reason' => 'ok'];
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return ['success' => false, 'reason' => 'exception'];
         }
     }
@@ -154,7 +152,7 @@ class CronInstaller
             }
 
             return $ok;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -268,7 +266,7 @@ class CronInstaller
     /**
      * @param string $level
      * @param string $message
-     * @param array  $context
+     * @param array $context
      *
      * @return void
      */

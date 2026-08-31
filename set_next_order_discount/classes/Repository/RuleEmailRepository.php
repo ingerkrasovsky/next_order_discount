@@ -12,10 +12,7 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Repository;
-
-use Db;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -48,19 +45,19 @@ class RuleEmailRepository
     /**
      * Returns the stored subject/html for a rule email in one language.
      *
-     * @param int    $idRule
+     * @param int $idRule
      * @param string $emailType
-     * @param int    $idLang
+     * @param int $idLang
      *
      * @return array|null ['subject' => string, 'html' => string] or null
      */
     public function findContent($idRule, $emailType, $idLang)
     {
-        $row = Db::getInstance()->getRow(
+        $row = \Db::getInstance()->getRow(
             'SELECT `subject`, `html` FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
             . ' WHERE `id_snod_rule` = ' . (int) $idRule
             . ' AND `email_type` = "' . pSQL((string) $emailType) . '"'
-            . ' AND `id_lang` = ' . (int) $idLang
+            . ' AND `id_lang` = ' . (int) $idLang,
         );
 
         if (!is_array($row) || empty($row)) {
@@ -82,9 +79,9 @@ class RuleEmailRepository
      */
     public function findAllForRule($idRule)
     {
-        $rows = Db::getInstance()->executeS(
+        $rows = \Db::getInstance()->executeS(
             'SELECT `email_type`, `id_lang`, `subject`, `html` FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
-            . ' WHERE `id_snod_rule` = ' . (int) $idRule
+            . ' WHERE `id_snod_rule` = ' . (int) $idRule,
         );
 
         $out = [];
@@ -103,9 +100,9 @@ class RuleEmailRepository
     /**
      * Inserts or updates one rule email row.
      *
-     * @param int    $idRule
+     * @param int $idRule
      * @param string $emailType
-     * @param int    $idLang
+     * @param int $idLang
      * @param string $subject
      * @param string $html
      *
@@ -122,7 +119,7 @@ class RuleEmailRepository
 
         $now = date('Y-m-d H:i:s');
 
-        return (bool) Db::getInstance()->execute(
+        return (bool) \Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
             . ' (`id_snod_rule`, `email_type`, `id_lang`, `subject`, `html`, `updated_at`)'
             . ' VALUES (' . $idRule . ', "' . pSQL($emailType) . '", ' . $idLang . ','
@@ -130,7 +127,7 @@ class RuleEmailRepository
             . ' ON DUPLICATE KEY UPDATE'
             . ' `subject` = VALUES(`subject`),'
             . ' `html` = VALUES(`html`),'
-            . ' `updated_at` = VALUES(`updated_at`)'
+            . ' `updated_at` = VALUES(`updated_at`)',
         );
     }
 }

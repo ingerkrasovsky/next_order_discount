@@ -12,7 +12,6 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Cron;
 
 use Configuration;
@@ -20,7 +19,6 @@ use Setecom\NextOrderDiscount\Coupon\CouponLifecycleManager;
 use Setecom\NextOrderDiscount\Logger\ModuleLogger;
 use Setecom\NextOrderDiscount\Queue\QueueWorker;
 use Setecom\NextOrderDiscount\Reminder\ReminderPlanner;
-use Throwable;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -70,18 +68,18 @@ class CronRouter
     private $logger;
 
     /**
-     * @param LockManager             $lockManager
-     * @param QueueWorker             $queueWorker
-     * @param ReminderPlanner         $reminderPlanner
-     * @param CouponLifecycleManager  $lifecycleManager
-     * @param ModuleLogger|null       $logger           optional structured logger
+     * @param LockManager $lockManager
+     * @param QueueWorker $queueWorker
+     * @param ReminderPlanner $reminderPlanner
+     * @param CouponLifecycleManager $lifecycleManager
+     * @param ModuleLogger|null $logger optional structured logger
      */
     public function __construct(
         LockManager $lockManager,
         QueueWorker $queueWorker,
         ReminderPlanner $reminderPlanner,
         CouponLifecycleManager $lifecycleManager,
-        ModuleLogger $logger = null
+        ?ModuleLogger $logger = null,
     ) {
         $this->lockManager = $lockManager;
         $this->queueWorker = $queueWorker;
@@ -130,8 +128,8 @@ class CronRouter
     /**
      * Runs one named task under its lock.
      *
-     * @param string $task   one of the TASK_* constants
-     * @param int    $idShop optional shop scope (0 = any shop)
+     * @param string $task one of the TASK_* constants
+     * @param int $idShop optional shop scope (0 = any shop)
      *
      * @return array a structured result:
      *               - unknown task: ['success' => false, 'error' => 'unknown_task', 'task' => ...]
@@ -169,7 +167,7 @@ class CronRouter
             $this->log(ModuleLogger::LEVEL_INFO, 'Cron task completed', ['task' => $task, 'result' => $result], $correlationId);
 
             return ['success' => true, 'task' => $task, 'result' => $result];
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->log(ModuleLogger::LEVEL_ERROR, 'Cron task failed', ['task' => $task, 'error' => $e->getMessage()], $correlationId);
 
             return ['success' => false, 'error' => 'exception', 'task' => $task];
@@ -213,8 +211,8 @@ class CronRouter
     private function recordLastRun($task)
     {
         try {
-            Configuration::updateValue(self::lastRunKeyFor($task), date('Y-m-d H:i:s'));
-        } catch (Throwable $e) {
+            \Configuration::updateValue(self::lastRunKeyFor($task), date('Y-m-d H:i:s'));
+        } catch (\Throwable $e) {
             // Ignored on purpose: see method docblock.
         }
     }
@@ -232,9 +230,9 @@ class CronRouter
     /**
      * Best-effort structured log entry.
      *
-     * @param string      $level
-     * @param string      $message
-     * @param array       $context
+     * @param string $level
+     * @param string $message
+     * @param array $context
      * @param string|null $correlationId
      *
      * @return void
@@ -250,7 +248,7 @@ class CronRouter
 
     /**
      * @param string $task
-     * @param int    $idShop
+     * @param int $idShop
      *
      * @return array the task's own summary counters
      */
@@ -284,7 +282,7 @@ class CronRouter
             return;
         }
 
-        $days = (int) Configuration::get('SNOD_LOG_RETENTION_DAYS');
+        $days = (int) \Configuration::get('SNOD_LOG_RETENTION_DAYS');
         if ($days > 0) {
             $this->logger->pruneOlderThan($days);
         }

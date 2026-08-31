@@ -12,7 +12,6 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Queue;
 
 use Setecom\NextOrderDiscount\Mail\CouponMailer;
@@ -61,7 +60,7 @@ class CouponEmailHandler implements QueueTaskHandlerInterface
      */
     private function decodePayload(array $task)
     {
-        if (!isset($task['payload_json']) || $task['payload_json'] === '' || $task['payload_json'] === null) {
+        if (!isset($task['payload_json']) || $task['payload_json'] === '') {
             return [];
         }
 

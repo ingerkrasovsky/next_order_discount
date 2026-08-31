@@ -14,13 +14,12 @@
  */
 namespace Setecom\NextOrderDiscount\Coupon;
 
-use Configuration;
 use Exception;
 use Setecom\NextOrderDiscount\Logger\ModuleLogger;
 use Setecom\NextOrderDiscount\Mail\CouponMailer;
+use Setecom\NextOrderDiscount\Queue\QueueService;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
 use Setecom\NextOrderDiscount\Rule\RuleMatcher;
-use Setecom\NextOrderDiscount\Queue\QueueService;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -53,23 +52,23 @@ class CouponGenerationService
     private $couponMailer;
 
     /**
-     * @param RuleMatcher          $ruleMatcher
-     * @param CartRuleAdapter      $cartRuleAdapter
+     * @param RuleMatcher $ruleMatcher
+     * @param CartRuleAdapter $cartRuleAdapter
      * @param CouponLinkRepository $couponLinkRepository
-     * @param QueueService         $queueService
-     * @param ModuleLogger|null    $logger               optional structured logger
-     * @param CouponMailer|null    $couponMailer         optional mailer for immediate
-     *                                                   delivery; when set the coupon
-     *                                                   email is sent right away and the
-     *                                                   queue is only a retry fallback
+     * @param QueueService $queueService
+     * @param ModuleLogger|null $logger optional structured logger
+     * @param CouponMailer|null $couponMailer optional mailer for immediate
+     *                                        delivery; when set the coupon
+     *                                        email is sent right away and the
+     *                                        queue is only a retry fallback
      */
     public function __construct(
         RuleMatcher $ruleMatcher,
         CartRuleAdapter $cartRuleAdapter,
         CouponLinkRepository $couponLinkRepository,
         QueueService $queueService,
-        ModuleLogger $logger = null,
-        CouponMailer $couponMailer = null
+        ?ModuleLogger $logger = null,
+        ?CouponMailer $couponMailer = null,
     ) {
         $this->ruleMatcher = $ruleMatcher;
         $this->cartRuleAdapter = $cartRuleAdapter;
@@ -100,7 +99,7 @@ class CouponGenerationService
                 ModuleLogger::LEVEL_DEBUG,
                 'No matching rule for order',
                 ['id_order' => $idOrderSource, 'id_shop' => $idShop, 'id_order_state' => isset($context['id_order_state']) ? (int) $context['id_order_state'] : 0],
-                $this->orderCorrelation($idOrderSource)
+                $this->orderCorrelation($idOrderSource),
             );
         }
 
@@ -117,9 +116,9 @@ class CouponGenerationService
      *
      * @param array $rule
      * @param array $context
-     * @param int   $idShop
-     * @param int   $idCustomer
-     * @param int   $idOrderSource
+     * @param int $idShop
+     * @param int $idCustomer
+     * @param int $idOrderSource
      *
      * @return array
      */
@@ -136,9 +135,9 @@ class CouponGenerationService
      *
      * @param array $rule
      * @param array $context
-     * @param int   $idShop
-     * @param int   $idCustomer
-     * @param int   $idOrderSource
+     * @param int $idShop
+     * @param int $idCustomer
+     * @param int $idOrderSource
      *
      * @return array
      */
@@ -157,7 +156,7 @@ class CouponGenerationService
         $idCartRule = 0;
 
         try {
-            $generator = new CouponCodeGenerator($idShop, [
+            $generator = new CouponCodeGenerator([
                 'length' => isset($rule['code_length']) ? (int) $rule['code_length'] : 0,
                 'type' => isset($rule['code_type']) ? (int) $rule['code_type'] : 0,
                 'template' => isset($rule['code_template']) ? (string) $rule['code_template'] : '',
@@ -238,7 +237,7 @@ class CouponGenerationService
                 'id_cart_rule' => $idCartRule,
                 'code' => $code,
             ];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // A coupon must never break checkout or order status updates.
             if ($idCartRule > 0) {
                 $this->cartRuleAdapter->deactivate($idCartRule);
@@ -272,14 +271,14 @@ class CouponGenerationService
     {
         $idCurrency = isset($context['id_currency']) ? (int) $context['id_currency'] : 0;
         if ($idCurrency <= 0) {
-            $idCurrency = (int) Configuration::get('PS_CURRENCY_DEFAULT');
+            $idCurrency = (int) \Configuration::get('PS_CURRENCY_DEFAULT');
         }
 
         return $idCurrency;
     }
 
     /**
-     * @param int   $idRule
+     * @param int $idRule
      * @param array $existing a ps_snod_coupon_link row
      *
      * @return array
@@ -293,7 +292,7 @@ class CouponGenerationService
             (int) $existing['id_snod_coupon_link'],
             isset($existing['id_shop']) ? (int) $existing['id_shop'] : 0,
             isset($existing['id_customer']) ? (int) $existing['id_customer'] : 0,
-            (string) $existing['coupon_code']
+            (string) $existing['coupon_code'],
         );
 
         return [
@@ -317,9 +316,9 @@ class CouponGenerationService
      * already-issued coupon, so any error is swallowed and the coupon can still
      * be re-detected and emailed on a later pass.
      *
-     * @param int    $idCouponLink
-     * @param int    $idShop
-     * @param int    $idCustomer
+     * @param int $idCouponLink
+     * @param int $idShop
+     * @param int $idCustomer
      * @param string $code
      *
      * @return void
@@ -338,7 +337,7 @@ class CouponGenerationService
                 'id_customer' => (int) $idCustomer,
                 'coupon_code' => (string) $code,
             ]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // Intentionally ignored: see method docblock.
         }
     }
@@ -350,9 +349,9 @@ class CouponGenerationService
      *
      * @param array $result
      * @param array $rule
-     * @param int   $idShop
-     * @param int   $idOrderSource
-     * @param int   $idCustomer
+     * @param int $idShop
+     * @param int $idOrderSource
+     * @param int $idCustomer
      *
      * @return void
      */
@@ -403,9 +402,9 @@ class CouponGenerationService
     /**
      * Best-effort structured log entry for a coupon event.
      *
-     * @param string      $level
-     * @param string      $message
-     * @param array       $context
+     * @param string $level
+     * @param string $message
+     * @param array $context
      * @param string|null $correlationId
      *
      * @return void
@@ -420,9 +419,9 @@ class CouponGenerationService
     }
 
     /**
-     * @param int    $idRule
+     * @param int $idRule
      * @param string $reason
-     * @param array  $extra
+     * @param array $extra
      *
      * @return array
      */
@@ -437,7 +436,7 @@ class CouponGenerationService
                 'id_cart_rule' => 0,
                 'code' => '',
             ],
-            $extra
+            $extra,
         );
     }
 }

@@ -38,7 +38,7 @@ class Set_Next_Order_DiscountCronModuleFrontController extends ModuleFrontContro
         try {
             parent::initContent();
             $this->handleCronRequest();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // A public endpoint must always answer JSON and must never leak an
             // internal error page (which can expose a stack trace in dev mode).
             $this->respond(['success' => false, 'error' => 'internal_error'], 500);
@@ -91,7 +91,7 @@ class Set_Next_Order_DiscountCronModuleFrontController extends ModuleFrontContro
      * Emits a JSON response and terminates the request.
      *
      * @param array $data
-     * @param int   $httpCode
+     * @param int $httpCode
      *
      * @return void
      */

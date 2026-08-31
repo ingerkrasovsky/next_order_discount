@@ -12,21 +12,13 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Reminder;
 
-use CartRule;
-use Configuration;
-use Context;
-use Currency;
 use Customer;
-use Exception;
 use Language;
 use Mail;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
 use Setecom\NextOrderDiscount\Repository\RuleEmailRepository;
-use Tools;
-use Validate;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -67,11 +59,11 @@ class ReminderMailer
 
     /**
      * @param CouponLinkRepository $couponLinkRepository
-     * @param RuleEmailRepository  $ruleEmailRepository
+     * @param RuleEmailRepository $ruleEmailRepository
      */
     public function __construct(
         CouponLinkRepository $couponLinkRepository,
-        RuleEmailRepository $ruleEmailRepository
+        RuleEmailRepository $ruleEmailRepository,
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->ruleEmailRepository = $ruleEmailRepository;
@@ -80,11 +72,11 @@ class ReminderMailer
     /**
      * Sends the reminder for one coupon link.
      *
-     * @param int  $idCouponLink   ps_snod_coupon_link primary key
-     * @param int  $reminderNumber 1 for the first reminder, 2 for the second
-     * @param bool $force          when true, resend even if this stage was already
-     *                             recorded (manual back-office send). The coupon
-     *                             must still be usable and not expired.
+     * @param int $idCouponLink ps_snod_coupon_link primary key
+     * @param int $reminderNumber 1 for the first reminder, 2 for the second
+     * @param bool $force when true, resend even if this stage was already
+     *                    recorded (manual back-office send). The coupon
+     *                    must still be usable and not expired.
      *
      * @return bool true when sent (or nothing needed to be sent), false on a
      *              missing/invalid record or a mail delivery failure
@@ -104,8 +96,8 @@ class ReminderMailer
             return true;
         }
 
-        $customer = new Customer((int) $link['id_customer']);
-        if (!Validate::isLoadedObject($customer) || !Validate::isEmail($customer->email)) {
+        $customer = new \Customer((int) $link['id_customer']);
+        if (!\Validate::isLoadedObject($customer) || !\Validate::isEmail($customer->email)) {
             return false;
         }
 
@@ -124,7 +116,7 @@ class ReminderMailer
             if ($custom !== null) {
                 $sent = $this->sendCustom($idLang, $iso, $custom, $templateVars, $customer, $idShop);
             } else {
-                $sent = Mail::send(
+                $sent = \Mail::send(
                     $idLang,
                     self::TEMPLATE_NAME,
                     $this->getSubject($iso),
@@ -137,10 +129,10 @@ class ReminderMailer
                     null,
                     $this->getTemplatePath(),
                     false,
-                    $idShop
+                    $idShop,
                 );
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // The mailer never throws: a transport/config error leaves the
             // reminder retryable and the coupon unchanged.
             return false;
@@ -164,10 +156,10 @@ class ReminderMailer
      * customer's language and falling back to the shop default. Null means "use
      * the shipped default template".
      *
-     * @param int    $idRule
+     * @param int $idRule
      * @param string $emailType
-     * @param int    $idLang
-     * @param int    $idShop
+     * @param int $idLang
+     * @param int $idShop
      *
      * @return array|null
      */
@@ -179,7 +171,7 @@ class ReminderMailer
         }
 
         $candidates = [(int) $idLang];
-        $default = (int) Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
+        $default = (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
         if ($default > 0 && $default !== (int) $idLang) {
             $candidates[] = $default;
         }
@@ -198,16 +190,16 @@ class ReminderMailer
      * Sends a rule's custom reminder: substitutes placeholders into the merchant
      * HTML and subject and delivers it through the generic pass-through template.
      *
-     * @param int      $idLang
-     * @param string   $iso
-     * @param array    $custom
-     * @param array    $templateVars
-     * @param Customer $customer
-     * @param int      $idShop
+     * @param int $idLang
+     * @param string $iso
+     * @param array $custom
+     * @param array $templateVars
+     * @param \Customer $customer
+     * @param int $idShop
      *
      * @return bool
      */
-    private function sendCustom($idLang, $iso, array $custom, array $templateVars, Customer $customer, $idShop)
+    private function sendCustom($idLang, $iso, array $custom, array $templateVars, \Customer $customer, $idShop)
     {
         // The core mailer embeds the shop logo (cid:shop_logo) for every HTML
         // email, so map the placeholder to it here to display it inline instead
@@ -216,7 +208,7 @@ class ReminderMailer
         $subject = strtr((string) $custom['subject'], $vars);
         $html = strtr((string) $custom['html'], $vars);
 
-        return (bool) Mail::send(
+        return (bool) \Mail::send(
             $idLang,
             'custom',
             $subject !== '' ? $subject : $this->getSubject($iso),
@@ -232,7 +224,7 @@ class ReminderMailer
             null,
             $this->getTemplatePath(),
             false,
-            $idShop
+            $idShop,
         );
     }
 
@@ -259,8 +251,8 @@ class ReminderMailer
      * A coupon is remindable for a stage when it is still usable, not past its
      * expiry, and the reminder for that stage has not already been recorded.
      *
-     * @param array $link           coupon link row
-     * @param int   $reminderNumber 1 or 2
+     * @param array $link coupon link row
+     * @param int $reminderNumber 1 or 2
      *
      * @return bool
      */
@@ -296,7 +288,7 @@ class ReminderMailer
      */
     private function isStillValid(array $link)
     {
-        if (!isset($link['valid_to']) || $link['valid_to'] === null || $link['valid_to'] === '') {
+        if (!isset($link['valid_to']) || $link['valid_to'] === '') {
             return false;
         }
 
@@ -306,7 +298,7 @@ class ReminderMailer
     }
 
     /**
-     * @param array  $link
+     * @param array $link
      * @param string $column
      *
      * @return bool whether the given timestamp column already holds a real value
@@ -318,19 +310,19 @@ class ReminderMailer
     }
 
     /**
-     * @param Customer $customer
-     * @param int      $idShop
+     * @param \Customer $customer
+     * @param int $idShop
      *
      * @return int
      */
-    private function resolveCustomerLang(Customer $customer, $idShop)
+    private function resolveCustomerLang(\Customer $customer, $idShop)
     {
         $idLang = (int) $customer->id_lang;
         if ($idLang > 0) {
             return $idLang;
         }
 
-        return (int) Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
+        return (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
     }
 
     /**
@@ -364,13 +356,13 @@ class ReminderMailer
     {
         $candidates = [];
 
-        $customerIso = $idLang > 0 ? (string) Language::getIsoById($idLang) : '';
+        $customerIso = $idLang > 0 ? (string) \Language::getIsoById($idLang) : '';
         if ($customerIso !== '') {
             $candidates[] = $customerIso;
         }
 
-        $defaultLangId = (int) Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
-        $defaultIso = $defaultLangId > 0 ? (string) Language::getIsoById($defaultLangId) : '';
+        $defaultLangId = (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
+        $defaultIso = $defaultLangId > 0 ? (string) \Language::getIsoById($defaultLangId) : '';
         if ($defaultIso !== '') {
             $candidates[] = $defaultIso;
         }
@@ -418,66 +410,66 @@ class ReminderMailer
      * escaped value. {customer_firstname} is the only customer-controlled value,
      * so it is escaped before it reaches the raw HTML substitution.
      *
-     * @param array    $link
-     * @param Customer $customer
-     * @param int      $idShop
-     * @param int      $idLang
-     * @param string   $iso
+     * @param array $link
+     * @param \Customer $customer
+     * @param int $idShop
+     * @param int $idLang
+     * @param string $iso
      *
      * @return array
      */
-    private function buildTemplateVars(array $link, Customer $customer, $idShop, $idLang, $iso)
+    private function buildTemplateVars(array $link, \Customer $customer, $idShop, $idLang, $iso)
     {
-        $cartRule = new CartRule((int) $link['id_cart_rule']);
+        $cartRule = new \CartRule((int) $link['id_cart_rule']);
         $currency = $this->resolveCurrency($cartRule, $idShop);
 
         return [
             '{coupon_code}' => (string) $link['coupon_code'],
             '{coupon_value}' => $this->formatCouponValue($cartRule, $currency, $iso),
             '{valid_to}' => $this->formatDate(isset($link['valid_to']) ? $link['valid_to'] : null, $idLang),
-            '{customer_firstname}' => Tools::safeOutput((string) $customer->firstname),
+            '{customer_firstname}' => \Tools::safeOutput((string) $customer->firstname),
             '{minimum_amount}' => $this->formatMinimumAmount($cartRule, $currency),
         ];
     }
 
     /**
-     * @param CartRule $cartRule
-     * @param int      $idShop
+     * @param \CartRule $cartRule
+     * @param int $idShop
      *
-     * @return Currency
+     * @return \Currency
      */
-    private function resolveCurrency(CartRule $cartRule, $idShop)
+    private function resolveCurrency(\CartRule $cartRule, $idShop)
     {
         $candidates = [];
-        if (Validate::isLoadedObject($cartRule)) {
+        if (\Validate::isLoadedObject($cartRule)) {
             $candidates[] = (int) $cartRule->reduction_currency;
             $candidates[] = (int) $cartRule->minimum_amount_currency;
         }
-        $candidates[] = (int) Configuration::get('PS_CURRENCY_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
+        $candidates[] = (int) \Configuration::get('PS_CURRENCY_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
 
         foreach ($candidates as $idCurrency) {
             if ($idCurrency <= 0) {
                 continue;
             }
-            $currency = new Currency($idCurrency);
-            if (Validate::isLoadedObject($currency)) {
+            $currency = new \Currency($idCurrency);
+            if (\Validate::isLoadedObject($currency)) {
                 return $currency;
             }
         }
 
-        return new Currency((int) Configuration::get('PS_CURRENCY_DEFAULT', null, null, $idShop > 0 ? $idShop : null));
+        return new \Currency((int) \Configuration::get('PS_CURRENCY_DEFAULT', null, null, $idShop > 0 ? $idShop : null));
     }
 
     /**
-     * @param CartRule $cartRule
-     * @param Currency $currency
-     * @param string   $iso
+     * @param \CartRule $cartRule
+     * @param \Currency $currency
+     * @param string $iso
      *
      * @return string
      */
-    private function formatCouponValue(CartRule $cartRule, Currency $currency, $iso)
+    private function formatCouponValue(\CartRule $cartRule, \Currency $currency, $iso)
     {
-        if (!Validate::isLoadedObject($cartRule)) {
+        if (!\Validate::isLoadedObject($cartRule)) {
             return self::EMPTY_VALUE;
         }
 
@@ -503,14 +495,14 @@ class ReminderMailer
     }
 
     /**
-     * @param CartRule $cartRule
-     * @param Currency $currency
+     * @param \CartRule $cartRule
+     * @param \Currency $currency
      *
      * @return string
      */
-    private function formatMinimumAmount(CartRule $cartRule, Currency $currency)
+    private function formatMinimumAmount(\CartRule $cartRule, \Currency $currency)
     {
-        if (!Validate::isLoadedObject($cartRule)) {
+        if (!\Validate::isLoadedObject($cartRule)) {
             return self::EMPTY_VALUE;
         }
 
@@ -535,29 +527,23 @@ class ReminderMailer
     }
 
     /**
-     * @param float    $amount
-     * @param Currency $currency
+     * @param float $amount
+     * @param \Currency $currency
      *
      * @return string
      */
-    private function formatPrice($amount, Currency $currency)
+    private function formatPrice($amount, \Currency $currency)
     {
-        $iso = Validate::isLoadedObject($currency) && $currency->iso_code ? (string) $currency->iso_code : 'USD';
+        $iso = \Validate::isLoadedObject($currency) && $currency->iso_code ? (string) $currency->iso_code : 'USD';
 
-        $context = Context::getContext();
-        if ($context !== null && method_exists($context, 'getCurrentLocale')) {
-            $locale = $context->getCurrentLocale();
-            if ($locale !== null) {
-                return (string) $locale->formatPrice($amount, $iso);
-            }
-        }
-
+        // Self-contained formatting: reminders are sent from the queue worker
+        // (cron), where no reliable display context/locale is available.
         return number_format((float) $amount, 2, '.', ' ') . ' ' . $iso;
     }
 
     /**
      * @param string|null $date
-     * @param int         $idLang
+     * @param int $idLang
      *
      * @return string
      */
@@ -574,8 +560,8 @@ class ReminderMailer
         }
 
         $format = 'Y-m-d';
-        $language = new Language((int) $idLang);
-        if (Validate::isLoadedObject($language) && !empty($language->date_format_lite)) {
+        $language = new \Language((int) $idLang);
+        if (\Validate::isLoadedObject($language) && !empty($language->date_format_lite)) {
             $format = (string) $language->date_format_lite;
         }
 

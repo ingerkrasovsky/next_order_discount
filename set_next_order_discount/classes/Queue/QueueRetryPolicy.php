@@ -12,7 +12,6 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Queue;
 
 if (!defined('_PS_VERSION_')) {
@@ -45,14 +44,14 @@ class QueueRetryPolicy
     private $maxDelaySeconds;
 
     /**
-     * @param int $maxAttempts      total attempts before a task is failed (>= 1)
+     * @param int $maxAttempts total attempts before a task is failed (>= 1)
      * @param int $baseDelaySeconds delay before the first retry (>= 0)
-     * @param int $maxDelaySeconds  upper bound for the backoff delay
+     * @param int $maxDelaySeconds upper bound for the backoff delay
      */
     public function __construct(
         $maxAttempts = self::DEFAULT_MAX_ATTEMPTS,
         $baseDelaySeconds = self::DEFAULT_BASE_DELAY_SECONDS,
-        $maxDelaySeconds = self::DEFAULT_MAX_DELAY_SECONDS
+        $maxDelaySeconds = self::DEFAULT_MAX_DELAY_SECONDS,
     ) {
         $this->maxAttempts = max(1, (int) $maxAttempts);
         $this->baseDelaySeconds = max(0, (int) $baseDelaySeconds);
@@ -109,8 +108,8 @@ class QueueRetryPolicy
     /**
      * Absolute timestamp at which a rescheduled task becomes eligible again.
      *
-     * @param int      $attempts number of attempts already made
-     * @param int|null $nowTs    reference epoch time; defaults to now (injectable)
+     * @param int $attempts number of attempts already made
+     * @param int|null $nowTs reference epoch time; defaults to now (injectable)
      *
      * @return string 'Y-m-d H:i:s'
      */

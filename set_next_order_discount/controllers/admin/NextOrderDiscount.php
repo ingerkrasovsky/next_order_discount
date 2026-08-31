@@ -207,7 +207,9 @@ class NextOrderDiscountController extends ModuleAdminController
             ]));
         }
 
-        return array_values(array_unique(array_filter(array_map('intval', array_filter(explode(',', (string) $raw), 'strlen')))));
+        return array_values(array_unique(array_filter(array_map('intval', array_filter(explode(',', (string) $raw), static function ($v) {
+            return $v !== '';
+        })))));
     }
 
     /**
@@ -229,7 +231,7 @@ class NextOrderDiscountController extends ModuleAdminController
         $submittedCancel = is_array($submittedCancel) ? array_map('intval', $submittedCancel) : [];
         $validStateIds = array_map(
             function ($state) { return (int) $state['id_order_state']; },
-            OrderState::getOrderStates((int) $this->context->language->id)
+            OrderState::getOrderStates((int) $this->context->language->id),
         );
         $cancelStatuses = array_values(array_unique(array_filter($submittedCancel, function ($id) use ($validStateIds) {
             return $id > 0 && in_array($id, $validStateIds, true);
@@ -305,7 +307,7 @@ class NextOrderDiscountController extends ModuleAdminController
         $where = empty($conditions) ? '1' : implode(' AND ', $conditions);
 
         $total = (int) Db::getInstance()->getValue(
-            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'snod_coupon_link` cl WHERE ' . $where
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'snod_coupon_link` cl WHERE ' . $where,
         );
 
         $totalPages = $total > 0 ? (int) ceil($total / $perPage) : 1;
@@ -327,7 +329,7 @@ class NextOrderDiscountController extends ModuleAdminController
             . ' LEFT JOIN `' . _DB_PREFIX_ . 'snod_rule` r ON r.`id_snod_rule` = cl.`id_snod_rule`'
             . ' WHERE ' . $where
             . ' ORDER BY cl.`id_snod_coupon_link` DESC'
-            . ' LIMIT ' . (int) $offset . ', ' . (int) $perPage
+            . ' LIMIT ' . (int) $offset . ', ' . (int) $perPage,
         );
         $rows = is_array($rows) ? $rows : [];
 
@@ -414,9 +416,9 @@ class NextOrderDiscountController extends ModuleAdminController
      * current shop.
      *
      * @param RuleRepository $repository
-     * @param string             $action
-     * @param int                $idRule
-     * @param int                $idShop
+     * @param string $action
+     * @param int $idRule
+     * @param int $idShop
      *
      * @return void
      */
@@ -566,9 +568,6 @@ class NextOrderDiscountController extends ModuleAdminController
 
         $blocks = [];
         foreach (self::EDITABLE_MODE_CONDITIONS as $type) {
-            if (!isset($sources[$type])) {
-                continue;
-            }
             $blocks[] = [
                 'type' => $type,
                 'label' => $sources[$type][0],
@@ -584,7 +583,7 @@ class NextOrderDiscountController extends ModuleAdminController
     /**
      * Normalizes a PrestaShop entity list to a flat [{id, name}] shape.
      *
-     * @param mixed  $rows
+     * @param mixed $rows
      * @param string $idKey
      *
      * @return array
@@ -821,7 +820,7 @@ class NextOrderDiscountController extends ModuleAdminController
             $this->module->name,
             'cron',
             ['token' => $cronToken],
-            true
+            true,
         );
 
         $labels = [
@@ -886,7 +885,7 @@ class NextOrderDiscountController extends ModuleAdminController
             $this->module->name,
             'cron',
             ['token' => $this->module->getCronSecurityService()->getToken(), 'task' => CronRouter::TASK_ALL],
-            true
+            true,
         );
 
         $env = $this->detectCronEnvironment();
@@ -940,8 +939,8 @@ class NextOrderDiscountController extends ModuleAdminController
      * Health verdict for a task from its last successful run and thresholds.
      *
      * @param string $lastRun 'Y-m-d H:i:s' or '' when never run
-     * @param int    $warn    age (s) above which the task is late
-     * @param int    $danger  age (s) above which the task is failing
+     * @param int $warn age (s) above which the task is late
+     * @param int $danger age (s) above which the task is failing
      *
      * @return string 'never' | 'ok' | 'warn' | 'danger'
      */
@@ -1056,7 +1055,7 @@ class NextOrderDiscountController extends ModuleAdminController
         $rows = Db::getInstance()->executeS(
             'SELECT `status`, COUNT(*) AS total FROM `' . _DB_PREFIX_ . 'snod_dispatch_queue`'
             . ' WHERE ' . $where
-            . ' GROUP BY `status`'
+            . ' GROUP BY `status`',
         );
         foreach ((array) $rows as $row) {
             $status = isset($row['status']) ? (string) $row['status'] : '';
@@ -1259,9 +1258,9 @@ class NextOrderDiscountController extends ModuleAdminController
                 null,
                 rtrim(_PS_MODULE_DIR_, '/') . '/' . $this->module->name . '/mails/',
                 false,
-                $idShop
+                $idShop,
             );
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $sent = false;
         }
 

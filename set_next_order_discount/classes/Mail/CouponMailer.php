@@ -12,21 +12,15 @@
  * @copyright 2026 Smart Ecommerce Tech
  * @license   Commercial License
  */
-
 namespace Setecom\NextOrderDiscount\Mail;
 
 use CartRule;
-use Configuration;
-use Context;
 use Currency;
 use Customer;
-use Exception;
 use Language;
 use Mail;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
 use Setecom\NextOrderDiscount\Repository\RuleEmailRepository;
-use Tools;
-use Validate;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -55,14 +49,14 @@ class CouponMailer
     private $ruleEmailRepository;
 
     /**
-     * @param CouponLinkRepository  $couponLinkRepository
-     * @param MailTemplateResolver  $templateResolver
-     * @param RuleEmailRepository   $ruleEmailRepository
+     * @param CouponLinkRepository $couponLinkRepository
+     * @param MailTemplateResolver $templateResolver
+     * @param RuleEmailRepository $ruleEmailRepository
      */
     public function __construct(
         CouponLinkRepository $couponLinkRepository,
         MailTemplateResolver $templateResolver,
-        RuleEmailRepository $ruleEmailRepository
+        RuleEmailRepository $ruleEmailRepository,
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->templateResolver = $templateResolver;
@@ -72,12 +66,12 @@ class CouponMailer
     /**
      * Sends the coupon email for one coupon link.
      *
-     * @param int  $idCouponLink ps_snod_coupon_link primary key
-     * @param bool $force        when true, resend even if the coupon was already
-     *                           emailed or has moved to a later/terminal state
-     *                           (manual back-office resend). The lifecycle status
-     *                           is never regressed — only `emailed_at` is refreshed
-     *                           for a coupon that is past the "created" stage.
+     * @param int $idCouponLink ps_snod_coupon_link primary key
+     * @param bool $force when true, resend even if the coupon was already
+     *                    emailed or has moved to a later/terminal state
+     *                    (manual back-office resend). The lifecycle status
+     *                    is never regressed — only `emailed_at` is refreshed
+     *                    for a coupon that is past the "created" stage.
      *
      * @return bool true when the email was sent (or was already sent), false on
      *              a missing/invalid record or a mail delivery failure
@@ -100,8 +94,8 @@ class CouponMailer
             return true;
         }
 
-        $customer = new Customer((int) $link['id_customer']);
-        if (!Validate::isLoadedObject($customer) || !Validate::isEmail($customer->email)) {
+        $customer = new \Customer((int) $link['id_customer']);
+        if (!\Validate::isLoadedObject($customer) || !\Validate::isEmail($customer->email)) {
             return false;
         }
 
@@ -116,13 +110,13 @@ class CouponMailer
                 (int) $link['id_snod_rule'],
                 RuleEmailRepository::TYPE_COUPON,
                 $idLang,
-                $idShop
+                $idShop,
             );
 
             if ($custom !== null) {
                 $sent = $this->sendCustom($idLang, $custom, $templateVars, $customer, $idShop);
             } else {
-                $sent = Mail::send(
+                $sent = \Mail::send(
                     $idLang,
                     $this->templateResolver->getTemplateName(),
                     $this->templateResolver->getSubject($iso),
@@ -135,10 +129,10 @@ class CouponMailer
                     null,
                     $this->templateResolver->getTemplatePath(),
                     false,
-                    $idShop
+                    $idShop,
                 );
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // The mailer never throws: a transport/config error leaves the task
             // pending and retryable, and the coupon is not flagged as emailed.
             return false;
@@ -166,10 +160,10 @@ class CouponMailer
      * the rule has no usable custom content, so the caller uses the shipped
      * default template.
      *
-     * @param int    $idRule
+     * @param int $idRule
      * @param string $emailType
-     * @param int    $idLang
-     * @param int    $idShop
+     * @param int $idLang
+     * @param int $idShop
      *
      * @return array|null ['subject' => string, 'html' => string]
      */
@@ -181,7 +175,7 @@ class CouponMailer
         }
 
         $candidates = [(int) $idLang];
-        $default = (int) Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
+        $default = (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
         if ($default > 0 && $default !== (int) $idLang) {
             $candidates[] = $default;
         }
@@ -201,15 +195,15 @@ class CouponMailer
      * merchant HTML and subject and delivers it through the generic pass-through
      * mail template.
      *
-     * @param int      $idLang
-     * @param array    $custom       ['subject' => string, 'html' => string]
-     * @param array    $templateVars placeholder map
-     * @param Customer $customer
-     * @param int      $idShop
+     * @param int $idLang
+     * @param array $custom ['subject' => string, 'html' => string]
+     * @param array $templateVars placeholder map
+     * @param \Customer $customer
+     * @param int $idShop
      *
      * @return bool
      */
-    private function sendCustom($idLang, array $custom, array $templateVars, Customer $customer, $idShop)
+    private function sendCustom($idLang, array $custom, array $templateVars, \Customer $customer, $idShop)
     {
         // The core mailer embeds the shop logo (cid:shop_logo) for every HTML
         // email, so map the placeholder to it here — otherwise the embedded image
@@ -218,7 +212,7 @@ class CouponMailer
         $subject = strtr((string) $custom['subject'], $vars);
         $html = strtr((string) $custom['html'], $vars);
 
-        return (bool) Mail::send(
+        return (bool) \Mail::send(
             $idLang,
             'custom',
             $subject !== '' ? $subject : $this->templateResolver->getSubject($this->templateResolver->resolveIso($idLang, $idShop)),
@@ -234,7 +228,7 @@ class CouponMailer
             null,
             $this->templateResolver->getTemplatePath(),
             false,
-            $idShop
+            $idShop,
         );
     }
 
@@ -295,35 +289,35 @@ class CouponMailer
      * Falls back to the shop's default language when the customer's language id
      * is not usable.
      *
-     * @param Customer $customer
-     * @param int      $idShop
+     * @param \Customer $customer
+     * @param int $idShop
      *
      * @return int
      */
-    private function resolveCustomerLang(Customer $customer, $idShop)
+    private function resolveCustomerLang(\Customer $customer, $idShop)
     {
         $idLang = (int) $customer->id_lang;
         if ($idLang > 0) {
             return $idLang;
         }
 
-        return (int) Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
+        return (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
     }
 
     /**
      * Builds the placeholder map consumed by the email template.
      *
-     * @param array    $link     coupon link row
-     * @param Customer $customer
-     * @param int      $idShop
-     * @param int      $idLang
-     * @param string   $iso      resolved template ISO code
+     * @param array $link coupon link row
+     * @param \Customer $customer
+     * @param int $idShop
+     * @param int $idLang
+     * @param string $iso resolved template ISO code
      *
      * @return array
      */
-    private function buildTemplateVars(array $link, Customer $customer, $idShop, $idLang, $iso)
+    private function buildTemplateVars(array $link, \Customer $customer, $idShop, $idLang, $iso)
     {
-        $cartRule = new CartRule((int) $link['id_cart_rule']);
+        $cartRule = new \CartRule((int) $link['id_cart_rule']);
         $currency = $this->resolveCurrency($cartRule, $idShop);
 
         // {shop_name} is intentionally omitted: the core mailer always fills it
@@ -334,7 +328,7 @@ class CouponMailer
             '{coupon_code}' => (string) $link['coupon_code'],
             '{coupon_value}' => $this->formatCouponValue($cartRule, $currency, $iso),
             '{valid_to}' => $this->formatDate(isset($link['valid_to']) ? $link['valid_to'] : null, $idLang),
-            '{customer_firstname}' => Tools::safeOutput((string) $customer->firstname),
+            '{customer_firstname}' => \Tools::safeOutput((string) $customer->firstname),
             '{minimum_amount}' => $this->formatMinimumAmount($cartRule, $currency),
         ];
     }
@@ -343,46 +337,46 @@ class CouponMailer
      * Resolves the currency used to format monetary values, preferring the
      * voucher's own currency and falling back to the shop default.
      *
-     * @param CartRule $cartRule
-     * @param int      $idShop
+     * @param \CartRule $cartRule
+     * @param int $idShop
      *
-     * @return Currency
+     * @return \Currency
      */
-    private function resolveCurrency(CartRule $cartRule, $idShop)
+    private function resolveCurrency(\CartRule $cartRule, $idShop)
     {
         $candidates = [];
-        if (Validate::isLoadedObject($cartRule)) {
+        if (\Validate::isLoadedObject($cartRule)) {
             $candidates[] = (int) $cartRule->reduction_currency;
             $candidates[] = (int) $cartRule->minimum_amount_currency;
         }
-        $candidates[] = (int) Configuration::get('PS_CURRENCY_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
+        $candidates[] = (int) \Configuration::get('PS_CURRENCY_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
 
         foreach ($candidates as $idCurrency) {
             if ($idCurrency <= 0) {
                 continue;
             }
-            $currency = new Currency($idCurrency);
-            if (Validate::isLoadedObject($currency)) {
+            $currency = new \Currency($idCurrency);
+            if (\Validate::isLoadedObject($currency)) {
                 return $currency;
             }
         }
 
-        return new Currency((int) Configuration::get('PS_CURRENCY_DEFAULT', null, null, $idShop > 0 ? $idShop : null));
+        return new \Currency((int) \Configuration::get('PS_CURRENCY_DEFAULT', null, null, $idShop > 0 ? $idShop : null));
     }
 
     /**
      * Renders the headline discount value from the actual voucher: a percentage,
      * a currency amount or a free-shipping label.
      *
-     * @param CartRule $cartRule
-     * @param Currency $currency
-     * @param string   $iso
+     * @param \CartRule $cartRule
+     * @param \Currency $currency
+     * @param string $iso
      *
      * @return string
      */
-    private function formatCouponValue(CartRule $cartRule, Currency $currency, $iso)
+    private function formatCouponValue(\CartRule $cartRule, \Currency $currency, $iso)
     {
-        if (!Validate::isLoadedObject($cartRule)) {
+        if (!\Validate::isLoadedObject($cartRule)) {
             return self::EMPTY_VALUE;
         }
 
@@ -404,14 +398,14 @@ class CouponMailer
     }
 
     /**
-     * @param CartRule $cartRule
-     * @param Currency $currency
+     * @param \CartRule $cartRule
+     * @param \Currency $currency
      *
      * @return string
      */
-    private function formatMinimumAmount(CartRule $cartRule, Currency $currency)
+    private function formatMinimumAmount(\CartRule $cartRule, \Currency $currency)
     {
-        if (!Validate::isLoadedObject($cartRule)) {
+        if (!\Validate::isLoadedObject($cartRule)) {
             return self::EMPTY_VALUE;
         }
 
@@ -441,23 +435,17 @@ class CouponMailer
      * Formats a monetary amount using the shop locale, with a defensive
      * fallback when the locale service is unavailable (e.g. CLI contexts).
      *
-     * @param float    $amount
-     * @param Currency $currency
+     * @param float $amount
+     * @param \Currency $currency
      *
      * @return string
      */
-    private function formatPrice($amount, Currency $currency)
+    private function formatPrice($amount, \Currency $currency)
     {
-        $iso = Validate::isLoadedObject($currency) && $currency->iso_code ? (string) $currency->iso_code : 'USD';
+        $iso = \Validate::isLoadedObject($currency) && $currency->iso_code ? (string) $currency->iso_code : 'USD';
 
-        $context = Context::getContext();
-        if ($context !== null && method_exists($context, 'getCurrentLocale')) {
-            $locale = $context->getCurrentLocale();
-            if ($locale !== null) {
-                return (string) $locale->formatPrice($amount, $iso);
-            }
-        }
-
+        // Self-contained formatting: these emails are sent from the queue worker
+        // (cron), where no reliable display context/locale is available.
         return number_format((float) $amount, 2, '.', ' ') . ' ' . $iso;
     }
 
@@ -465,7 +453,7 @@ class CouponMailer
      * Formats a datetime string using the customer language's short date format.
      *
      * @param string|null $date
-     * @param int         $idLang
+     * @param int $idLang
      *
      * @return string
      */
@@ -482,8 +470,8 @@ class CouponMailer
         }
 
         $format = 'Y-m-d';
-        $language = new Language((int) $idLang);
-        if (Validate::isLoadedObject($language) && !empty($language->date_format_lite)) {
+        $language = new \Language((int) $idLang);
+        if (\Validate::isLoadedObject($language) && !empty($language->date_format_lite)) {
             $format = (string) $language->date_format_lite;
         }
 

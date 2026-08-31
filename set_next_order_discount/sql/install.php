@@ -21,7 +21,7 @@ if ($defaultShop <= 0) {
     $defaultShop = 1;
 }
 $defaultShopGroup = (int) Db::getInstance()->getValue(
-    'SELECT `id_shop_group` FROM `' . _DB_PREFIX_ . 'shop` WHERE `id_shop` = ' . $defaultShop
+    'SELECT `id_shop_group` FROM `' . _DB_PREFIX_ . 'shop` WHERE `id_shop` = ' . $defaultShop,
 );
 if ($defaultShopGroup <= 0) {
     $defaultShopGroup = 1;

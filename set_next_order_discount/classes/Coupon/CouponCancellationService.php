@@ -14,10 +14,8 @@
  */
 namespace Setecom\NextOrderDiscount\Coupon;
 
-use RuntimeException;
 use Setecom\NextOrderDiscount\Logger\ModuleLogger;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
-use Throwable;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -57,13 +55,13 @@ class CouponCancellationService
 
     /**
      * @param CouponLinkRepository $couponLinkRepository
-     * @param CartRuleAdapter      $cartRuleAdapter
-     * @param ModuleLogger|null    $logger               optional structured logger
+     * @param CartRuleAdapter $cartRuleAdapter
+     * @param ModuleLogger|null $logger optional structured logger
      */
     public function __construct(
         CouponLinkRepository $couponLinkRepository,
         CartRuleAdapter $cartRuleAdapter,
-        ModuleLogger $logger = null
+        ?ModuleLogger $logger = null,
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->cartRuleAdapter = $cartRuleAdapter;
@@ -74,8 +72,8 @@ class CouponCancellationService
      * Cancels every non-terminal coupon issued for a reversed source order.
      *
      * @param int $idOrderSource the canceled/refunded order
-     * @param int $idOrderState  the triggering order state (recorded in metadata)
-     * @param int $idShop        optional shop filter (0 = any shop)
+     * @param int $idOrderState the triggering order state (recorded in metadata)
+     * @param int $idShop optional shop filter (0 = any shop)
      *
      * @return array summary counters: canceled, deactivated, skipped, errors
      */
@@ -96,7 +94,7 @@ class CouponCancellationService
                 if ($result) {
                     ++$summary['deactivated'];
                 }
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 // One coupon's failure must never abort the rest or break the order.
                 ++$summary['errors'];
             }
@@ -109,7 +107,7 @@ class CouponCancellationService
      * Applies the cancellation transition to one coupon link.
      *
      * @param array $link
-     * @param int   $idOrderState
+     * @param int $idOrderState
      *
      * @return bool|null null when already terminal (skipped); otherwise true/false
      *                   depending on whether its CartRule was deactivated
@@ -137,7 +135,7 @@ class CouponCancellationService
         if (!$persisted) {
             // Surface the failure so it is counted as an error; the next hook pass
             // (still non-terminal) retries the same transition safely.
-            throw new RuntimeException('Failed to persist cancellation of coupon link ' . $idLink . '.');
+            throw new \RuntimeException('Failed to persist cancellation of coupon link ' . $idLink . '.');
         }
 
         $this->logCancellation($link, $idLink, $idOrderState);
@@ -150,7 +148,7 @@ class CouponCancellationService
      * preserving any existing keys. Best-effort: unreadable metadata is replaced.
      *
      * @param array $link
-     * @param int   $idOrderState
+     * @param int $idOrderState
      *
      * @return string JSON metadata
      */
@@ -174,8 +172,8 @@ class CouponCancellationService
 
     /**
      * @param array $link
-     * @param int   $idLink
-     * @param int   $idOrderState
+     * @param int $idLink
+     * @param int $idOrderState
      *
      * @return void
      */
@@ -196,7 +194,7 @@ class CouponCancellationService
                 'id_order_state' => (int) $idOrderState,
             ],
             'order:' . $idOrderSource,
-            self::LOG_CHANNEL
+            self::LOG_CHANNEL,
         );
     }
 }

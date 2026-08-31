@@ -30,11 +30,11 @@ if (!defined('_PS_VERSION_')) {
 class RulePresenter
 {
     /**
-     * @param array  $rule         a rule row with 'conditions'
+     * @param array $rule a rule row with 'conditions'
      * @param string $currencySign
-     * @param array  $statusNames  id_order_state => localized name
-     * @param array  $labels       translated labels: free_shipping, order_total,
-     *                             order_no, date_window, conditions[type]
+     * @param array $statusNames id_order_state => localized name
+     * @param array $labels translated labels: free_shipping, order_total,
+     *                      order_no, date_window, conditions[type]
      *
      * @return array
      */
@@ -64,10 +64,10 @@ class RulePresenter
      * Structured targeting badges for the rules list: each is a colored pill with
      * an icon, a variant (all/include/exclude/date) and its text.
      *
-     * @param array  $rule
-     * @param array  $conditions
+     * @param array $rule
+     * @param array $conditions
      * @param string $currencySign
-     * @param array  $labels
+     * @param array $labels
      *
      * @return array list of ['variant' => string, 'icon' => string, 'text' => string]
      */
@@ -125,7 +125,7 @@ class RulePresenter
 
     /**
      * @param string $variant all|include|exclude|date
-     * @param string $icon    material icon name
+     * @param string $icon material icon name
      * @param string $text
      *
      * @return array
@@ -136,9 +136,9 @@ class RulePresenter
     }
 
     /**
-     * @param array  $rule
+     * @param array $rule
      * @param string $currencySign
-     * @param array  $labels
+     * @param array $labels
      *
      * @return string
      */
@@ -179,10 +179,10 @@ class RulePresenter
     }
 
     /**
-     * @param array  $rule
-     * @param array  $conditions
+     * @param array $rule
+     * @param array $conditions
      * @param string $currencySign
-     * @param array  $labels
+     * @param array $labels
      *
      * @return array short human-readable condition strings
      */
