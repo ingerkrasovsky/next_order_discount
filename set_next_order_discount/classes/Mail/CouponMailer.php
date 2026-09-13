@@ -47,6 +47,7 @@ class CouponMailer
     private $couponLinkRepository;
     private $templateResolver;
     private $ruleEmailRepository;
+    private $defaultEmailProvider;
 
     /**
      * @param CouponLinkRepository $couponLinkRepository
@@ -61,6 +62,7 @@ class CouponMailer
         $this->couponLinkRepository = $couponLinkRepository;
         $this->templateResolver = $templateResolver;
         $this->ruleEmailRepository = $ruleEmailRepository;
+        $this->defaultEmailProvider = new DefaultEmailProvider();
     }
 
     /**
@@ -72,11 +74,14 @@ class CouponMailer
      *                    (manual back-office resend). The lifecycle status
      *                    is never regressed — only `emailed_at` is refreshed
      *                    for a coupon that is past the "created" stage.
+     * @param int $forceLang when > 0, the language id the email is rendered and
+     *                    sent in, overriding the customer's own language (manual
+     *                    back-office send). 0 keeps the customer's language.
      *
      * @return bool true when the email was sent (or was already sent), false on
      *              a missing/invalid record or a mail delivery failure
      */
-    public function sendForCouponLink($idCouponLink, $force = false)
+    public function sendForCouponLink($idCouponLink, $force = false, $forceLang = 0)
     {
         $link = $this->couponLinkRepository->findById((int) $idCouponLink);
         if ($link === null) {
@@ -100,38 +105,20 @@ class CouponMailer
         }
 
         $idShop = (int) $link['id_shop'];
-        $idLang = $this->resolveCustomerLang($customer, $idShop);
-        $iso = $this->templateResolver->resolveIso($idLang, $idShop);
+        $idLang = $this->resolveSendLang($customer, $idShop, $forceLang);
+        $iso = $this->defaultEmailProvider->resolveIso($idLang, $idShop);
 
         try {
             $templateVars = $this->buildTemplateVars($link, $customer, $idShop, $idLang, $iso);
 
-            $custom = $this->resolveRuleEmail(
+            $content = $this->resolveRuleEmail(
                 (int) $link['id_snod_rule'],
                 RuleEmailRepository::TYPE_COUPON,
                 $idLang,
                 $idShop,
             );
 
-            if ($custom !== null) {
-                $sent = $this->sendCustom($idLang, $custom, $templateVars, $customer, $idShop);
-            } else {
-                $sent = \Mail::send(
-                    $idLang,
-                    $this->templateResolver->getTemplateName(),
-                    $this->templateResolver->getSubject($iso),
-                    $templateVars,
-                    $customer->email,
-                    trim($customer->firstname . ' ' . $customer->lastname),
-                    null,
-                    null,
-                    null,
-                    null,
-                    $this->templateResolver->getTemplatePath(),
-                    false,
-                    $idShop,
-                );
-            }
+            $sent = $this->sendWrapped($idLang, $iso, $content, $templateVars, $customer, $idShop);
         } catch (\Exception $e) {
             // The mailer never throws: a transport/config error leaves the task
             // pending and retryable, and the coupon is not flagged as emailed.
@@ -155,67 +142,73 @@ class CouponMailer
     }
 
     /**
-     * Returns the rule's own email content for a type, preferring the customer's
-     * language and falling back to the shop's default language. Returns null when
-     * the rule has no usable custom content, so the caller uses the shipped
-     * default template.
+     * Returns the email content (subject + HTML) to send for a rule: the rule's
+     * own stored content, preferring the send language and falling back to the
+     * shop's default language. When the rule has no usable stored content for
+     * either language, the shipped default content is used as a last resort so a
+     * blank email is never sent. The content is always injected into the
+     * pass-through coupon template — the template itself carries no content.
      *
      * @param int $idRule
      * @param string $emailType
      * @param int $idLang
      * @param int $idShop
      *
-     * @return array|null ['subject' => string, 'html' => string]
+     * @return array ['subject' => string, 'html' => string]
      */
     private function resolveRuleEmail($idRule, $emailType, $idLang, $idShop)
     {
         $idRule = (int) $idRule;
-        if ($idRule <= 0) {
-            return null;
-        }
+        if ($idRule > 0) {
+            $candidates = [(int) $idLang];
+            $default = (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
+            if ($default > 0 && $default !== (int) $idLang) {
+                $candidates[] = $default;
+            }
 
-        $candidates = [(int) $idLang];
-        $default = (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
-        if ($default > 0 && $default !== (int) $idLang) {
-            $candidates[] = $default;
-        }
-
-        foreach ($candidates as $lang) {
-            $content = $this->ruleEmailRepository->findContent($idRule, $emailType, $lang);
-            if ($content !== null && trim((string) $content['html']) !== '') {
-                return $content;
+            foreach ($candidates as $lang) {
+                $content = $this->ruleEmailRepository->findContent($idRule, $emailType, $lang);
+                if ($content !== null && trim((string) $content['html']) !== '') {
+                    return $content;
+                }
             }
         }
 
-        return null;
+        // Last resort: the shipped default content, so a rule that was never saved
+        // through the form (empty stored content) still sends a usable email.
+        return $this->defaultEmailProvider->getDefault($emailType, (int) $idLang);
     }
 
     /**
-     * Sends a rule's custom email: substitutes the template placeholders into the
-     * merchant HTML and subject and delivers it through the generic pass-through
-     * mail template.
+     * Renders the rule's subject and HTML body — substituting the template
+     * placeholders — and delivers it through the pass-through coupon template
+     * (mails/<iso>/next_order_discount.*), a thin shell of {snod_body_html} /
+     * {snod_body_txt} that carries only the merchant's own body.
      *
      * @param int $idLang
-     * @param array $custom ['subject' => string, 'html' => string]
+     * @param string $iso resolved template ISO code (for the subject fallback)
+     * @param array $content ['subject' => string, 'html' => string]
      * @param array $templateVars placeholder map
      * @param \Customer $customer
      * @param int $idShop
      *
      * @return bool
      */
-    private function sendCustom($idLang, array $custom, array $templateVars, \Customer $customer, $idShop)
+    private function sendWrapped($idLang, $iso, array $content, array $templateVars, \Customer $customer, $idShop)
     {
-        // The core mailer embeds the shop logo (cid:shop_logo) for every HTML
-        // email, so map the placeholder to it here — otherwise the embedded image
-        // would arrive as a dangling attachment instead of showing inline.
-        $vars = array_merge($templateVars, ['{shop_logo}' => 'cid:shop_logo']);
-        $subject = strtr((string) $custom['subject'], $vars);
-        $html = strtr((string) $custom['html'], $vars);
+        // The body is injected into the pass-through template via {snod_body_html},
+        // so the core mailer's own {shop_name}/{shop_url}/{shop_logo} substitution
+        // (which runs on the template before the body is inserted) never reaches
+        // it. We therefore resolve those shop placeholders here, mirroring the core
+        // mailer, so they are replaced inside the merchant's own body and subject.
+        $vars = array_merge($templateVars, $this->shopVars($idShop));
+        $subject = strtr((string) $content['subject'], $vars);
+        $html = strtr((string) $content['html'], $vars);
 
         return (bool) \Mail::send(
             $idLang,
-            'custom',
-            $subject !== '' ? $subject : $this->templateResolver->getSubject($this->templateResolver->resolveIso($idLang, $idShop)),
+            $this->templateResolver->getTemplateName(),
+            $subject !== '' ? $subject : $this->defaultEmailProvider->getSubject(RuleEmailRepository::TYPE_COUPON, $iso),
             [
                 '{snod_body_html}' => $html,
                 '{snod_body_txt}' => $this->htmlToText($html),
@@ -230,6 +223,28 @@ class CouponMailer
             false,
             $idShop,
         );
+    }
+
+    /**
+     * The shop placeholders the core mailer normally substitutes, resolved here
+     * so they work inside the merchant's injected body. {shop_logo} maps to the
+     * inline CID the core mailer embeds for every HTML email (otherwise it would
+     * arrive as a dangling attachment).
+     *
+     * @param int $idShop
+     *
+     * @return array
+     */
+    private function shopVars($idShop)
+    {
+        $idShop = (int) $idShop;
+        $shopName = (string) \Configuration::get('PS_SHOP_NAME', null, null, $idShop > 0 ? $idShop : null);
+
+        return [
+            '{shop_name}' => \Tools::safeOutput($shopName),
+            '{shop_url}' => \Tools::getShopDomainSsl(true, true),
+            '{shop_logo}' => 'cid:shop_logo',
+        ];
     }
 
     /**
@@ -286,6 +301,27 @@ class CouponMailer
     }
 
     /**
+     * Resolves the language the email is sent in: an explicit, installed override
+     * (manual back-office send) wins; otherwise the customer's own language, with
+     * the shop default as a final fallback.
+     *
+     * @param \Customer $customer
+     * @param int $idShop
+     * @param int $forceLang overriding language id, or 0 for none
+     *
+     * @return int
+     */
+    private function resolveSendLang(\Customer $customer, $idShop, $forceLang)
+    {
+        $forceLang = (int) $forceLang;
+        if ($forceLang > 0 && \Validate::isLoadedObject(new \Language($forceLang))) {
+            return $forceLang;
+        }
+
+        return $this->resolveCustomerLang($customer, $idShop);
+    }
+
+    /**
      * Falls back to the shop's default language when the customer's language id
      * is not usable.
      *
@@ -320,10 +356,11 @@ class CouponMailer
         $cartRule = new \CartRule((int) $link['id_cart_rule']);
         $currency = $this->resolveCurrency($cartRule, $idShop);
 
-        // {shop_name} is intentionally omitted: the core mailer always fills it
-        // with a shop-scoped, escaped value (Mail::send). {customer_firstname}
-        // is the only customer-controlled value, so it is escaped here as a
-        // defense-in-depth measure before it reaches the raw HTML substitution.
+        // Shop placeholders ({shop_name}, {shop_url}, {shop_logo}) are added later
+        // in shopVars(), since the core mailer's own substitution never reaches the
+        // injected body. {customer_firstname} is the only customer-controlled value,
+        // so it is escaped here as a defense-in-depth measure before it reaches the
+        // raw HTML substitution.
         return [
             '{coupon_code}' => (string) $link['coupon_code'],
             '{coupon_value}' => $this->formatCouponValue($cartRule, $currency, $iso),
@@ -420,7 +457,7 @@ class CouponMailer
         }
 
         if ((bool) $cartRule->free_shipping) {
-            return $this->templateResolver->getFreeShippingLabel($iso);
+            return $this->defaultEmailProvider->getFreeShippingLabel($iso);
         }
 
         return self::EMPTY_VALUE;

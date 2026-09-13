@@ -1,0 +1,38 @@
+/*Custom styles for frontend*/
+
+.introjs-fixParent {
+    position: static !important;
+}
+
+/* Подъём прогресс-бара над затемняющим оверлеем intro.js делается из JS
+ * (tutorial_data_front.js → lift/unlift): у бара много вложенных контекстов
+ * наложения и промежуточных предков, поэтому цепочка предков поднимается
+ * инлайн-стилями с восстановлением исходных значений после тура. */
+
+/* Move close control to the right and render it as a cross icon. */
+.introjs-tooltipbuttons .introjs-skipbutton {
+    float: right;
+    text-decoration: none;
+    font-size: 0;
+    line-height: 1;
+    width: 22px;
+    height: 22px;
+    text-align: center;
+    color: transparent;
+    position: relative;
+}
+
+.introjs-tooltipbuttons .introjs-skipbutton::before {
+    content: '\00d7';
+    position: absolute;
+    inset: 0;
+    color: #777980;
+    font-size: 22px;
+    line-height: 22px;
+    font-weight: 400;
+}
+
+.introjs-tooltipbuttons .introjs-skipbutton:hover::before,
+.introjs-tooltipbuttons .introjs-skipbutton:focus::before {
+    color: #333;
+}

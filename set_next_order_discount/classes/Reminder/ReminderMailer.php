@@ -17,6 +17,7 @@ namespace Setecom\NextOrderDiscount\Reminder;
 use Customer;
 use Language;
 use Mail;
+use Setecom\NextOrderDiscount\Mail\DefaultEmailProvider;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
 use Setecom\NextOrderDiscount\Repository\RuleEmailRepository;
 
@@ -41,21 +42,11 @@ class ReminderMailer
     public const TEMPLATE_NAME = 'reminder_next_order_discount';
     public const MODULE_NAME = 'set_next_order_discount';
 
-    private const FALLBACK_ISO = 'en';
     private const EMPTY_VALUE = '—';
-
-    private const SUBJECTS = [
-        'en' => 'Your discount is waiting — use it before it expires',
-        'ru' => 'Ваша скидка ждёт — успейте воспользоваться до истечения',
-    ];
-
-    private const FREE_SHIPPING_LABELS = [
-        'en' => 'Free shipping',
-        'ru' => 'Бесплатная доставка',
-    ];
 
     private $couponLinkRepository;
     private $ruleEmailRepository;
+    private $defaultEmailProvider;
 
     /**
      * @param CouponLinkRepository $couponLinkRepository
@@ -67,6 +58,7 @@ class ReminderMailer
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->ruleEmailRepository = $ruleEmailRepository;
+        $this->defaultEmailProvider = new DefaultEmailProvider();
     }
 
     /**
@@ -77,11 +69,15 @@ class ReminderMailer
      * @param bool $force when true, resend even if this stage was already
      *                    recorded (manual back-office send). The coupon
      *                    must still be usable and not expired.
+     * @param int $forceLang when > 0, the language id the reminder is rendered
+     *                    and sent in, overriding the customer's own language
+     *                    (manual back-office send). 0 keeps the customer's
+     *                    language.
      *
      * @return bool true when sent (or nothing needed to be sent), false on a
      *              missing/invalid record or a mail delivery failure
      */
-    public function sendReminder($idCouponLink, $reminderNumber, $force = false)
+    public function sendReminder($idCouponLink, $reminderNumber, $force = false, $forceLang = 0)
     {
         $reminderNumber = ((int) $reminderNumber === 2) ? 2 : 1;
 
@@ -102,8 +98,8 @@ class ReminderMailer
         }
 
         $idShop = (int) $link['id_shop'];
-        $idLang = $this->resolveCustomerLang($customer, $idShop);
-        $iso = $this->resolveIso($idLang, $idShop);
+        $idLang = $this->resolveSendLang($customer, $idShop, $forceLang);
+        $iso = $this->defaultEmailProvider->resolveIso($idLang, $idShop);
 
         try {
             $templateVars = $this->buildTemplateVars($link, $customer, $idShop, $idLang, $iso);
@@ -111,27 +107,9 @@ class ReminderMailer
             $emailType = $reminderNumber === 2
                 ? RuleEmailRepository::TYPE_REMINDER_2
                 : RuleEmailRepository::TYPE_REMINDER_1;
-            $custom = $this->resolveRuleEmail((int) $link['id_snod_rule'], $emailType, $idLang, $idShop);
+            $content = $this->resolveRuleEmail((int) $link['id_snod_rule'], $emailType, $idLang, $idShop);
 
-            if ($custom !== null) {
-                $sent = $this->sendCustom($idLang, $iso, $custom, $templateVars, $customer, $idShop);
-            } else {
-                $sent = \Mail::send(
-                    $idLang,
-                    self::TEMPLATE_NAME,
-                    $this->getSubject($iso),
-                    $templateVars,
-                    $customer->email,
-                    trim($customer->firstname . ' ' . $customer->lastname),
-                    null,
-                    null,
-                    null,
-                    null,
-                    $this->getTemplatePath(),
-                    false,
-                    $idShop,
-                );
-            }
+            $sent = $this->sendWrapped($idLang, $iso, $content, $templateVars, $customer, $idShop);
         } catch (\Exception $e) {
             // The mailer never throws: a transport/config error leaves the
             // reminder retryable and the coupon unchanged.
@@ -152,66 +130,73 @@ class ReminderMailer
     }
 
     /**
-     * Returns the rule's own email content for a reminder type, preferring the
-     * customer's language and falling back to the shop default. Null means "use
-     * the shipped default template".
+     * Returns the reminder content (subject + HTML) to send for a rule: the
+     * rule's own stored content, preferring the send language and falling back to
+     * the shop default. When the rule has no usable stored content for either
+     * language, the shipped default content is used as a last resort so a blank
+     * reminder is never sent. The content is always injected into the
+     * pass-through reminder template — the template itself carries no content.
      *
      * @param int $idRule
      * @param string $emailType
      * @param int $idLang
      * @param int $idShop
      *
-     * @return array|null
+     * @return array ['subject' => string, 'html' => string]
      */
     private function resolveRuleEmail($idRule, $emailType, $idLang, $idShop)
     {
         $idRule = (int) $idRule;
-        if ($idRule <= 0) {
-            return null;
-        }
+        if ($idRule > 0) {
+            $candidates = [(int) $idLang];
+            $default = (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
+            if ($default > 0 && $default !== (int) $idLang) {
+                $candidates[] = $default;
+            }
 
-        $candidates = [(int) $idLang];
-        $default = (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
-        if ($default > 0 && $default !== (int) $idLang) {
-            $candidates[] = $default;
-        }
-
-        foreach ($candidates as $lang) {
-            $content = $this->ruleEmailRepository->findContent($idRule, $emailType, $lang);
-            if ($content !== null && trim((string) $content['html']) !== '') {
-                return $content;
+            foreach ($candidates as $lang) {
+                $content = $this->ruleEmailRepository->findContent($idRule, $emailType, $lang);
+                if ($content !== null && trim((string) $content['html']) !== '') {
+                    return $content;
+                }
             }
         }
 
-        return null;
+        // Last resort: the shipped default content, so a rule that was never saved
+        // through the form (empty stored content) still sends a usable reminder.
+        return $this->defaultEmailProvider->getDefault($emailType, (int) $idLang);
     }
 
     /**
-     * Sends a rule's custom reminder: substitutes placeholders into the merchant
-     * HTML and subject and delivers it through the generic pass-through template.
+     * Renders the rule's reminder subject and HTML body — substituting the
+     * placeholders — and delivers it through the pass-through reminder template
+     * (mails/<iso>/reminder_next_order_discount.*), a thin shell of
+     * {snod_body_html} / {snod_body_txt} that carries only the merchant's body.
      *
      * @param int $idLang
-     * @param string $iso
-     * @param array $custom
+     * @param string $iso resolved template ISO code (for the subject fallback)
+     * @param array $content ['subject' => string, 'html' => string]
      * @param array $templateVars
      * @param \Customer $customer
      * @param int $idShop
      *
      * @return bool
      */
-    private function sendCustom($idLang, $iso, array $custom, array $templateVars, \Customer $customer, $idShop)
+    private function sendWrapped($idLang, $iso, array $content, array $templateVars, \Customer $customer, $idShop)
     {
-        // The core mailer embeds the shop logo (cid:shop_logo) for every HTML
-        // email, so map the placeholder to it here to display it inline instead
-        // of leaving it as a dangling attachment.
-        $vars = array_merge($templateVars, ['{shop_logo}' => 'cid:shop_logo']);
-        $subject = strtr((string) $custom['subject'], $vars);
-        $html = strtr((string) $custom['html'], $vars);
+        // The body is injected into the pass-through template via {snod_body_html},
+        // so the core mailer's own {shop_name}/{shop_url}/{shop_logo} substitution
+        // (which runs on the template before the body is inserted) never reaches
+        // it. We therefore resolve those shop placeholders here, mirroring the core
+        // mailer, so they are replaced inside the merchant's own body and subject.
+        $vars = array_merge($templateVars, $this->shopVars($idShop));
+        $subject = strtr((string) $content['subject'], $vars);
+        $html = strtr((string) $content['html'], $vars);
 
         return (bool) \Mail::send(
             $idLang,
-            'custom',
-            $subject !== '' ? $subject : $this->getSubject($iso),
+            self::TEMPLATE_NAME,
+            $subject !== '' ? $subject : $this->defaultEmailProvider->getSubject(RuleEmailRepository::TYPE_REMINDER_1, $iso),
             [
                 '{snod_body_html}' => $html,
                 '{snod_body_txt}' => $this->htmlToText($html),
@@ -226,6 +211,28 @@ class ReminderMailer
             false,
             $idShop,
         );
+    }
+
+    /**
+     * The shop placeholders the core mailer normally substitutes, resolved here
+     * so they work inside the merchant's injected body. {shop_logo} maps to the
+     * inline CID the core mailer embeds for every HTML email (otherwise it would
+     * arrive as a dangling attachment).
+     *
+     * @param int $idShop
+     *
+     * @return array
+     */
+    private function shopVars($idShop)
+    {
+        $idShop = (int) $idShop;
+        $shopName = (string) \Configuration::get('PS_SHOP_NAME', null, null, $idShop > 0 ? $idShop : null);
+
+        return [
+            '{shop_name}' => \Tools::safeOutput($shopName),
+            '{shop_url}' => \Tools::getShopDomainSsl(true, true),
+            '{shop_logo}' => 'cid:shop_logo',
+        ];
     }
 
     /**
@@ -310,6 +317,27 @@ class ReminderMailer
     }
 
     /**
+     * Resolves the language the reminder is sent in: an explicit, installed
+     * override (manual back-office send) wins; otherwise the customer's own
+     * language, with the shop default as a final fallback.
+     *
+     * @param \Customer $customer
+     * @param int $idShop
+     * @param int $forceLang overriding language id, or 0 for none
+     *
+     * @return int
+     */
+    private function resolveSendLang(\Customer $customer, $idShop, $forceLang)
+    {
+        $forceLang = (int) $forceLang;
+        if ($forceLang > 0 && \Validate::isLoadedObject(new \Language($forceLang))) {
+            return $forceLang;
+        }
+
+        return $this->resolveCustomerLang($customer, $idShop);
+    }
+
+    /**
      * @param \Customer $customer
      * @param int $idShop
      *
@@ -326,65 +354,6 @@ class ReminderMailer
     }
 
     /**
-     * Resolves the ISO code whose reminder template files will be used, mirroring
-     * the core mailer fallback order (customer language, shop default, English)
-     * so the subject matches the template body's language.
-     *
-     * @param int $idLang
-     * @param int $idShop
-     *
-     * @return string
-     */
-    private function resolveIso($idLang, $idShop)
-    {
-        foreach ($this->buildIsoCandidates((int) $idLang, (int) $idShop) as $iso) {
-            if ($this->templateExists($iso)) {
-                return $iso;
-            }
-        }
-
-        return self::FALLBACK_ISO;
-    }
-
-    /**
-     * @param int $idLang
-     * @param int $idShop
-     *
-     * @return string[]
-     */
-    private function buildIsoCandidates($idLang, $idShop)
-    {
-        $candidates = [];
-
-        $customerIso = $idLang > 0 ? (string) \Language::getIsoById($idLang) : '';
-        if ($customerIso !== '') {
-            $candidates[] = $customerIso;
-        }
-
-        $defaultLangId = (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
-        $defaultIso = $defaultLangId > 0 ? (string) \Language::getIsoById($defaultLangId) : '';
-        if ($defaultIso !== '') {
-            $candidates[] = $defaultIso;
-        }
-
-        $candidates[] = self::FALLBACK_ISO;
-
-        return array_values(array_unique($candidates));
-    }
-
-    /**
-     * @param string $iso
-     *
-     * @return bool
-     */
-    private function templateExists($iso)
-    {
-        $base = $this->getTemplatePath() . $iso . '/' . self::TEMPLATE_NAME;
-
-        return is_file($base . '.html') && is_file($base . '.txt');
-    }
-
-    /**
      * @return string absolute path to the module's mails/ directory
      */
     private function getTemplatePath()
@@ -393,21 +362,10 @@ class ReminderMailer
     }
 
     /**
-     * @param string $iso
-     *
-     * @return string localized subject
-     */
-    private function getSubject($iso)
-    {
-        $iso = (string) $iso;
-
-        return isset(self::SUBJECTS[$iso]) ? self::SUBJECTS[$iso] : self::SUBJECTS[self::FALLBACK_ISO];
-    }
-
-    /**
-     * Builds the placeholder map consumed by the reminder template. {shop_name}
-     * is intentionally omitted: the core mailer fills it with a shop-scoped,
-     * escaped value. {customer_firstname} is the only customer-controlled value,
+     * Builds the placeholder map consumed by the reminder template. Shop
+     * placeholders ({shop_name}, {shop_url}, {shop_logo}) are added later in
+     * shopVars(), since the core mailer's own substitution never reaches the
+     * injected body. {customer_firstname} is the only customer-controlled value,
      * so it is escaped before it reaches the raw HTML substitution.
      *
      * @param array $link
@@ -513,11 +471,7 @@ class ReminderMailer
         }
 
         if ((bool) $cartRule->free_shipping) {
-            $iso = (string) $iso;
-
-            return isset(self::FREE_SHIPPING_LABELS[$iso])
-                ? self::FREE_SHIPPING_LABELS[$iso]
-                : self::FREE_SHIPPING_LABELS[self::FALLBACK_ISO];
+            return $this->defaultEmailProvider->getFreeShippingLabel($iso);
         }
 
         return self::EMPTY_VALUE;

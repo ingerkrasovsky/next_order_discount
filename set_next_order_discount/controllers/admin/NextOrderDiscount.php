@@ -320,6 +320,7 @@ class NextOrderDiscountController extends ModuleAdminController
             'SELECT cl.*,'
             . ' CONCAT(c.`firstname`, " ", c.`lastname`) AS customer_name,'
             . ' c.`email` AS customer_email,'
+            . ' c.`id_lang` AS customer_id_lang,'
             . ' r.`name` AS rule_name,'
             . ' r.`reminder_enabled` AS rule_reminder_enabled,'
             . ' r.`reminder1_days` AS rule_reminder1_days,'
@@ -332,6 +333,24 @@ class NextOrderDiscountController extends ModuleAdminController
             . ' LIMIT ' . (int) $offset . ', ' . (int) $perPage,
         );
         $rows = is_array($rows) ? $rows : [];
+
+        // Preselect the send-language dropdown with the customer's own language
+        // (the language the mailer would use automatically), falling back to the
+        // shop default when that language is not installed.
+        $languages = $this->getFormLanguages();
+        $installedLangIds = array_map(function ($lang) {
+            return (int) $lang['id_lang'];
+        }, $languages);
+        $defaultLangId = (int) $this->context->language->id;
+        foreach ($rows as &$row) {
+            $customerLang = (int) $row['customer_id_lang'];
+            $row['send_lang'] = in_array($customerLang, $installedLangIds, true) ? $customerLang : $defaultLangId;
+            // Localized display of the datetime columns (employee/shop locale, with
+            // time), leaving empty/zero dates blank so the template shows a dash.
+            $row['valid_to_display'] = $this->displayCouponDate(isset($row['valid_to']) ? $row['valid_to'] : null);
+            $row['generated_at_display'] = $this->displayCouponDate(isset($row['generated_at']) ? $row['generated_at'] : null);
+        }
+        unset($row);
 
         $baseUrl = $this->adminLink . '&tab=coupons';
         if ($statusFilter !== '') {
@@ -354,7 +373,27 @@ class NextOrderDiscountController extends ModuleAdminController
             'snod_total_coupons' => $total,
             'snod_coupons_base_url' => $baseUrl,
             'snod_admin_token' => (string) $this->token,
+            'snod_languages' => $languages,
         ]);
+    }
+
+    /**
+     * Formats a coupon datetime for the back-office list using the current
+     * locale (with time). Empty or zero dates return '' so the template renders a
+     * dash instead of a bogus date.
+     *
+     * @param string|null $date
+     *
+     * @return string
+     */
+    private function displayCouponDate($date)
+    {
+        $date = (string) $date;
+        if ($date === '' || strpos($date, '0000-00-00') === 0) {
+            return '';
+        }
+
+        return (string) Tools::displayDate($date, true);
     }
 
     /**
@@ -1109,7 +1148,7 @@ class NextOrderDiscountController extends ModuleAdminController
             ]);
         }
 
-        $sent = $this->module->getCouponMailer()->sendForCouponLink($idCouponLink, true);
+        $sent = $this->module->getCouponMailer()->sendForCouponLink($idCouponLink, true, $this->getRequestedSendLang());
         if (!$sent) {
             $this->respondJson([
                 'success' => false,
@@ -1163,7 +1202,7 @@ class NextOrderDiscountController extends ModuleAdminController
             ]);
         }
 
-        $sent = $this->module->getReminderMailer()->sendReminder($idCouponLink, $reminderNumber, true);
+        $sent = $this->module->getReminderMailer()->sendReminder($idCouponLink, $reminderNumber, true, $this->getRequestedSendLang());
         if (!$sent) {
             $this->respondJson([
                 'success' => false,
@@ -1176,6 +1215,31 @@ class NextOrderDiscountController extends ModuleAdminController
             'success' => true,
             'message' => $this->trans('Reminder email sent.', [], $domain),
         ]);
+    }
+
+    /**
+     * Reads the requested send language from a manual send/resend request and
+     * validates it against the shop's installed languages. Returns 0 (meaning
+     * "keep the customer's own language") when none was requested or the id is
+     * not an installed language, so an out-of-range value can never force an
+     * unusable language.
+     *
+     * @return int an installed language id, or 0
+     */
+    private function getRequestedSendLang()
+    {
+        $idLang = (int) Tools::getValue('id_lang');
+        if ($idLang <= 0) {
+            return 0;
+        }
+
+        foreach ($this->getFormLanguages() as $lang) {
+            if ((int) $lang['id_lang'] === $idLang) {
+                return $idLang;
+            }
+        }
+
+        return 0;
     }
 
     /**
@@ -1244,7 +1308,7 @@ class NextOrderDiscountController extends ModuleAdminController
         try {
             $sent = Mail::Send(
                 $idLang,
-                'custom',
+                'next_order_discount',
                 $finalSubject,
                 [
                     '{snod_body_html}' => $finalHtml,
@@ -1285,11 +1349,12 @@ class NextOrderDiscountController extends ModuleAdminController
             '{coupon_value}' => '10%',
             '{valid_to}' => date($format, strtotime('+30 days')),
             '{shop_name}' => (string) Configuration::get('PS_SHOP_NAME', null, null, (int) $this->context->shop->id),
-            '{customer_firstname}' => 'Alex',
-            '{customer_lastname}' => 'Morgan',
-            '{customer_fullname}' => 'Alex Morgan',
+            '{shop_url}' => Tools::getShopDomainSsl(true, true),
+            '{customer_firstname}' => 'John',
+            '{customer_lastname}' => 'Doe',
+            '{customer_fullname}' => 'John Doe',
             '{customer_title}' => 'Mr',
-            '{customer_email}' => 'alex.morgan@example.com',
+            '{customer_email}' => 'john.doe@example.com',
             '{minimum_amount}' => '—',
         ];
     }

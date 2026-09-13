@@ -80,6 +80,190 @@
     overflow: visible;
 }
 
+.help-box {
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    width: 1.4rem;
+    height: 1.2rem;
+    padding: 0;
+    margin: 0 5px 2px;
+    margin-top: 0px;
+    line-height: 19px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.help-box::after {
+    font-family: "Material Icons", Arial, sans-serif;
+    font-size: 19px;
+    color: #25b9d7;
+    content: "";
+    -webkit-transition: .25s ease-out;
+    transition: .25s ease-out;
+}
+
+.popover {
+    min-width: 300px;
+    background-color: #333333;
+    color: #ffffff;
+    border: 1px solid #555555;
+}
+
+.popover .popover-body {
+    color: #ffffff;
+}
+
+/* Dashboard tab */
+.snod-dash-intro {
+    padding: 0 15px;
+    margin: 12px 0 0;
+}
+
+.snod-dash-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0 15px 15px;
+}
+
+.snod-dash-card {
+    flex: 1 1 140px;
+    min-width: 140px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 14px 16px;
+    background: #fafbfc;
+}
+
+.snod-dash-card-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: #363a41;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.snod-dash-card-label,
+.snod-dash-section-title,
+.snod-dash-conversion {
+    display: flex;
+    align-items: center;
+}
+
+.snod-dash-card-label {
+    gap: 4px;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #777;
+    text-transform: uppercase;
+}
+
+.snod-dash-progress {
+    height: 6px;
+    margin: 8px 0 2px;
+}
+
+.snod-dash-card-percent {
+    color: #777;
+}
+
+.snod-dash-section {
+    padding: 0 15px;
+}
+
+.snod-dash-section-title {
+    gap: 6px;
+    margin: 14px 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.snod-dash-conversion {
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 0 15px 15px;
+}
+
+.snod-dash-queue-section {
+    padding-top: 1px;
+    padding-bottom: 15px;
+    border-top: 1px solid #eaebec;
+}
+
+/* Dashboard tooltips / help */
+.snod-dash-help {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    color: #b0b6bd;
+    cursor: help;
+    outline: none;
+}
+
+.snod-dash-help:hover,
+.snod-dash-help:focus {
+    color: #25b9d7;
+}
+
+.snod-dash-help .material-icons {
+    font-size: 15px;
+    line-height: 1;
+}
+
+.snod-dash-help::after {
+    content: attr(data-snod-tip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    width: 240px;
+    max-width: 60vw;
+    padding: 8px 10px;
+    background: #363a41;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.4;
+    text-transform: none;
+    font-weight: normal;
+    letter-spacing: normal;
+    white-space: normal;
+    text-align: left;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .18);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .12s ease;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.snod-dash-help::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 3px);
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #363a41;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .12s ease;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.snod-dash-help:hover::after,
+.snod-dash-help:focus::after,
+.snod-dash-help:hover::before,
+.snod-dash-help:focus::before {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* ---------------------------------------------------------------------------
  * Targeting badges (rules list) — colored pills, one per active condition.
  * ------------------------------------------------------------------------- */

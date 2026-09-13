@@ -295,16 +295,24 @@
             });
         }
 
+        function langParam(button) {
+            var cell = button.closest('td');
+            var select = cell ? cell.querySelector('.snod-send-lang') : null;
+            return (select && select.value) ? '&id_lang=' + encodeURIComponent(select.value) : '';
+        }
+
         Array.prototype.forEach.call(root.querySelectorAll('.snod-resend-coupon'), function (button) {
             bind(button, function (b) {
-                return ajaxUrl + '&ajax=1&action=resendCouponEmail&id_coupon_link=' + encodeURIComponent(b.getAttribute('data-id'));
+                return ajaxUrl + '&ajax=1&action=resendCouponEmail&id_coupon_link=' + encodeURIComponent(b.getAttribute('data-id')) +
+                    langParam(b);
             });
         });
 
         Array.prototype.forEach.call(root.querySelectorAll('.snod-send-reminder'), function (button) {
             bind(button, function (b) {
                 return ajaxUrl + '&ajax=1&action=sendReminderEmail&id_coupon_link=' + encodeURIComponent(b.getAttribute('data-id')) +
-                    '&reminder=' + encodeURIComponent(b.getAttribute('data-reminder'));
+                    '&reminder=' + encodeURIComponent(b.getAttribute('data-reminder')) +
+                    langParam(b);
             });
         });
     }

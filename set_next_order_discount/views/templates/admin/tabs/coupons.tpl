@@ -107,10 +107,18 @@
                                 {/if}
                             {/if}
                         </td>
-                        <td>{if $coupon.valid_to}{$coupon.valid_to|escape:'html':'UTF-8'}{else}<span class="text-muted">&mdash;</span>{/if}</td>
-                        <td>{if $coupon.generated_at}{$coupon.generated_at|escape:'html':'UTF-8'}{else}<span class="text-muted">&mdash;</span>{/if}</td>
+                        <td>{if $coupon.valid_to_display}{$coupon.valid_to_display|escape:'html':'UTF-8'}{else}<span class="text-muted">&mdash;</span>{/if}</td>
+                        <td>{if $coupon.generated_at_display}{$coupon.generated_at_display|escape:'html':'UTF-8'}{else}<span class="text-muted">&mdash;</span>{/if}</td>
                         <td class="text-right" style="white-space:nowrap;">
                             {if $coupon.status != 'used' && $coupon.status != 'expired' && $coupon.status != 'canceled'}
+                                {if $snod_languages|count > 1}
+                                    <select class="snod-send-lang" style="max-width:110px;display:inline-block;vertical-align:middle;margin-right:4px;"
+                                            title="{l s='Language of the email to send' d='Modules.Setnextorderdiscount.Admin'}">
+                                        {foreach from=$snod_languages item=lang}
+                                            <option value="{$lang.id_lang|intval}"{if $lang.id_lang == $coupon.send_lang} selected="selected"{/if}>{$lang.iso_code|escape:'html':'UTF-8'|upper}</option>
+                                        {/foreach}
+                                    </select>
+                                {/if}
                                 <div class="btn-group" role="group">
                                     <button type="button"
                                             class="btn btn-default btn-sm snod-resend-coupon"

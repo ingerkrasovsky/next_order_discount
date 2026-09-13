@@ -44,6 +44,7 @@ use Setecom\NextOrderDiscount\Cron\CronSecurityService;
 use Setecom\NextOrderDiscount\Cron\LockManager;
 use Setecom\NextOrderDiscount\Logger\ModuleLogger;
 use Setecom\NextOrderDiscount\Mail\CouponMailer;
+use Setecom\NextOrderDiscount\Mail\MailTemplateInstaller;
 use Setecom\NextOrderDiscount\Mail\MailTemplateResolver;
 use Setecom\NextOrderDiscount\Queue\CouponEmailHandler;
 use Setecom\NextOrderDiscount\Queue\QueueRetryPolicy;
@@ -68,6 +69,7 @@ class set_next_order_discount extends Module
     private const MODULE_HOOKS = [
         'actionValidateOrder',
         'actionOrderStatusPostUpdate',
+        'actionObjectLanguageAddAfter',
     ];
 
     public function __construct()
@@ -122,6 +124,11 @@ class set_next_order_discount extends Module
         if (!$this->registerModuleHooks()) {
             return false;
         }
+
+        // Materialize the pass-through mail shells for every installed language.
+        // Best-effort: delivery never depends on it (Mail::send falls back to the
+        // shipped en/ shell), so a non-writable mails/ dir must not block install.
+        (new MailTemplateInstaller())->installForAllLanguages();
 
         return $this->installTab();
     }
@@ -226,6 +233,27 @@ class set_next_order_discount extends Module
         // already marked used here is skipped.
         $this->processOrderForRedemption($order);
         $this->processOrderForCoupon($order, $orderState);
+    }
+
+    /**
+     * When a new shop language is added (including via a language pack, which goes
+     * through Language::add()), materialize the pass-through mail shell for its
+     * ISO. Otherwise Mail::send would fall back to the shipped en/ shell and log a
+     * "template missing" entry for that language on every email. Best-effort: a
+     * write failure never disrupts the language creation.
+     *
+     * @param array $params ['object' => Language]
+     *
+     * @return void
+     */
+    public function hookActionObjectLanguageAddAfter(array $params)
+    {
+        $language = isset($params['object']) ? $params['object'] : null;
+        if (!($language instanceof Language) || empty($language->iso_code)) {
+            return;
+        }
+
+        (new MailTemplateInstaller())->installForIso((string) $language->iso_code);
     }
 
     /**

@@ -18,7 +18,10 @@
     {* Setup helper                                                        *}
     {* ------------------------------------------------------------------ *}
     <div class="panel">
-        <h3><i class="icon icon-magic"></i> {l s='Set up the cron' d='Modules.Setnextorderdiscount.Admin'}</h3>
+        <div class="panel-heading">
+            <i class="material-icons">schedule</i>
+            {l s='Set up the cron' d='Modules.Setnextorderdiscount.Admin'}
+        </div>
         <p class="text-muted">
             {l s='The module needs a cron to send queued emails, plan reminders and expire lapsed coupons. The recommended way works on any hosting and is independent of your PHP version, because it calls a URL over HTTP instead of running PHP from the command line.' d='Modules.Setnextorderdiscount.Admin'}
         </p>
@@ -126,7 +129,10 @@
     {* Tasks: schedule, health, per-task URL, manual run                   *}
     {* ------------------------------------------------------------------ *}
     <div class="panel">
-        <h3><i class="icon icon-cogs"></i> {l s='Tasks' d='Modules.Setnextorderdiscount.Admin'}</h3>
+        <div class="panel-heading">
+            <i class="material-icons">settings</i>
+            {l s='Tasks' d='Modules.Setnextorderdiscount.Admin'}
+        </div>
         <p>
             <strong>{l s='Managed cron:' d='Modules.Setnextorderdiscount.Admin'}</strong>
             {if $snod_cron_installed}
@@ -207,7 +213,10 @@
     {* Queue snapshot                                                      *}
     {* ------------------------------------------------------------------ *}
     <div class="panel">
-        <h3><i class="icon icon-tasks"></i> {l s='Dispatch queue' d='Modules.Setnextorderdiscount.Admin'}</h3>
+        <div class="panel-heading">
+            <i class="material-icons">list_alt</i>
+            {l s='Dispatch queue' d='Modules.Setnextorderdiscount.Admin'}
+        </div>
         <div class="snod-targeting-badges">
             <span class="snod-badge snod-badge-all"><i class="material-icons">schedule</i>{l s='Pending' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.pending|intval}</span>
             <span class="snod-badge snod-badge-include"><i class="material-icons">autorenew</i>{l s='Processing' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.processing|intval}</span>

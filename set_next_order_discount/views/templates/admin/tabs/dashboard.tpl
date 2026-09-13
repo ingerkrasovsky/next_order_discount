@@ -13,34 +13,73 @@
  *}
 
 <div class="panel page-content">
-    <h3><i class="icon icon-dashboard"></i> {l s='Coupon funnel' d='Modules.Setnextorderdiscount.Admin'}</h3>
-    <div class="row">
+    <div class="panel-heading">
+        <i class="material-icons">insights</i>
+        {l s='Dashboard' d='Modules.Setnextorderdiscount.Admin'}
+    </div>
+
+    {function name=snod_dash_help}
+        <span class="snod-dash-help" tabindex="0" role="img" aria-label="{$tip|escape:'html':'UTF-8'}" data-snod-tip="{$tip|escape:'html':'UTF-8'}">
+            <i class="material-icons" aria-hidden="true">help_outline</i>
+        </span>
+    {/function}
+
+    <p class="help-block snod-dash-intro">
+        {l s='Coupon lifecycle totals and dispatch queue status for the current shop context.' d='Modules.Setnextorderdiscount.Admin'}
+    </p>
+
+    <div class="snod-dash-section">
+        <h4 class="snod-dash-section-title">
+            {l s='Coupon funnel' d='Modules.Setnextorderdiscount.Admin'}
+            {call name=snod_dash_help tip="{l s='Each card shows a coupon lifecycle total. Percentages use generated coupons as the baseline; lifecycle outcomes can overlap, so they do not need to add up to 100%.' d='Modules.Setnextorderdiscount.Admin'}"}
+        </h4>
+    </div>
+
+    <div class="snod-dash-cards">
         {foreach from=$snod_funnel item=step}
-            <div class="col-lg-2 col-md-4 col-xs-6" style="margin-bottom:15px;">
-                <div style="border:1px solid #e0e6ed; border-radius:6px; padding:14px; text-align:center;">
-                    <div style="font-size:26px; font-weight:bold; color:#2b3a67;">{$step.value|intval}</div>
-                    <div class="text-muted" style="text-transform:uppercase; font-size:11px; letter-spacing:1px;">{$step.label|escape:'html':'UTF-8'}</div>
-                    <div class="progress" style="margin:8px 0 2px; height:6px;">
-                        <div class="progress-bar progress-bar-info" role="progressbar" style="width:{$step.percent|floatval}%;"></div>
-                    </div>
-                    <small class="text-muted">{$step.percent|floatval}%</small>
+            <div class="snod-dash-card">
+                <div class="snod-dash-card-value">{$step.value|intval}</div>
+                <div class="snod-dash-card-label">
+                    {$step.label|escape:'html':'UTF-8'}
+                    {if $step.key == 'generated'}
+                        {call name=snod_dash_help tip="{l s='Coupons created after an order matched an active rule. This is the baseline used for all funnel percentages.' d='Modules.Setnextorderdiscount.Admin'}"}
+                    {elseif $step.key == 'emailed'}
+                        {call name=snod_dash_help tip="{l s='Generated coupons whose initial customer email was sent successfully.' d='Modules.Setnextorderdiscount.Admin'}"}
+                    {elseif $step.key == 'reminded'}
+                        {call name=snod_dash_help tip="{l s='Coupons for which at least one reminder email was sent.' d='Modules.Setnextorderdiscount.Admin'}"}
+                    {elseif $step.key == 'used'}
+                        {call name=snod_dash_help tip="{l s='Coupons redeemed by customers on a later order.' d='Modules.Setnextorderdiscount.Admin'}"}
+                    {elseif $step.key == 'expired'}
+                        {call name=snod_dash_help tip="{l s='Unused coupons whose validity period has ended.' d='Modules.Setnextorderdiscount.Admin'}"}
+                    {elseif $step.key == 'canceled'}
+                        {call name=snod_dash_help tip="{l s='Coupons voided after the originating order moved to a configured cancellation status.' d='Modules.Setnextorderdiscount.Admin'}"}
+                    {/if}
                 </div>
+                <div class="progress snod-dash-progress">
+                    <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="{$step.percent|floatval}" aria-valuemin="0" aria-valuemax="100" style="width:{$step.percent|floatval}%;"></div>
+                </div>
+                <small class="snod-dash-card-percent">{$step.percent|floatval}%</small>
             </div>
         {/foreach}
     </div>
-    <p class="text-muted" style="margin-top:10px;">
+
+    <p class="help-block snod-dash-conversion">
         {l s='Conversion (used vs generated):' d='Modules.Setnextorderdiscount.Admin'}
         <strong>{$snod_conversion_rate|floatval}%</strong>
         &mdash; {l s='based on' d='Modules.Setnextorderdiscount.Admin'} {$snod_funnel_generated|intval} {l s='generated coupons' d='Modules.Setnextorderdiscount.Admin'}.
+        {call name=snod_dash_help tip="{l s='Conversion rate equals used coupons divided by generated coupons for the current shop context.' d='Modules.Setnextorderdiscount.Admin'}"}
     </p>
-</div>
 
-<div class="panel">
-    <h3><i class="icon icon-tasks"></i> {l s='Dispatch queue' d='Modules.Setnextorderdiscount.Admin'}</h3>
-    <div class="snod-targeting-badges">
-        <span class="snod-badge snod-badge-all"><i class="material-icons">schedule</i>{l s='Pending' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.pending|intval}</span>
-        <span class="snod-badge snod-badge-include"><i class="material-icons">autorenew</i>{l s='Processing' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.processing|intval}</span>
-        <span class="snod-badge snod-badge-success"><i class="material-icons">check_circle</i>{l s='Done' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.done|intval}</span>
-        <span class="snod-badge snod-badge-danger"><i class="material-icons">error</i>{l s='Failed' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.failed|intval}</span>
+    <div class="snod-dash-section snod-dash-queue-section">
+        <h4 class="snod-dash-section-title">
+            {l s='Dispatch queue' d='Modules.Setnextorderdiscount.Admin'}
+            {call name=snod_dash_help tip="{l s='Current background email queue snapshot. Cron moves items from Pending to Processing, then to Done or Failed.' d='Modules.Setnextorderdiscount.Admin'}"}
+        </h4>
+        <div class="snod-targeting-badges">
+            <span class="snod-badge snod-badge-all"><i class="material-icons">schedule</i>{l s='Pending' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.pending|intval}</span>
+            <span class="snod-badge snod-badge-include"><i class="material-icons">autorenew</i>{l s='Processing' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.processing|intval}</span>
+            <span class="snod-badge snod-badge-success"><i class="material-icons">check_circle</i>{l s='Done' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.done|intval}</span>
+            <span class="snod-badge snod-badge-danger"><i class="material-icons">error</i>{l s='Failed' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.failed|intval}</span>
+        </div>
     </div>
 </div>

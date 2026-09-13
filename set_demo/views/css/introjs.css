@@ -1,0 +1,527 @@
+.admin__menu .level-0._show > .submenu {
+  z-index:698 !important;
+}
+
+.introjs-overlay {
+  position: absolute;
+  z-index: 999999;
+  background-color: #000;
+  opacity: 0.6 !important;
+  /*background: -webkit-gradient(radial,center center,0px,center center,100%,color-stop(0%,rgba(0,0,0,0.4)),color-stop(100%,rgba(0,0,0,0.9)));
+  background: -webkit-radial-gradient(center,ellipse cover,rgba(0,0,0,0.4) 0,rgba(0,0,0,0.9) 100%);
+  background: -webkit-radial-gradient(center, ellipse cover, rgba(0,0,0,0.4) 0, rgba(0,0,0,0.9) 100%);
+  background: radial-gradient(center,ellipse cover,rgba(0,0,0,0.4) 0,rgba(0,0,0,0.9) 100%);*/
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#66000000',endColorstr='#e6000000',GradientType=1);
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+  filter: alpha(opacity=50);
+  -webkit-transition: all 0.3s ease-out;
+  transition: all 0.3s ease-out;
+}
+
+.introjs-fixParent {
+  z-index: auto !important;
+  opacity: 1.0 !important;
+  position: absolute !important;
+  -webkit-transform: none !important;
+  -ms-transform: none !important;
+  transform: none !important;
+}
+
+.introjs-showElement,
+tr.introjs-showElement > td,
+tr.introjs-showElement > th {
+  z-index: 9999999 !important;
+}
+
+.introjs-disableInteraction {
+  z-index: 99999999 !important;
+  position: absolute;
+}
+
+.introjs-relativePosition,
+tr.introjs-showElement > td,
+tr.introjs-showElement > th {
+  position: relative;
+}
+
+.introjs-helperLayer {
+  position: absolute;
+  z-index: 9999998;
+  background-color: #FFF;
+  background-color: rgba(255,255,255,.9);
+  border: 1px solid #777;
+  border: 1px solid rgba(0,0,0,.5);
+  border-radius: 4px;
+  box-shadow: 0 2px 15px rgba(0,0,0,.4);
+  -webkit-transition: all 0.3s ease-out;
+  transition: all 0.3s ease-out;
+}
+
+.introjs-tooltipReferenceLayer {
+  position: absolute;
+  visibility: hidden;
+  z-index: 10000000;
+  background-color: transparent;
+  -webkit-transition: all 0.3s ease-out;
+  transition: all 0.3s ease-out;
+}
+
+.introjs-helperLayer *,
+.introjs-helperLayer *:before,
+.introjs-helperLayer *:after {
+  -ms-box-sizing: content-box;
+  -o-box-sizing: content-box;
+  box-sizing: content-box;
+}
+
+.introjs-helperNumberLayer {
+  box-sizing: content-box !important;
+  position: absolute;
+  visibility: visible;
+  top: -16px;
+  left: -16px;
+  z-index: 9999999999 !important;
+  padding: 2px;
+  font-family: Arial, verdana, tahoma;
+  font-size: 13px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+  text-shadow: 1px 1px 1px rgba(0,0,0,.3);
+  background: #ff3019;
+  background: -webkit-linear-gradient(top, #ff3019 0%, #cf0404 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #ff3019), color-stop(100%, #cf0404));
+  background:         linear-gradient(to bottom, #ff3019 0%, #cf0404 100%);
+  width: 20px;
+  height:20px;
+  line-height: 20px;
+  border: 3px solid white;
+  border-radius: 50%;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff3019', endColorstr='#cf0404', GradientType=0); /* IE6-9 */
+  filter: progid:DXImageTransform.Microsoft.Shadow(direction=135, strength=2, color=ff0000); /* IE10 text shadows */
+  box-shadow: 0 2px 5px rgba(0,0,0,.4);
+}
+
+.introjs-arrow {
+  border: 5px solid white;
+  content:'';
+  position: absolute;
+}
+.introjs-arrow.top {
+  top: -10px;
+  border-top-color:transparent;
+  border-right-color:transparent;
+  border-bottom-color:white;
+  border-left-color:transparent;
+}
+.introjs-arrow.top-right {
+  top: -10px;
+  right: 10px;
+  border-top-color:transparent;
+  border-right-color:transparent;
+  border-bottom-color:white;
+  border-left-color:transparent;
+}
+.introjs-arrow.top-middle {
+  top: -10px;
+  left: 50%;
+  margin-left: -5px;
+  border-top-color:transparent;
+  border-right-color:transparent;
+  border-bottom-color:white;
+  border-left-color:transparent;
+}
+.introjs-arrow.right {
+  right: -10px;
+  top: 10px;
+  border-top-color:transparent;
+  border-right-color:transparent;
+  border-bottom-color:transparent;
+  border-left-color:white;
+}
+.introjs-arrow.right-bottom {
+  bottom:10px;
+  right: -10px;
+  border-top-color:transparent;
+  border-right-color:transparent;
+  border-bottom-color:transparent;
+  border-left-color:white;
+}
+.introjs-arrow.bottom {
+  bottom: -10px;
+  border-top-color:white;
+  border-right-color:transparent;
+  border-bottom-color:transparent;
+  border-left-color:transparent;
+}
+.introjs-arrow.left {
+  left: -10px;
+  top: 10px;
+  border-top-color:transparent;
+  border-right-color:white;
+  border-bottom-color:transparent;
+  border-left-color:transparent;
+}
+.introjs-arrow.left-bottom {
+  left: -10px;
+  bottom:10px;
+  border-top-color:transparent;
+  border-right-color:white;
+  border-bottom-color:transparent;
+  border-left-color:transparent;
+}
+
+.introjs-tooltip {
+  position: absolute;
+  visibility: visible;
+  padding: 10px;
+  background-color: white;
+  width: 185px;
+  border-radius: 3px;
+  font-size: 14px;
+  line-height: 22px;
+  box-shadow: 0 1px 10px rgba(0,0,0,.4);
+  -webkit-transition: opacity 0.1s ease-out;
+  transition: opacity 0.1s ease-out;
+}
+
+.introjs-tooltipbuttons {
+  margin-top: 20px;
+  text-align: right;
+  white-space: nowrap;
+}
+.introjs-button {
+  display: inline-block;
+  height: 30px;
+  outline: none;
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 29px;
+  cursor: pointer;
+}
+.introjs-prevbutton:hover,
+.introjs-button:focus,
+.introjs-button:active {
+}
+
+/* overrides extra padding on button elements in Firefox */
+.introjs-button::-moz-focus-inner {
+  padding: 0;
+  border: 0;
+}
+
+.introjs-skipbutton {
+  float: right !important;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  color: transparent !important;
+  text-decoration: none;
+  font-size: 0;
+  line-height: 1;
+  text-indent: -9999px;
+  overflow: hidden;
+}
+.introjs-skipbutton:hover {
+  color: transparent !important;
+}
+
+.introjs-skipbutton::before {
+  content: '\00d7';
+  position: absolute;
+  inset: 0;
+  text-indent: 0;
+  color: #777980;
+  font-size: 22px;
+  line-height: 22px;
+  font-weight: 400;
+}
+
+.introjs-skipbutton:hover::before,
+.introjs-skipbutton:focus::before {
+  color: #333;
+}
+.introjs-prevbutton,
+.introjs-nextbutton {
+  padding: 0 15px;
+  background: linear-gradient(180deg,#4A8BA8 0,#37657D 100%);
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 12px;
+  border-radius: 4px;
+}
+.introjs-prevbutton {
+}
+.introjs-nextbutton {
+  margin-left: 6px;
+}
+.introjs-prevbutton:hover,
+.introjs-nextbutton:hover {
+  background: #37657D;
+  color: #fff !important;
+  text-decoration: none;
+}
+.introjs-disabled, .introjs-disabled:hover, .introjs-disabled:active, .introjs-disabled:focus {
+  opacity: .5;
+  pointer-events: none;
+}
+
+.introjs-bullets {
+  text-align: center;
+}
+.introjs-bullets ul {
+  clear: both;
+  margin: 15px auto 0;
+  padding: 0;
+  display: inline-block;
+}
+.introjs-bullets ul li {
+  list-style: none;
+  float: left;
+  margin: 0 2px;
+}
+.introjs-bullets ul li a {
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: #ccc;
+  border-radius: 10px;
+  text-decoration: none;
+}
+.introjs-bullets ul li a:hover {
+  background: #999;
+}
+.introjs-bullets ul li a.active {
+  background: #999;
+}
+
+.introjs-progress {
+  overflow: hidden;
+  height: 6px;
+  margin-bottom: 20px;
+  border-radius: 3px;
+  background-color: #edeff2;
+}
+.introjs-progressbar {
+  float: left;
+  width: 0%;
+  height: 100%;
+  font-size: 6px;
+  line-height: 6px;
+  text-align: center;
+  background-color: #7b7e89;
+}
+
+.introjsFloatingElement {
+  position: absolute;
+  height: 0;
+  width: 0;
+  left: 50%;
+  top: 50%;
+}
+.intro-main-title {
+  font-weight: bold;
+}
+.intro-main-button-wrapper {
+  margin-bottom: 10px;
+}
+.intro-main-button {
+  padding: 0;
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 4px;
+  background: #37657D;
+  color: #fff !important;
+}
+.intro-main-button:hover,
+.intro-main-button:focus {
+  background: #4A8BA8;
+}
+.intro-main-button:active {
+  background: #37657D;
+}
+.intro-main-textarea {
+  display: block;
+  padding: 10px;
+  width: 100%;
+  border: 1px solid #a6aab3;
+  border-radius: 4px;
+  background-color: #edeff2;
+  font-size: 12px;
+  line-height: 16px;
+}
+.intro-main-textarea:focus {
+  border-color: #37657D;
+}
+.back-to-tutorial {
+  position: fixed;
+  right: 100px;
+  bottom: 0;
+  z-index: 2;
+}
+.back-to-tutorial__link {
+  display: inline-block;
+  width: 250px;
+  height: 50px;
+  border-radius: 4px 4px 0 0;
+  background-color: #1fc064;
+  color: #fff;
+  text-align: center;
+  font-size: 15px;
+  line-height: 49px;
+}
+.back-to-tutorial__link:hover {
+  background: #23d972;
+  color: #fff;
+  text-decoration: none;
+}
+.back-to-tutorial__link:active {
+  background: #1ba657;
+}
+.message-system-inner .message-system-list.message-system-list {
+  width: 50%;
+}
+#subscribe-form {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  padding: 8px 18px;
+  padding-bottom:1.2rem;
+  background: #ccdeff;
+  white-space: nowrap;
+  position: relative;
+  z-index: 2;
+  float: right;
+  width: 50%;
+}
+#subscribe-form input {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 auto;
+  -ms-flex: 1 1 auto;
+  flex: 1 1 auto;
+  padding: 6px 20px;
+  height: 34px;
+  border: 1px solid #a6aab3;
+  border-radius: 4px;
+  background: #edeff2;
+  font-size: 14px;
+  line-height: 20px;
+}
+#subscribe-form input:focus {
+  border-color: #37657D;
+}
+#subscribe-form button {
+  -webkit-box-flex: 0;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
+  flex: 0 0 auto;
+  margin-left: 14px;
+  width: 142px;
+  height: 35px;
+  border: none;
+  border-radius: 4px;
+  background: #37657D;
+  color: #fff;
+  font-size: 14px;
+}
+#subscribe-form button:hover {
+  background: #4A8BA8;
+}
+#subscribe-form button:active {
+  background: #37657D;
+}
+
+.subscribe-result {
+  text-align: center;
+  margin-top: 1rem;
+  /* height: 7em; */
+  font-size: 18px;
+  color:green;
+}
+
+
+.leave_feedback {
+  position: fixed;
+  right: 400px;
+  bottom: 0;
+  z-index: 2;
+}
+.leave_feedback__link {
+  display: inline-block;
+  width: 250px;
+  height: 50px;
+  border-radius: 4px 4px 0 0;
+  background-color:#4A8BA8;
+  color: #fff;
+  text-align: center;
+  font-size: 15px;
+  line-height: 49px;
+}
+.leave_feedback__link:hover {
+  background: #4A8BA8;
+  color: #fff;
+  text-decoration: none;
+}
+
+.introjs-next-tutorial {
+  background: linear-gradient(180deg,#4A8BA8 0,#37657D 100%);
+}
+
+.introjs-next-tutorial:hover {
+  background: #37657D;
+  color: #fff;
+  text-decoration: none;
+}
+
+.first-step-introjs-hidden {
+  display: none;
+}
+
+.introjs-tooltip .button-section {
+  float: right;
+}
+
+/*media*/
+@media only screen and (min-width: 320px) {
+  .introjs-tooltip {
+    width: 220px;
+  }
+}
+
+@media only screen and (min-width: 480px) {
+  .introjs-tooltip {
+    width: 300px;
+  }
+}
+
+@media only screen and (min-width: 578px) {
+  .introjs-tooltip {
+    width: 400px;
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  .introjs-tooltip {
+    width: 500px;
+  }
+}
+
+@media only screen and (min-width: 992px) {
+  .introjs-tooltip {
+    width: 700px;
+  }
+}
+
+@media only screen and (min-width : 1024px) {
+  .introjs-tooltip {
+    font-size: 18px;
+    line-height: 25px;
+    padding: 20px;
+    width: 700px;
+  }
+}
+

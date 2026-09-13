@@ -1,0 +1,36 @@
+/*Custom styles for backend*/
+
+/* Keep PrestaShop fixed product footer above Intro.js overlay during save-step highlight. */
+.product-page .product-footer.introjs-fixParent,
+.product-page .product-footer.introjs-relativePosition {
+	position: fixed !important;
+	z-index: 10000001 !important;
+}
+
+/* Move close control to the right and render it as a cross icon. */
+.introjs-tooltipbuttons .introjs-skipbutton {
+	float: right;
+	text-decoration: none;
+	font-size: 0;
+	line-height: 1;
+	width: 22px;
+	height: 22px;
+	text-align: center;
+	color: transparent;
+	position: relative;
+}
+
+.introjs-tooltipbuttons .introjs-skipbutton::before {
+	content: '\00d7';
+	position: absolute;
+	inset: 0;
+	color: #777980;
+	font-size: 22px;
+	line-height: 22px;
+	font-weight: 400;
+}
+
+.introjs-tooltipbuttons .introjs-skipbutton:hover::before,
+.introjs-tooltipbuttons .introjs-skipbutton:focus::before {
+	color: #333;
+}

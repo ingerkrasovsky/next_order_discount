@@ -13,7 +13,10 @@
  *}
 
 <div class="panel page-content">
-    <h3><i class="icon icon-file-text"></i> {l s='Logs' d='Modules.Setnextorderdiscount.Admin'}</h3>
+    <div class="panel-heading">
+        <i class="material-icons">description</i>
+        {l s='Logs' d='Modules.Setnextorderdiscount.Admin'}
+    </div>
 
     <form method="post" action="{$AdminLink|escape:'html':'UTF-8'}&tab=logs" class="form-inline" style="margin-bottom:15px;">
         <div class="form-group">
