@@ -470,11 +470,69 @@ class set_next_order_discount extends Module
             'id_lang' => $idLang,
             'id_country' => $this->getOrderCountry($order),
             'customer_group_ids' => Customer::getGroupsStatic($idCustomer),
-            'customer_valid_order_count' => (int) Order::getCustomerNbOrders($idCustomer),
+            'is_guest' => $this->isGuestCustomer($idCustomer),
+            'customer_valid_order_count' => $this->countCustomerOrdersByEmail($order, $idShop, $idCustomer),
             'product_category_ids' => $productCategoryIds,
             'product_manufacturer_ids' => $productManufacturerIds,
             'voucher_name' => $this->getVoucherName($idLang),
         ];
+    }
+
+    /**
+     * Whether the order's customer is a guest-checkout account.
+     *
+     * @param int $idCustomer
+     *
+     * @return bool
+     */
+    private function isGuestCustomer($idCustomer)
+    {
+        $customer = new Customer((int) $idCustomer);
+
+        return Validate::isLoadedObject($customer) && (bool) $customer->is_guest;
+    }
+
+    /**
+     * Counts the customer's orders by EMAIL, not by id_customer.
+     *
+     * PrestaShop routinely creates a fresh customer record for the same shopper
+     * (every guest checkout, and duplicate registrations), so the same email ends
+     * up spread across many id_customer values. Counting with
+     * Order::getCustomerNbOrders($idCustomer) then returns 1 for each of them, and
+     * a "first order only" rule fires on every order. Aggregating by email (across
+     * all customer records that share it) restores a stable per-shopper count so
+     * such a rule fires only on the genuine first order. The current order is
+     * already persisted at this point, so it is included in the count.
+     *
+     * Falls back to the plain id_customer count if the email is unavailable.
+     *
+     * @param Order $order
+     * @param int $idShop
+     * @param int $idCustomer
+     *
+     * @return int
+     */
+    private function countCustomerOrdersByEmail(Order $order, $idShop, $idCustomer)
+    {
+        try {
+            $customer = new Customer((int) $idCustomer);
+            $email = Validate::isLoadedObject($customer) ? (string) $customer->email : '';
+            if ($email === '' || !Validate::isEmail($email)) {
+                return (int) Order::getCustomerNbOrders((int) $idCustomer);
+            }
+
+            $count = Db::getInstance()->getValue(
+                'SELECT COUNT(o.`id_order`)'
+                . ' FROM `' . _DB_PREFIX_ . 'orders` o'
+                . ' INNER JOIN `' . _DB_PREFIX_ . 'customer` c ON c.`id_customer` = o.`id_customer`'
+                . ' WHERE c.`email` = "' . pSQL($email) . '"'
+                . ' AND o.`id_shop` = ' . (int) $idShop
+            );
+
+            return (int) $count;
+        } catch (Exception $e) {
+            return (int) Order::getCustomerNbOrders((int) $idCustomer);
+        }
     }
 
     /**

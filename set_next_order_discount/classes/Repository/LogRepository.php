@@ -169,7 +169,10 @@ class LogRepository
             $conditions[] = '`correlation_id` = "' . pSQL((string) $filters['correlation_id']) . '"';
         }
         if (isset($filters['id_shop']) && (int) $filters['id_shop'] > 0) {
-            $conditions[] = '`id_shop` = ' . (int) $filters['id_shop'];
+            // Include shop-agnostic entries (id_shop = 0) written from CLI/cron,
+            // where there is no single-shop context, so cron/queue logs remain
+            // visible in a per-shop log view instead of silently disappearing.
+            $conditions[] = '(`id_shop` = ' . (int) $filters['id_shop'] . ' OR `id_shop` = 0)';
         }
 
         return empty($conditions) ? '1' : implode(' AND ', $conditions);

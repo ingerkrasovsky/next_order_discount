@@ -61,7 +61,7 @@ class RuleMatcher
      *  - id_shop (int)
      *  - id_order_state (int), order_is_paid (bool)
      *  - order_total_paid (float)
-     *  - customer_valid_order_count (int)
+     *  - customer_valid_order_count (int), is_guest (bool)
      *  - customer_group_ids (int[]), id_country (int), id_currency (int)
      *  - product_category_ids (int[]), product_manufacturer_ids (int[])
      *
@@ -101,10 +101,31 @@ class RuleMatcher
     private function ruleMatches(array $rule, array $context, array $contextValues, $now)
     {
         return $this->matchesStatus($rule, $context)
+            && $this->matchesGuest($rule, $context)
             && $this->matchesSourceTotal($rule, $context)
             && $this->matchesOrderCount($rule, $context)
             && $this->matchesDateWindow($rule, $now)
             && $this->matchesModeConditions($rule, $contextValues);
+    }
+
+    /**
+     * When the rule is set to registered customers only, a guest-checkout order
+     * never matches. Guests are excluded because each guest checkout creates a
+     * fresh customer record, so guest orders cannot be reliably de-duplicated or
+     * counted as returning.
+     *
+     * @param array $rule
+     * @param array $context
+     *
+     * @return bool
+     */
+    private function matchesGuest(array $rule, array $context)
+    {
+        if (empty($rule['exclude_guests']) || (int) $rule['exclude_guests'] !== 1) {
+            return true;
+        }
+
+        return empty($context['is_guest']);
     }
 
     /**

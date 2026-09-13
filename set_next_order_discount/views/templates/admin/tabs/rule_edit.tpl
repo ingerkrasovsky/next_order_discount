@@ -283,6 +283,20 @@
                         <p class="help-block">{l s='How many valid orders the customer must have. Set both to 1 for first-order-only. Use 0 for no limit.' d='Modules.Setnextorderdiscount.Admin'}</p>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Registered customers only' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <div class="col-lg-5">
+                        <span class="switch prestashop-switch fixed-width-lg">
+                            <input type="radio" id="snod_rule_exclude_guests_on" name="snod_rule_exclude_guests" value="1" {if $snod_rule_form.exclude_guests}checked{/if}>
+                            <label class="radioCheck" for="snod_rule_exclude_guests_on"><i class="color_success"></i>{l s='Yes' d='Modules.Setnextorderdiscount.Admin'}</label>
+                            <input type="radio" id="snod_rule_exclude_guests_off" name="snod_rule_exclude_guests" value="0" {if !$snod_rule_form.exclude_guests}checked{/if}>
+                            <label class="radioCheck" for="snod_rule_exclude_guests_off"><i class="color_danger"></i>{l s='No' d='Modules.Setnextorderdiscount.Admin'}</label>
+                            <a class="slide-button btn"></a>
+                        </span>
+                        <p class="help-block">{l s='Skip guest-checkout orders. Recommended for "first order" / returning-customer rules: each guest checkout creates a new customer record, so guests cannot be reliably counted as returning and would qualify as a first order every time.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                    </div>
+                </div>
             </div>
 
             {* ===================== CODE ===================== *}

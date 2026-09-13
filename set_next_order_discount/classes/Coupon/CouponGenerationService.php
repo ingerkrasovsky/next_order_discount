@@ -125,7 +125,8 @@ class CouponGenerationService
     private function generateForRule(array $rule, array $context, $idShop, $idCustomer, $idOrderSource)
     {
         $result = $this->issueForRule($rule, $context, $idShop, $idCustomer, $idOrderSource);
-        $this->logResult($result, $rule, $idShop, $idOrderSource, $idCustomer);
+        $idLang = isset($context['id_lang']) ? (int) $context['id_lang'] : 0;
+        $this->logResult($result, $rule, $idShop, $idOrderSource, $idCustomer, $idLang);
 
         return $result;
     }
@@ -198,6 +199,10 @@ class CouponGenerationService
                 'id_shop' => $idShop,
                 'id_shop_group' => isset($context['id_shop_group']) ? (int) $context['id_shop_group'] : 0,
                 'id_customer' => $idCustomer,
+                // Language of the source order: the coupon email is sent in the
+                // language the customer actually ordered in, not their account
+                // default (which may differ).
+                'id_lang' => isset($context['id_lang']) ? (int) $context['id_lang'] : 0,
                 'id_order_source' => $idOrderSource,
                 'id_snod_rule' => $idRule,
                 'id_cart_rule' => $idCartRule,
@@ -352,20 +357,26 @@ class CouponGenerationService
      * @param int $idShop
      * @param int $idOrderSource
      * @param int $idCustomer
+     * @param int $idLang the source order's language (0 if unknown)
      *
      * @return void
      */
-    private function logResult(array $result, array $rule, $idShop, $idOrderSource, $idCustomer)
+    private function logResult(array $result, array $rule, $idShop, $idOrderSource, $idCustomer, $idLang = 0)
     {
         if ($this->logger === null) {
             return;
         }
+
+        $idLang = (int) $idLang;
+        $langIso = $idLang > 0 ? (string) \Language::getIsoById($idLang) : '';
 
         $reason = isset($result['reason']) ? (string) $result['reason'] : '';
         $context = [
             'id_order' => (int) $idOrderSource,
             'id_shop' => (int) $idShop,
             'id_customer' => (int) $idCustomer,
+            'id_lang' => $idLang,
+            'lang' => $langIso,
             'id_snod_rule' => (int) $rule['id_snod_rule'],
             'rule_name' => isset($rule['name']) ? (string) $rule['name'] : '',
             'code' => isset($result['code']) ? (string) $result['code'] : '',

@@ -137,6 +137,7 @@ class RuleFormHandler
             'date_to' => '',
             'customer_order_count_min' => '0',
             'customer_order_count_max' => '0',
+            'exclude_guests' => 0,
             'reminder_enabled' => 0,
             'reminder_basis' => RuleRepository::REMINDER_BASIS_AFTER_EMAIL,
             'reminder1_days' => '',
@@ -180,6 +181,7 @@ class RuleFormHandler
             'date_to' => RuleValueFormatter::dateColumnToInput($rule['date_to']),
             'customer_order_count_min' => (int) $rule['customer_order_count_min'],
             'customer_order_count_max' => (int) $rule['customer_order_count_max'],
+            'exclude_guests' => (int) $rule['exclude_guests'],
             'reminder_enabled' => (int) $rule['reminder_enabled'],
             'reminder_basis' => (isset($rule['reminder_basis']) && (string) $rule['reminder_basis'] !== '')
                 ? (string) $rule['reminder_basis']
@@ -236,6 +238,7 @@ class RuleFormHandler
             'date_to' => $this->str($input, 'date_to'),
             'customer_order_count_min' => $this->str($input, 'customer_order_count_min'),
             'customer_order_count_max' => $this->str($input, 'customer_order_count_max'),
+            'exclude_guests' => $this->str($input, 'exclude_guests') === '1' ? 1 : 0,
             'reminder_enabled' => $this->str($input, 'reminder_enabled') === '1' ? 1 : 0,
             'reminder_basis' => $this->str($input, 'reminder_basis'),
             'reminder1_days' => $this->str($input, 'reminder1_days'),
@@ -321,6 +324,11 @@ class RuleFormHandler
         }
         $data['customer_order_count_min'] = $countMin;
         $data['customer_order_count_max'] = $countMax;
+
+        // Registered-customers-only toggle: skip guest checkouts (each guest is a
+        // fresh customer record, so guest orders can never be reliably counted as
+        // returning and would repeatedly qualify as a "first order").
+        $data['exclude_guests'] = $this->str($input, 'exclude_guests') === '1' ? 1 : 0;
 
         // Per-rule reminders: whether to remind, and how many days after the
         // coupon email each reminder goes out (0/empty = that reminder is off).

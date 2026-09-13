@@ -105,7 +105,8 @@ class CouponMailer
         }
 
         $idShop = (int) $link['id_shop'];
-        $idLang = $this->resolveSendLang($customer, $idShop, $forceLang);
+        $orderLang = isset($link['id_lang']) ? (int) $link['id_lang'] : 0;
+        $idLang = $this->resolveSendLang($orderLang, $customer, $idShop, $forceLang);
         $iso = $this->defaultEmailProvider->resolveIso($idLang, $idShop);
 
         try {
@@ -115,7 +116,6 @@ class CouponMailer
                 (int) $link['id_snod_rule'],
                 RuleEmailRepository::TYPE_COUPON,
                 $idLang,
-                $idShop,
             );
 
             $sent = $this->sendWrapped($idLang, $iso, $content, $templateVars, $customer, $idShop);
@@ -142,40 +142,34 @@ class CouponMailer
     }
 
     /**
-     * Returns the email content (subject + HTML) to send for a rule: the rule's
-     * own stored content, preferring the send language and falling back to the
-     * shop's default language. When the rule has no usable stored content for
-     * either language, the shipped default content is used as a last resort so a
-     * blank email is never sent. The content is always injected into the
-     * pass-through coupon template — the template itself carries no content.
+     * Returns the email content (subject + HTML) to send for a rule in one
+     * language: the rule's own stored content for that exact language, or — when
+     * there is none — the shipped default in that same language. It never falls
+     * back to another language's content, so the email always matches the language
+     * it is sent in. The content is injected into the pass-through coupon template,
+     * which carries no content itself.
      *
      * @param int $idRule
      * @param string $emailType
      * @param int $idLang
-     * @param int $idShop
      *
      * @return array ['subject' => string, 'html' => string]
      */
-    private function resolveRuleEmail($idRule, $emailType, $idLang, $idShop)
+    private function resolveRuleEmail($idRule, $emailType, $idLang)
     {
         $idRule = (int) $idRule;
         if ($idRule > 0) {
-            $candidates = [(int) $idLang];
-            $default = (int) \Configuration::get('PS_LANG_DEFAULT', null, null, $idShop > 0 ? $idShop : null);
-            if ($default > 0 && $default !== (int) $idLang) {
-                $candidates[] = $default;
-            }
-
-            foreach ($candidates as $lang) {
-                $content = $this->ruleEmailRepository->findContent($idRule, $emailType, $lang);
-                if ($content !== null && trim((string) $content['html']) !== '') {
-                    return $content;
-                }
+            // Only the requested language: never borrow another language's stored
+            // content, otherwise the customer's language (or an explicit manual
+            // choice, e.g. FR) would silently send an email in the wrong language.
+            $content = $this->ruleEmailRepository->findContent($idRule, $emailType, (int) $idLang);
+            if ($content !== null && trim((string) $content['html']) !== '') {
+                return $content;
             }
         }
 
-        // Last resort: the shipped default content, so a rule that was never saved
-        // through the form (empty stored content) still sends a usable email.
+        // No stored content for this language → the shipped default in the SAME
+        // language, so the email always matches the language it is sent in.
         return $this->defaultEmailProvider->getDefault($emailType, (int) $idLang);
     }
 
@@ -301,21 +295,29 @@ class CouponMailer
     }
 
     /**
-     * Resolves the language the email is sent in: an explicit, installed override
-     * (manual back-office send) wins; otherwise the customer's own language, with
-     * the shop default as a final fallback.
+     * Resolves the language the email is sent in, in priority order: an explicit
+     * installed override (manual back-office send), then the language of the
+     * source order (what the customer actually ordered in), then the customer's
+     * account language, then the shop default. Only installed languages win at
+     * each step.
      *
+     * @param int $orderLang the source order's language id (0 if unknown)
      * @param \Customer $customer
      * @param int $idShop
      * @param int $forceLang overriding language id, or 0 for none
      *
      * @return int
      */
-    private function resolveSendLang(\Customer $customer, $idShop, $forceLang)
+    private function resolveSendLang($orderLang, \Customer $customer, $idShop, $forceLang)
     {
         $forceLang = (int) $forceLang;
         if ($forceLang > 0 && \Validate::isLoadedObject(new \Language($forceLang))) {
             return $forceLang;
+        }
+
+        $orderLang = (int) $orderLang;
+        if ($orderLang > 0 && \Validate::isLoadedObject(new \Language($orderLang))) {
+            return $orderLang;
         }
 
         return $this->resolveCustomerLang($customer, $idShop);

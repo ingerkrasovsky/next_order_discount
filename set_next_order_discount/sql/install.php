@@ -16,17 +16,6 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-$defaultShop = (int) Configuration::get('PS_SHOP_DEFAULT');
-if ($defaultShop <= 0) {
-    $defaultShop = 1;
-}
-$defaultShopGroup = (int) Db::getInstance()->getValue(
-    'SELECT `id_shop_group` FROM `' . _DB_PREFIX_ . 'shop` WHERE `id_shop` = ' . $defaultShop,
-);
-if ($defaultShopGroup <= 0) {
-    $defaultShopGroup = 1;
-}
-
 $sql = [];
 
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'snod_rule` (
@@ -49,6 +38,7 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'snod_rule` (
             `date_to` DATETIME DEFAULT NULL,
             `customer_order_count_min` INT UNSIGNED NOT NULL DEFAULT 0,
             `customer_order_count_max` INT UNSIGNED NOT NULL DEFAULT 0,
+            `exclude_guests` TINYINT(1) NOT NULL DEFAULT 0,
             `reminder_enabled` TINYINT(1) NOT NULL DEFAULT 0,
             `reminder_basis` VARCHAR(16) NOT NULL DEFAULT "after_email",
             `reminder1_days` INT UNSIGNED NULL DEFAULT NULL,
@@ -132,6 +122,7 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'snod_coupon_link` (
             `id_shop` INT UNSIGNED NOT NULL,
             `id_shop_group` INT UNSIGNED NOT NULL,
             `id_customer` INT UNSIGNED NOT NULL,
+            `id_lang` INT UNSIGNED NOT NULL DEFAULT 0,
             `id_order_source` INT UNSIGNED NOT NULL,
             `id_snod_rule` INT UNSIGNED NOT NULL DEFAULT 0,
             `id_cart_rule` INT UNSIGNED DEFAULT NULL,
@@ -200,18 +191,6 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'snod_log` (
             KEY `idx_snod_log_correlation` (`correlation_id`),
             KEY `idx_snod_log_shop` (`id_shop`)
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8mb4;';
-
-// Seed a sensible default rule (single coupon on any paid order) if none exist.
-$sql[] = 'INSERT INTO `' . _DB_PREFIX_ . 'snod_rule`
-            (`id_shop`, `id_shop_group`, `name`, `active`, `priority`, `stop_further`,
-             `discount_type`, `discount_value`, `validity_days`, `next_order_min_amount`,
-             `source_total_min`, `source_total_max`, `customer_order_count_min`,
-             `customer_order_count_max`, `group_mode`, `country_mode`, `currency_mode`,
-             `category_mode`, `manufacturer_mode`, `created_at`, `updated_at`)
-            SELECT ' . $defaultShop . ', ' . $defaultShopGroup . ', "Default discount", 1, 1, 1,
-             "percent", 10, 30, 0, 0, 0, 0, 0, "all", "all", "all", "all", "all", NOW(), NOW()
-            FROM DUAL
-            WHERE NOT EXISTS (SELECT 1 FROM `' . _DB_PREFIX_ . 'snod_rule` r)';
 
 foreach ($sql as $query) {
     if (!Db::getInstance()->execute($query)) {

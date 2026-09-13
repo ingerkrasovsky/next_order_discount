@@ -343,8 +343,19 @@ class NextOrderDiscountController extends ModuleAdminController
         }, $languages);
         $defaultLangId = (int) $this->context->language->id;
         foreach ($rows as &$row) {
+            // Preselect the send-language dropdown with the language the coupon
+            // email would use automatically: the source order's language first
+            // (what the customer ordered in), then the customer's account
+            // language, then the shop default.
+            $orderLang = (int) $row['id_lang'];
             $customerLang = (int) $row['customer_id_lang'];
-            $row['send_lang'] = in_array($customerLang, $installedLangIds, true) ? $customerLang : $defaultLangId;
+            if (in_array($orderLang, $installedLangIds, true)) {
+                $row['send_lang'] = $orderLang;
+            } elseif (in_array($customerLang, $installedLangIds, true)) {
+                $row['send_lang'] = $customerLang;
+            } else {
+                $row['send_lang'] = $defaultLangId;
+            }
             // Localized display of the datetime columns (employee/shop locale, with
             // time), leaving empty/zero dates blank so the template shows a dash.
             $row['valid_to_display'] = $this->displayCouponDate(isset($row['valid_to']) ? $row['valid_to'] : null);
@@ -669,6 +680,7 @@ class NextOrderDiscountController extends ModuleAdminController
             'date_to' => $this->getSubmittedString('snod_rule_date_to'),
             'customer_order_count_min' => $this->getSubmittedString('snod_rule_order_count_min'),
             'customer_order_count_max' => $this->getSubmittedString('snod_rule_order_count_max'),
+            'exclude_guests' => $this->getSubmittedString('snod_rule_exclude_guests'),
             'reminder_enabled' => $this->getSubmittedString('snod_rule_reminder_enabled'),
             'reminder_basis' => $this->getSubmittedString('snod_rule_reminder_basis'),
             'reminder1_days' => $this->getSubmittedString('snod_rule_reminder1_days'),
