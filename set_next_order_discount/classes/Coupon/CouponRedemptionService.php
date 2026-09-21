@@ -58,7 +58,7 @@ class CouponRedemptionService
      */
     public function __construct(
         CouponLinkRepository $couponLinkRepository,
-        ?ModuleLogger $logger = null,
+        ?ModuleLogger $logger = null
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->logger = $logger;

@@ -49,7 +49,7 @@ class CouponLifecycleManager
      */
     public function __construct(
         CouponLinkRepository $couponLinkRepository,
-        CartRuleAdapter $cartRuleAdapter,
+        CartRuleAdapter $cartRuleAdapter
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->cartRuleAdapter = $cartRuleAdapter;

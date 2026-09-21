@@ -61,11 +61,11 @@ class DefaultEmailProvider
         ],
         RuleEmailRepository::TYPE_REMINDER_1 => [
             'en' => 'Your discount is waiting — use it before it expires',
-            'fr' => "Votre réduction vous attend — utilisez-la avant son expiration",
+            'fr' => 'Votre réduction vous attend — utilisez-la avant son expiration',
         ],
         RuleEmailRepository::TYPE_REMINDER_2 => [
             'en' => 'Your discount is waiting — use it before it expires',
-            'fr' => "Votre réduction vous attend — utilisez-la avant son expiration",
+            'fr' => 'Votre réduction vous attend — utilisez-la avant son expiration',
         ],
     ];
 

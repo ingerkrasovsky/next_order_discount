@@ -51,7 +51,7 @@ class QueueRetryPolicy
     public function __construct(
         $maxAttempts = self::DEFAULT_MAX_ATTEMPTS,
         $baseDelaySeconds = self::DEFAULT_BASE_DELAY_SECONDS,
-        $maxDelaySeconds = self::DEFAULT_MAX_DELAY_SECONDS,
+        $maxDelaySeconds = self::DEFAULT_MAX_DELAY_SECONDS
     ) {
         $this->maxAttempts = max(1, (int) $maxAttempts);
         $this->baseDelaySeconds = max(0, (int) $baseDelaySeconds);

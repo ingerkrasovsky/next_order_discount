@@ -49,7 +49,7 @@ class ReminderPlanner
      */
     public function __construct(
         ReminderCandidateRepository $candidateRepository,
-        QueueService $queueService,
+        QueueService $queueService
     ) {
         $this->candidateRepository = $candidateRepository;
         $this->queueService = $queueService;

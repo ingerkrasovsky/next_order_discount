@@ -68,7 +68,7 @@ class CouponGenerationService
         CouponLinkRepository $couponLinkRepository,
         QueueService $queueService,
         ?ModuleLogger $logger = null,
-        ?CouponMailer $couponMailer = null,
+        ?CouponMailer $couponMailer = null
     ) {
         $this->ruleMatcher = $ruleMatcher;
         $this->cartRuleAdapter = $cartRuleAdapter;

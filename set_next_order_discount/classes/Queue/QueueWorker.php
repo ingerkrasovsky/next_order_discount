@@ -77,7 +77,7 @@ class QueueWorker
         DispatchQueueRepository $repository,
         QueueRetryPolicy $retryPolicy,
         array $handlers = [],
-        ?ModuleLogger $logger = null,
+        ?ModuleLogger $logger = null
     ) {
         foreach ($handlers as $type => $handler) {
             if (!$handler instanceof QueueTaskHandlerInterface) {

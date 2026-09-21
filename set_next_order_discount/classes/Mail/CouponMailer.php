@@ -14,11 +14,6 @@
  */
 namespace Setecom\NextOrderDiscount\Mail;
 
-use CartRule;
-use Currency;
-use Customer;
-use Language;
-use Mail;
 use Setecom\NextOrderDiscount\Repository\CouponLinkRepository;
 use Setecom\NextOrderDiscount\Repository\RuleEmailRepository;
 
@@ -57,7 +52,7 @@ class CouponMailer
     public function __construct(
         CouponLinkRepository $couponLinkRepository,
         MailTemplateResolver $templateResolver,
-        RuleEmailRepository $ruleEmailRepository,
+        RuleEmailRepository $ruleEmailRepository
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->templateResolver = $templateResolver;
@@ -75,8 +70,8 @@ class CouponMailer
      *                    is never regressed — only `emailed_at` is refreshed
      *                    for a coupon that is past the "created" stage.
      * @param int $forceLang when > 0, the language id the email is rendered and
-     *                    sent in, overriding the customer's own language (manual
-     *                    back-office send). 0 keeps the customer's language.
+     *                       sent in, overriding the customer's own language (manual
+     *                       back-office send). 0 keeps the customer's language.
      *
      * @return bool true when the email was sent (or was already sent), false on
      *              a missing/invalid record or a mail delivery failure

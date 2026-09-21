@@ -176,6 +176,9 @@ failed») содержит `id_lang` и `lang` (iso) — язык, на кото
 | `classes/Mail/CouponMailer.php` | Отправка купона через pass-through + `shopVars()` + `$forceLang` |
 | `classes/Reminder/ReminderMailer.php` | Отправка напоминания (аналогично) |
 | `classes/Repository/RuleEmailRepository.php` | Контент писем по правилу/типу/языку (БД) |
+| `classes/Coupon/CouponGenerationService.php` | Создание купона: сохраняет `id_lang` заказа, пишет язык в лог |
+| `classes/Repository/CouponLinkRepository.php` | `snod_coupon_link` (+ колонка `id_lang`) |
+| `classes/Rule/RuleMatcher.php` | Матчинг правил, вкл. `matchesGuest()` (исключение гостей) |
 | `views/email_defaults/{en,fr}/*` | Дефолтные тела писем (сид + фолбэк), НЕ шаблоны отправки |
 | `controllers/admin/NextOrderDiscount.php` | Ручная отправка с языком, превью/тест, формат дат |
 | `views/templates/admin/tabs/coupons.tpl` | Список купонов: дропдаун языка, локальные даты |
@@ -199,3 +202,29 @@ failed») содержит `id_lang` и `lang` (iso) — язык, на кото
   зарегистрируется).
 - Добавили язык после установки без reset — оболочку под него можно догенерить
   переустановкой модуля или ручным вызовом `MailTemplateInstaller`.
+- **Изменения схемы (на существующих установках нужен ALTER или reinstall):**
+  ```sql
+  ALTER TABLE `ps_snod_coupon_link` ADD COLUMN `id_lang` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `id_customer`;
+  ALTER TABLE `ps_snod_rule` ADD COLUMN `exclude_guests` TINYINT(1) NOT NULL DEFAULT 0 AFTER `customer_order_count_max`;
+  ```
+  (префикс `ps_` заменить на свой). Старые строки получают `0` = прежнее поведение.
+
+---
+
+## 10. Смежные недавние правки (таргетинг и логи)
+
+Не про саму «оболочку письма», но входят в последние правки и влияют на то, кому и
+когда уходит письмо:
+
+- **«Первый заказ» считается по email, а не по `id_customer`.** PrestaShop создаёт
+  новую запись customer почти на каждый заказ (гости, дубли), поэтому счёт по
+  `id_customer` всегда давал 1 → правило «after first order» срабатывало каждый раз.
+  Теперь `countCustomerOrdersByEmail()` объединяет все заказы с одним email.
+  Оговорка: гость с новым email каждый раз — это разные личности, дедупнуть нельзя.
+- **Переключатель правила «Registered customers only» (исключить гостей).** Колонка
+  `snod_rule.exclude_guests`; при `1` гостевой заказ (`customer.is_guest`) не
+  матчится (`RuleMatcher::matchesGuest()`). Рекомендуется для «first order» /
+  comeback-правил.
+- **Пустая страница логов при выключенном debug — исправлено.** Cron из CLI пишет
+  логи с `id_shop = 0`, а страница фильтровала по текущему магазину. Теперь
+  шоп-скоуп включает глобальные записи: `(id_shop = <shop> OR id_shop = 0)`.

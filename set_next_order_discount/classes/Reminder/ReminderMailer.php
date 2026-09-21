@@ -54,7 +54,7 @@ class ReminderMailer
      */
     public function __construct(
         CouponLinkRepository $couponLinkRepository,
-        RuleEmailRepository $ruleEmailRepository,
+        RuleEmailRepository $ruleEmailRepository
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->ruleEmailRepository = $ruleEmailRepository;
@@ -70,9 +70,9 @@ class ReminderMailer
      *                    recorded (manual back-office send). The coupon
      *                    must still be usable and not expired.
      * @param int $forceLang when > 0, the language id the reminder is rendered
-     *                    and sent in, overriding the customer's own language
-     *                    (manual back-office send). 0 keeps the customer's
-     *                    language.
+     *                       and sent in, overriding the customer's own language
+     *                       (manual back-office send). 0 keeps the customer's
+     *                       language.
      *
      * @return bool true when sent (or nothing needed to be sent), false on a
      *              missing/invalid record or a mail delivery failure

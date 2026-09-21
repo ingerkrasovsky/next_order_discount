@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Slide builder 1000×1000 — Next Order Discount</title>
+<!-- Вариант «1000»: артборд по-прежнему свёрстан в 2000 (это ретина-мастер, режется
+     без потерь), но превью по умолчанию 50% = ровно 1000 px на экране — что видишь,
+     то и уйдёт на маркетплейс. Экспорт всё равно рендерит в 4000 и уменьшает до 1000,
+     поэтому качество максимальное. Правите размеры — правьте в 2000-системе. -->
+<style>
+  @font-face{font-family:Unbounded;src:url('../../set_demo/views/fonts/unbounded-700-cyrillic.woff2') format('woff2');font-weight:700 800;font-style:normal;font-display:swap}
+  @font-face{font-family:Unbounded;src:url('../../set_demo/views/fonts/unbounded-600-cyrillic.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap}
+  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-400-cyrillic.woff2') format('woff2');font-weight:400 500;font-style:normal;font-display:swap}
+  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-600-cyrillic.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap}
+  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-700-cyrillic.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+  :root{
+    --accent:#37657D; --accent-2:#4A8BA8; --accent-soft:#E8F1F5;
+    --ink:#101C24; --ink-2:#465863; --bg:#FFFFFF;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:#20303a; font-family:Manrope,sans-serif}
+
+  /* Управляющая панель — не попадает в кадр, скрывается при печати/рендере */
+  .toolbar{
+    position:fixed; top:0; left:0; right:0; z-index:99; display:flex; gap:10px; align-items:center;
+    padding:10px 16px; background:#16232B; color:#fff; font:600 13px Manrope,sans-serif;
+  }
+  .toolbar button{
+    border:1px solid #3d5260; background:#22333F; color:#cfe0ea; border-radius:8px;
+    padding:6px 12px; font:600 13px Manrope,sans-serif; cursor:pointer;
+  }
+  .toolbar button[aria-pressed="true"]{background:#4A8BA8; border-color:#4A8BA8; color:#fff}
+  .toolbar .sp{margin-left:auto; opacity:.7; font-weight:500}
+  .stage{padding:64px 0 40px}
+
+  /* ---- СЛАЙД: ровно 2000×2000 ---- */
+  .slide{
+    width:2000px; height:2000px; margin:0 auto 40px;
+    background:var(--bg); position:relative; overflow:hidden;
+    display:flex; flex-direction:column; padding:120px 96px 104px 96px;
+    /* уменьшенный показ на экране; на экспорт не влияет */
+    transform-origin:top center;
+  }
+  .title{
+    font:700 92px/1.1 Unbounded,Manrope,sans-serif; letter-spacing:-.02em; color:var(--ink);
+    margin:0 0 32px; max-width:22ch;
+  }
+  .sub{font:500 50px/1.4 Manrope,sans-serif; color:var(--ink-2); margin:0; max-width:40ch}
+
+  /* ---- режим "banner": акцентный фон, белый заголовок, встроенный скрин, блоки выгод ---- */
+  /* Переносит canva-баннеры в билдер: тот же Unbounded/Manrope, единый вид со скрин-слайдами. */
+  .slide.banner{ background:var(--accent); color:#fff; padding:130px 120px 35px; }
+  .banner .b-title{
+    font:800 94px/1.06 Unbounded,Manrope,sans-serif; letter-spacing:-.02em;
+    color:#fff; margin:0; max-width:24ch;
+  }
+  .banner .b-sub{
+    font:600 46px/1.34 Manrope,sans-serif; color:rgba(255,255,255,.72);
+    margin:24px 0 0; max-width:42ch;
+  }
+  /* встроенный скриншот в белой карточке (как на canva-баннере) */
+  .banner .b-shot{
+    margin:54px 0; border-radius:28px; overflow:hidden; background:#fff;
+    box-shadow:0 22px 50px rgba(0,0,0,.28); align-self:stretch;
+  }
+  .banner .b-shot img{ display:block; width:100%; height:auto; }
+  .banner .b-shot .ph{
+    height:520px; display:grid; place-items:center; color:#93a7b3;
+    font:600 30px Manrope,sans-serif;
+    background:repeating-linear-gradient(45deg,#F2F6F8 0 22px,#EDF2F5 22px 44px);
+  }
+  /* блоки «жирный заголовок + приглушённый текст» */
+  .banner .b-list{ display:flex; flex-direction:column; gap:38px; margin-top:6px; }
+  .banner .b-pair h3{
+    font:800 58px/1.08 Unbounded,Manrope,sans-serif; letter-spacing:-.01em;
+    color:#fff; margin:0 0 8px;
+  }
+  .banner .b-pair p{
+    font:600 42px/1.28 Manrope,sans-serif; color:rgba(255,255,255,.7);
+    margin:0; max-width:42ch;
+  }
+  /* окно со скриншотом */
+  /* Зона фиксированной высоты держит слайд ровно 2000×2000 и центрирует рамку.
+     Сама зона невидима — вся отрисовка окна браузера на .shot-frame внутри. */
+  .shot{
+    margin-top:56px; height:1330px; position:relative;
+    /* Окно центрируется в зоне: у альбомного кадра оно невысокое, и остаток
+       делится поровну сверху и снизу — нижнее поле меньше, чем при прижатии к верху. */
+    display:flex; align-items:center; justify-content:center;
+  }
+  /* Рамка обнимает картинку: её размер = размеру кадра, а не фиксированные 1330px.
+     Раньше окно было фиксированной высоты с object-fit:contain — широкий скриншот
+     ложился по ширине, и снизу ВНУТРИ рамки оставалась белая полоса (~40%), которая
+     читалась как «слайд сломан». Теперь остаток — это фон слайда вокруг парящего окна. */
+  .shot-frame{
+    position:relative; display:inline-flex; flex-direction:column;
+    max-width:100%; max-height:100%;
+    border-radius:22px; overflow:hidden; background:#fff;
+    box-shadow:0 18px 40px rgba(16,35,45,.16), 0 0 0 1px rgba(16,35,45,.10);
+  }
+  .shot-frame .bar{
+    height:56px; flex:none; background:#EEF3F6; border-bottom:1px solid #E0E8ED;
+    display:flex; align-items:center; gap:10px; padding:0 22px;
+  }
+  .shot-frame .bar i{width:14px; height:14px; border-radius:50%; background:#CBD8E0; display:block}
+  /* Картинка сама задаёт размер рамки: по ширине не шире зоны, по высоте не выше
+     зоны за вычетом шапки (1330 − 56). Альбомный кадр упрётся в ширину, книжный — в
+     высоту; в обоих случаях рамка ровно по картинке, без внутренней пустоты. */
+  .shot-frame img{
+    display:block; width:auto; height:auto;
+    max-width:100%; max-height:1274px; background:#fff;
+  }
+  .shot-frame .ph{
+    width:1500px; height:850px; display:grid; place-items:center; color:#93a7b3;
+    font:600 30px Manrope,sans-serif; background:
+      repeating-linear-gradient(45deg,#F2F6F8 0 22px,#EDF2F5 22px 44px);
+    text-align:center; padding:40px;
+  }
+
+  /* ---- режим "states": одно и то же место в трёх состояниях ---- */
+  /* Высота фиксирована и содержимое центрируется: вырезки бара бывают очень узкими,
+     иначе низ слайда остаётся пустым. */
+  .states{margin-top:66px; height:1330px; display:flex; flex-direction:column; justify-content:center; gap:34px}
+  .state{
+    border-radius:18px; overflow:hidden; background:#fff;
+    box-shadow:0 10px 26px rgba(16,35,45,.13), 0 0 0 1px rgba(16,35,45,.10);
+    position:relative;
+  }
+  .state img{display:block; width:100%; height:auto}
+  .state .ph{
+    height:300px; display:grid; place-items:center; color:#93a7b3; font:600 26px Manrope,sans-serif;
+    background:repeating-linear-gradient(45deg,#F2F6F8 0 22px,#EDF2F5 22px 44px); text-align:center;
+  }
+  .state .tag{
+    position:absolute; left:0; top:0; background:var(--accent); color:#fff;
+    font:700 26px Manrope,sans-serif; padding:12px 26px; border-radius:0 0 16px 0;
+  }
+
+  /* ---- режим "annotate": выноски поверх скриншота ---- */
+  .note{
+    position:absolute; z-index:5; max-width:560px;
+    background:#fff; color:var(--ink); border-radius:14px; padding:20px 26px;
+    font:600 30px/1.3 Manrope,sans-serif;
+    box-shadow:0 16px 40px rgba(16,35,45,.24), 0 0 0 2px var(--accent);
+  }
+  .note::after{content:""; position:absolute; width:0; height:0; border:16px solid transparent}
+  .note[data-dir="left"]::after{left:-32px; top:calc(50% - 16px); border-right-color:var(--accent)}
+  .note[data-dir="right"]::after{right:-32px; top:calc(50% - 16px); border-left-color:var(--accent)}
+  .note[data-dir="up"]::after{top:-32px; left:44px; border-bottom-color:var(--accent)}
+  .note[data-dir="down"]::after{bottom:-32px; left:44px; border-top-color:var(--accent)}
+
+  /* ---- режим "devices": десктоп + телефон рядом ---- */
+  .devices{margin-top:66px; height:1330px; position:relative}
+  .devices .desk{
+    width:1560px; border-radius:22px; overflow:hidden; background:#fff;
+    box-shadow:0 18px 40px rgba(16,35,45,.16), 0 0 0 1px rgba(16,35,45,.10);
+    display:flex; flex-direction:column; height:1150px;
+  }
+  .devices .desk img{display:block; width:100%; flex:1; min-height:0; object-fit:contain; object-position:center top}
+  .devices .desk .ph{flex:1; display:grid; place-items:center; color:#93a7b3; font:600 30px Manrope,sans-serif;
+    background:repeating-linear-gradient(45deg,#F2F6F8 0 22px,#EDF2F5 22px 44px)}
+  .devices .mob{
+    position:absolute; right:0; bottom:0; width:430px;
+    border-radius:46px; background:#16232B; padding:14px;
+    box-shadow:0 40px 90px rgba(16,35,45,.34);
+  }
+  .devices .mob .screen{border-radius:34px; overflow:hidden; background:#fff}
+  .devices .mob img{display:block; width:100%; height:auto}
+  .devices .mob .ph{height:820px; display:grid; place-items:center; color:#93a7b3;
+    font:600 22px Manrope,sans-serif; background:repeating-linear-gradient(45deg,#F2F6F8 0 22px,#EDF2F5 22px 44px)}
+
+  /* вариант с мобильным кадром — два телефона рядом */
+  .phones{margin-top:auto; display:flex; gap:70px; justify-content:center; align-items:flex-end}
+  .phone{
+    width:520px; border-radius:52px; background:#16232B; padding:16px;
+    box-shadow:0 40px 90px rgba(16,35,45,.28);
+  }
+  .phone .screen{border-radius:38px; overflow:hidden; background:#fff}
+  .phone img{display:block; width:100%; height:auto}
+  .phone .ph{height:1000px; display:grid; place-items:center; color:#93a7b3;
+    font:600 24px Manrope,sans-serif; background:repeating-linear-gradient(45deg,#F2F6F8 0 22px,#EDF2F5 22px 44px);
+    text-align:center; padding:30px}
+  .phone .cap{color:#8fa6b4; font:600 26px Manrope,sans-serif; text-align:center; margin-top:22px}
+
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span>Next Order Discount · RU</span>
+  <span style="margin-left:18px">Масштаб:</span>
+  <button type="button" data-zoom="0.25">25%</button>
+  <button type="button" data-zoom="0.5" aria-pressed="true">50% = 1000px</button>
+  <button type="button" data-zoom="1">100%</button>
+  <span class="sp">14 слайдов · 4 баннера + 10 экранов модуля</span>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<script src="../slides/translations.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  /* Кадры и подписи — синхронно с ../slides/slides_tex.md. */
+  var SLIDES = [
+    {
+      "n": 1,
+      "banner": true,
+      "shot": "shot_dashboard.png"
+    },
+    {
+      "n": 5,
+      "banner": true,
+      "shot": "shot_targeting.png"
+    },
+    {
+      "n": 8,
+      "banner": true,
+      "shot": "shot_email.png"
+    },
+    {
+      "n": 11,
+      "banner": true,
+      "shot": "shot_cron.png"
+    },
+    {
+      "n": 2,
+      "shot": "shot1.png"
+    },
+    {
+      "n": 3,
+      "shot": "shot2.png"
+    },
+    {
+      "n": 4,
+      "shot": "shot3.png"
+    },
+    {
+      "n": 6,
+      "shot": "shot4.png"
+    },
+    {
+      "n": 7,
+      "shot": "shot5.png"
+    },
+    {
+      "n": 9,
+      "shot": "shot6.png"
+    },
+    {
+      "n": 10,
+      "shot": "shot7.png"
+    },
+    {
+      "n": 12,
+      "shot": "shot8.png"
+    },
+    {
+      "n": 13,
+      "shot": "shot9.png"
+    },
+    {
+      "n": 14,
+      "shot": "shot10.png"
+    }
+  ];
+  /* Порядок слайдов = поле n. Меняете n — двигать блоки в массиве не нужно. */
+  SLIDES.forEach(function(slide){
+    Object.keys(window.NOD_SLIDE_TRANSLATIONS).forEach(function(code){
+      slide[code] = window.NOD_SLIDE_TRANSLATIONS[code][slide.n];
+    });
+  });
+  SLIDES.sort(function(a, b){ return a.n - b.n; });
+
+  var lang = 'ru';
+  var zoom = 0.5;   // 50% = слайд ровно 1000px на экране (финальный размер)
+
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function shotBlock(file, tall){
+    return '<div class="shot">'
+         +   '<div class="shot-frame">'
+         +     '<div class="bar"><i></i><i></i><i></i></div>'
+         +     '<img src="shots/' + file + '" alt="" '
+         +          'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'grid\'">'
+         +     '<div class="ph" style="display:none">shots/' + esc(file) + '<br><small>положите файл сюда</small></div>'
+         +   '</div>'
+         + '</div>';
+  }
+
+  /* Картинка с плейсхолдером: если файла нет, показываем его имя вместо битой иконки. */
+  function img(file, phClass, phText){
+    return '<img src="shots/' + file + '" alt="" '
+         +      'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'grid\'">'
+         + '<div class="' + (phClass || 'ph') + '" style="display:none">' + esc(phText || ('shots/' + file)) + '</div>';
+  }
+
+  /* Режим "states": одно место в трёх состояниях — прогресс читается как движение. */
+  function statesBlock(files, caps){
+    return '<div class="states">'
+      + files.map(function(f, i){
+          return '<div class="state">' + img(f)
+               + ((caps && caps[i]) ? '<span class="tag">' + esc(caps[i]) + '</span>' : '')
+               + '</div>';
+        }).join('')
+      + '</div>';
+  }
+
+  /* Режим "annotate": выноски поверх скриншота. Координаты — в % от окна кадра. */
+  function annotateBlock(file, notes){
+    return '<div class="shot">'
+         +   '<div class="shot-frame">'
+         +     '<div class="bar"><i></i><i></i><i></i></div>'
+         +     img(file)
+         +     (notes || []).map(function(n){
+               var pos = 'left:' + n.x + '%; top:' + n.y + '%;';
+               // dir:'right' по умолчанию тянет бокс влево (правый край к точке); noshift это отключает.
+               if (n.dir === 'right' && !n.noshift) { pos += ' transform:translateX(-100%);'; }
+               // Необязательная ширина конкретной выноски.
+               if (n.maxw) { pos += ' max-width:' + n.maxw + 'px;'; }
+               return '<div class="note" data-dir="' + (n.dir || 'left') + '" style="' + pos + '">'
+                    + esc(n.text) + '</div>';
+             }).join('')
+         +   '</div>'
+         + '</div>';
+  }
+
+  /* Режим "devices": десктоп и телефон в одном кадре — снимает вопрос «а на мобильных?». */
+  function devicesBlock(deskFile, mobFile){
+    return '<div class="devices">'
+         +   '<div class="desk"><div class="bar"><i></i><i></i><i></i></div>' + img(deskFile) + '</div>'
+         +   '<div class="mob"><div class="screen">' + img(mobFile) + '</div></div>'
+         + '</div>';
+  }
+
+  function phonesBlock(files, caps){
+    return '<div class="phones">'
+      + files.map(function(f, i){
+          return '<div><div class="phone"><div class="screen">'
+               +   '<img src="shots/' + f + '" alt="" '
+               +        'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'grid\'">'
+               +   '<div class="ph" style="display:none">shots/' + esc(f) + '</div>'
+               + '</div></div>'
+               + '<div class="cap">' + esc((caps && caps[i]) || '') + '</div></div>';
+        }).join('')
+      + '</div>';
+  }
+
+  /* Координаты выносок живут в конфиге кадра, а тексты — в языковом блоке,
+     чтобы не дублировать позиции для каждого языка. */
+  function buildNotes(positions, texts){
+    return positions.map(function(p, i){
+      return { x:p.x, y:p.y, dir:p.dir, noshift:p.noshift, maxw:p.maxw, text:(texts && texts[i]) || '' };
+    });
+  }
+
+  /* Режим "banner": языковой блок = [заголовок, подзаголовок|'', пары[[h,текст],…]].
+     shot (если есть) встраивается белой карточкой между подзаголовком и блоками. */
+  function bannerSlide(s, t){
+    var sub   = t[1] ? '<p class="b-sub">' + esc(t[1]) + '</p>' : '';
+    var shot  = s.shot ? '<div class="b-shot">' + img(s.shot) + '</div>' : '';
+    var pairs = (t[2] || []).map(function(p){
+      return '<div class="b-pair"><h3>' + esc(p[0]) + '</h3><p>' + esc(p[1]) + '</p></div>';
+    }).join('');
+    return '<div class="slide banner" data-n="' + s.n + '">'
+         +   '<h2 class="b-title">' + esc(t[0]) + '</h2>'
+         +   sub + shot
+         +   '<div class="b-list">' + pairs + '</div>'
+         + '</div>';
+  }
+
+  function render(){
+    var stage = document.getElementById('stage');
+    stage.innerHTML = SLIDES.map(function(s){
+      var t = s[lang];
+      if (s.banner) { return bannerSlide(s, t); }
+      var body;
+      if (s.states)       { body = statesBlock(s.states, t[3]); }
+      else if (s.devices) { body = devicesBlock(s.devices[0], s.devices[1]); }
+      else if (s.notes)   { body = annotateBlock(s.shot, buildNotes(s.notes, t[3])); }
+      else if (s.phones)  { body = phonesBlock(s.phones, t[3]); }
+      else                { body = shotBlock(s.shot, s.tall); }
+      // Надзаголовок, логотип и нумерация намеренно не выводятся: на слайде остаётся
+      // только заголовок, пояснение и сам скриншот. Тексты t[0] в SLIDES сохранены —
+      // если понадобится вернуть категорию, достаточно снова вставить её сюда.
+      return '<div class="slide' + (s.tall ? ' tall' : '') + '" data-n="' + s.n + '">'
+           +   '<h2 class="title">' + esc(t[1]) + '</h2>'
+           +   '<p class="sub">' + esc(t[2]) + '</p>'
+           +   body
+           + '</div>';
+    }).join('');
+    applyZoom();
+  }
+
+  /* Слайд всегда 2000×2000; на экране просто масштабируем обёртку. */
+  function applyZoom(){
+    document.querySelectorAll('.slide').forEach(function(el){
+      el.style.transform = 'scale(' + zoom + ')';
+      el.style.marginBottom = (40 - 2000 * (1 - zoom)) + 'px';
+    });
+    document.getElementById('stage').style.height = 'auto';
+  }
+
+  document.querySelectorAll('[data-lang]').forEach(function(b){
+    b.addEventListener('click', function(){
+      lang = b.getAttribute('data-lang');
+      document.querySelectorAll('[data-lang]').forEach(function(x){
+        x.setAttribute('aria-pressed', String(x === b));
+      });
+      document.documentElement.lang = lang;
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-zoom]').forEach(function(b){
+    b.addEventListener('click', function(){
+      zoom = parseFloat(b.getAttribute('data-zoom'));
+      document.querySelectorAll('[data-zoom]').forEach(function(x){
+        x.setAttribute('aria-pressed', String(x === b));
+      });
+      applyZoom();
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -14,8 +14,6 @@
  */
 namespace Setecom\NextOrderDiscount\Mail;
 
-use Language;
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -60,7 +58,7 @@ class MailTemplateInstaller
     public function installForAllLanguages()
     {
         $ok = true;
-        foreach (Language::getLanguages(false) as $lang) {
+        foreach (\Language::getLanguages(false) as $lang) {
             $iso = isset($lang['iso_code']) ? (string) $lang['iso_code'] : '';
             if ($iso === '') {
                 continue;

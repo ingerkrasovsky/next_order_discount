@@ -368,7 +368,7 @@
                                             <span class="snod-ph-chips">
                                                 {assign var=snod_placeholders value=['coupon_code', 'coupon_value', 'valid_to', 'minimum_amount', 'customer_firstname', 'customer_lastname', 'customer_fullname', 'customer_title', 'customer_email', 'shop_name', 'shop_logo']}
                                                 {foreach from=$snod_placeholders item=snod_ph}
-                                                    <a href="#" class="snod-ph-chip" data-ph="{ldelim}{$snod_ph}{rdelim}" title="{l s='Insert into the content above' d='Modules.Setnextorderdiscount.Admin'}"><code>{ldelim}{$snod_ph}{rdelim}</code></a>
+                                                    <a href="#" class="snod-ph-chip" data-ph="{ldelim}{$snod_ph|escape:'html':'UTF-8'}{rdelim}" title="{l s='Insert into the content above' d='Modules.Setnextorderdiscount.Admin'}"><code>{ldelim}{$snod_ph|escape:'html':'UTF-8'}{rdelim}</code></a>
                                                 {/foreach}
                                             </span>
                                         </div>

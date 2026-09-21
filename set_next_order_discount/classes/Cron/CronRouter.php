@@ -79,7 +79,7 @@ class CronRouter
         QueueWorker $queueWorker,
         ReminderPlanner $reminderPlanner,
         CouponLifecycleManager $lifecycleManager,
-        ?ModuleLogger $logger = null,
+        ?ModuleLogger $logger = null
     ) {
         $this->lockManager = $lockManager;
         $this->queueWorker = $queueWorker;

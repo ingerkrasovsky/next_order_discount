@@ -1,0 +1,136 @@
+Next Order Discount - Validation report
+-------
+
+Addon details
+-------------
+
+Validation date: 2026-09-19
+Addon type: Module
+Technical name: set_next_order_discount
+Display name: Next Order Discount
+Author: Smart Ecommerce Tech
+Version: 1.0.0
+Category (tab): advertising_marketing
+Description: Automatically creates a personal discount coupon after a successful order and ma
+nages its full lifecycle.
+
+
+Security
+-------------
+
+In file /views/templates/admin/tabs/rule_edit.tpl:
+ * No modifier method used. This value will be cleaned automatically before being displayed.
+
+Line	| Code
+--------| ------------------------------------------------------
+371	|                                                     <a href="#" class="snod-ph-chip" data-ph="{ldelim}{$snod_ph}{rdelim}" title="{l s='Insert into the content above' d='Modules.Setnextorderdiscount.Admin'}"><code>{ldelim}{$snod_ph}{rdelim}</code></a>
+
+
+Standards
+-------------
+
+In file /classes/Reminder/ReminderMailer.php:
+ * The following rule(s) need be applied to match the coding standard: fully_qualified_strict_types, blank_line_after_opening_tag, global_namespace_import, trailing_comma_in_multiline, blank_lines_before_namespace, phpdoc_align
+
+Line	| Code
+--------| ------------------------------------------------------
+57	|         RuleEmailRepository $ruleEmailRepository
+	| [...]
+73	|      *                    and sent in, overriding the customer's own language
+74	|      *                    (manual back-office send). 0 keeps the customer's
+75	|      *                    language.
+
+
+In file /classes/Reminder/ReminderPlanner.php:
+ * The following rule(s) need be applied to match the coding standard: blank_line_after_opening_tag, trailing_comma_in_multiline, blank_lines_before_namespace
+
+Line	| Code
+--------| ------------------------------------------------------
+52	|         QueueService $queueService
+
+
+In file /classes/Cron/CronRouter.php:
+ * The following rule(s) need be applied to match the coding standard: fully_qualified_strict_types, blank_line_after_opening_tag, global_namespace_import, trailing_comma_in_multiline, blank_lines_before_namespace
+
+Line	| Code
+--------| ------------------------------------------------------
+82	|         ?ModuleLogger $logger = null
+
+
+In file /classes/Coupon/CouponRedemptionService.php:
+ * The following rule(s) need be applied to match the coding standard: blank_line_after_opening_tag, trailing_comma_in_multiline, blank_lines_before_namespace
+
+Line	| Code
+--------| ------------------------------------------------------
+61	|         ?ModuleLogger $logger = null
+
+
+In file /classes/Coupon/CouponGenerationService.php:
+ * The following rule(s) need be applied to match the coding standard: fully_qualified_strict_types, blank_line_after_opening_tag, global_namespace_import, trailing_comma_in_multiline, blank_lines_before_namespace
+
+Line	| Code
+--------| ------------------------------------------------------
+71	|         ?CouponMailer $couponMailer = null
+
+
+In file /classes/Coupon/CouponCancellationService.php:
+ * The following rule(s) need be applied to match the coding standard: blank_line_after_opening_tag, trailing_comma_in_multiline, blank_lines_before_namespace
+
+Line	| Code
+--------| ------------------------------------------------------
+64	|         ?ModuleLogger $logger = null
+
+
+In file /classes/Coupon/CouponLifecycleManager.php:
+ * The following rule(s) need be applied to match the coding standard: blank_line_after_opening_tag, trailing_comma_in_multiline, blank_lines_before_namespace
+
+Line	| Code
+--------| ------------------------------------------------------
+52	|         CartRuleAdapter $cartRuleAdapter
+
+
+In file /classes/Mail/DefaultEmailProvider.php:
+ * The following rule(s) need be applied to match the coding standard: single_quote, fully_qualified_strict_types, blank_line_after_opening_tag, global_namespace_import, blank_lines_before_namespace
+
+Line	| Code
+--------| ------------------------------------------------------
+64	|             'fr' => "Votre réduction vous attend — utilisez-la avant son expiration",
+	| [...]
+68	|             'fr' => "Votre réduction vous attend — utilisez-la avant son expiration",
+
+
+In file /classes/Mail/MailTemplateInstaller.php:
+ * The following rule(s) need be applied to match the coding standard: blank_line_after_opening_tag, global_namespace_import, blank_lines_before_namespace
+
+Line	| Code
+--------| ------------------------------------------------------
+63	|         foreach (Language::getLanguages(false) as $lang) {
+
+
+In file /classes/Mail/CouponMailer.php:
+ * The following rule(s) need be applied to match the coding standard: fully_qualified_strict_types, blank_line_after_opening_tag, global_namespace_import, trailing_comma_in_multiline, blank_lines_before_namespace, phpdoc_align
+
+Line	| Code
+--------| ------------------------------------------------------
+60	|         RuleEmailRepository $ruleEmailRepository
+	| [...]
+78	|      *                    sent in, overriding the customer's own language (manual
+79	|      *                    back-office send). 0 keeps the customer's language.
+
+
+In file /classes/Queue/QueueRetryPolicy.php:
+ * The following rule(s) need be applied to match the coding standard: blank_line_after_opening_tag, trailing_comma_in_multiline, blank_lines_before_namespace
+
+Line	| Code
+--------| ------------------------------------------------------
+54	|         $maxDelaySeconds = self::DEFAULT_MAX_DELAY_SECONDS
+
+
+In file /classes/Queue/QueueWorker.php:
+ * The following rule(s) need be applied to match the coding standard: blank_line_after_opening_tag, trailing_comma_in_multiline, blank_lines_before_namespace
+
+Line	| Code
+--------| ------------------------------------------------------
+80	|         ?ModuleLogger $logger = null
+
+

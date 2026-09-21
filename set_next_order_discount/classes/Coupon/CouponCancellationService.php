@@ -61,7 +61,7 @@ class CouponCancellationService
     public function __construct(
         CouponLinkRepository $couponLinkRepository,
         CartRuleAdapter $cartRuleAdapter,
-        ?ModuleLogger $logger = null,
+        ?ModuleLogger $logger = null
     ) {
         $this->couponLinkRepository = $couponLinkRepository;
         $this->cartRuleAdapter = $cartRuleAdapter;
