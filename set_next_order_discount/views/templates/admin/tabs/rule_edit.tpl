@@ -309,7 +309,7 @@
                     <label class="control-label col-lg-3">{l s='Key length' d='Modules.Setnextorderdiscount.Admin'}</label>
                     <div class="col-lg-3">
                         <input type="text" name="snod_rule_code_length" class="form-control" value="{$snod_rule_form.code_length|escape:'html':'UTF-8'}">
-                        <p class="help-block">{l s='Number of random characters in %key% (clamped between 4 and 32).' d='Modules.Setnextorderdiscount.Admin'}</p>
+                        <p class="help-block">{l s='Number of random characters in' d='Modules.Setnextorderdiscount.Admin'} <code>%key%</code> {l s='(clamped between 4 and 32).' d='Modules.Setnextorderdiscount.Admin'}</p>
                     </div>
                 </div>
 
@@ -323,7 +323,7 @@
                                 </option>
                             {/foreach}
                         </select>
-                        <p class="help-block">{l s='Character set used for the generated %key%.' d='Modules.Setnextorderdiscount.Admin'}</p>
+                        <p class="help-block">{l s='Character set used for the generated' d='Modules.Setnextorderdiscount.Admin'} <code>%key%</code>.</p>
                     </div>
                 </div>
 
@@ -331,7 +331,10 @@
                     <label class="control-label col-lg-3">{l s='Key template' d='Modules.Setnextorderdiscount.Admin'}</label>
                     <div class="col-lg-3">
                         <input type="text" name="snod_rule_code_template" class="form-control" value="{$snod_rule_form.code_template|escape:'html':'UTF-8'}" maxlength="64">
-                        <p class="help-block">{l s='Use %key% as a placeholder for the generated key. Example: NOD-%key% → NOD-AB12CD8X' d='Modules.Setnextorderdiscount.Admin'}</p>
+                        <p class="help-block">
+                            {l s='Use' d='Modules.Setnextorderdiscount.Admin'} <code>%key%</code> {l s='as a placeholder for the generated key. Example:' d='Modules.Setnextorderdiscount.Admin'}
+                            <code>NOD-%key%</code> → <code>NOD-AB12CD8X</code>
+                        </p>
                     </div>
                 </div>
             </div>

@@ -33,25 +33,31 @@
 
         {* Optional one-click install: shown only when this server can manage its crontab. *}
         {if $snod_cron_caps.available}
-            <div class="well well-sm" id="snod-cron-install-box" data-installed="{if $snod_cron_installed}1{else}0{/if}">
-                <strong>{l s='One-click install' d='Modules.Setnextorderdiscount.Admin'}</strong>
-                {l s='— this server can manage its own crontab, so you can install the cron without leaving this page.' d='Modules.Setnextorderdiscount.Admin'}
-                <div style="margin-top:8px;">
-                    {if $snod_cron_installed}
-                        <span class="snod-badge snod-badge-success"><i class="material-icons">check_circle</i>{l s='Installed' d='Modules.Setnextorderdiscount.Admin'}</span>
-                        <button type="button" class="btn btn-default btn-sm snod-cron-remove">
-                            <i class="material-icons">delete</i> {l s='Remove cron' d='Modules.Setnextorderdiscount.Admin'}
-                        </button>
-                    {else}
-                        <button type="button" class="btn btn-success btn-sm snod-cron-install">
-                            <i class="material-icons">download</i> {l s='Install cron automatically' d='Modules.Setnextorderdiscount.Admin'}
-                        </button>
-                    {/if}
-                    <span class="snod-cron-install-result" style="margin-left:8px;"></span>
+            <div class="snod-subpanel" id="snod-cron-install-box" data-installed="{if $snod_cron_installed}1{else}0{/if}">
+                <div class="snod-subpanel-heading">
+                    {l s='One-click install' d='Modules.Setnextorderdiscount.Admin'}
                 </div>
-                <p class="help-block" style="margin-bottom:0;">
-                    {l s='Adds one line (every 5 minutes) to this server’s crontab, wrapped in markers so it is removed cleanly when you uninstall the module.' d='Modules.Setnextorderdiscount.Admin'}
-                </p>
+                <div class="snod-subpanel-body">
+                    <p style="margin:0 0 8px;">
+                        {l s='This server can manage its own crontab, so you can install the cron without leaving this page.' d='Modules.Setnextorderdiscount.Admin'}
+                    </p>
+                    <div>
+                        {if $snod_cron_installed}
+                            <span class="snod-badge snod-badge-success"><i class="material-icons">check_circle</i>{l s='Installed' d='Modules.Setnextorderdiscount.Admin'}</span>
+                            <button type="button" class="btn btn-default btn-sm snod-cron-remove">
+                                <i class="material-icons">delete</i> {l s='Remove cron' d='Modules.Setnextorderdiscount.Admin'}
+                            </button>
+                        {else}
+                            <button type="button" class="btn btn-default btn-sm snod-cron-install">
+                                <i class="material-icons">download</i> {l s='Install cron automatically' d='Modules.Setnextorderdiscount.Admin'}
+                            </button>
+                        {/if}
+                        <span class="snod-cron-install-result" style="margin-left:8px;"></span>
+                    </div>
+                    <p class="help-block" style="margin:8px 0 0;">
+                        {l s='Adds one line (every 5 minutes) to this server’s crontab, wrapped in markers so it is removed cleanly when you uninstall the module.' d='Modules.Setnextorderdiscount.Admin'}
+                    </p>
+                </div>
             </div>
         {else}
             <p class="help-block">

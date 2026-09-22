@@ -18,21 +18,23 @@
         {l s='Logs' d='Modules.Setnextorderdiscount.Admin'}
     </div>
 
-    <form method="post" action="{$AdminLink|escape:'html':'UTF-8'}&tab=logs" class="form-inline" style="margin-bottom:15px;">
-        <div class="form-group">
-            <label>{l s='Level' d='Modules.Setnextorderdiscount.Admin'}</label>
+    <form method="post" action="{$AdminLink|escape:'html':'UTF-8'}&tab=logs" class="snod-filters">
+        <label class="snod-filter">
+            <span>{l s='Level' d='Modules.Setnextorderdiscount.Admin'}</span>
             <select name="snod_log_level" class="form-control">
                 <option value="">{l s='All' d='Modules.Setnextorderdiscount.Admin'}</option>
                 {foreach from=$snod_log_levels item=level}
                     <option value="{$level|escape:'html':'UTF-8'}"{if $snod_log_filter_level == $level} selected="selected"{/if}>{$level|escape:'html':'UTF-8'}</option>
                 {/foreach}
             </select>
-        </div>
-        <div class="form-group">
-            <label>{l s='Channel' d='Modules.Setnextorderdiscount.Admin'}</label>
+        </label>
+        <label class="snod-filter">
+            <span>{l s='Channel' d='Modules.Setnextorderdiscount.Admin'}</span>
             <input type="text" name="snod_log_channel" class="form-control" value="{$snod_log_filter_channel|escape:'html':'UTF-8'}" placeholder="cron, queue…" />
+        </label>
+        <div class="snod-filter-actions">
+            <button type="submit" class="btn btn-default">{l s='Filter' d='Modules.Setnextorderdiscount.Admin'}</button>
         </div>
-        <button type="submit" class="btn btn-default">{l s='Filter' d='Modules.Setnextorderdiscount.Admin'}</button>
     </form>
 
     <p class="text-muted">{l s='Total entries:' d='Modules.Setnextorderdiscount.Admin'} {$snod_log_total|intval}</p>

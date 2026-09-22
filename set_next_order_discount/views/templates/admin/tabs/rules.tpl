@@ -109,8 +109,9 @@
             </table>
         </div>
     {else}
-        <div class="alert alert-info" style="margin-bottom:0;">
-            {l s='No discount rules yet.' d='Modules.Setnextorderdiscount.Admin'}
+        <div class="alert alert-warning" role="alert">
+            {l s='No discount rules yet. Click "Add a rule" above to create your first one.' d='Modules.Setnextorderdiscount.Admin'}
         </div>
+        <a href="{$AdminLink|escape:'html':'UTF-8'}&tab=rule_edit&id_rule=0" class="btn btn-default">{l s='Add a rule' d='Modules.Setnextorderdiscount.Admin'}</a>
     {/if}
 </div>

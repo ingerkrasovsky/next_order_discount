@@ -162,13 +162,42 @@
     text-transform: uppercase;
 }
 
-.snod-dash-progress {
-    height: 6px;
-    margin: 8px 0 2px;
+.snod-dash-card-percent {
+    margin-left: 4px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #9099a1;
 }
 
-.snod-dash-card-percent {
-    color: #777;
+/* Thin progress bar under each funnel card — own component (not Bootstrap's
+ * .progress) so its color can match the card's semantic (info/success/danger),
+ * same palette as .snod-badge-*. */
+.snod-dash-card-bar {
+    height: 4px;
+    margin-top: 10px;
+    border-radius: 2px;
+    background: #eceff1;
+    overflow: hidden;
+}
+
+.snod-dash-card-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: #9099a1;
+    transition: width .3s ease;
+}
+
+.snod-dash-card-bar-info > span {
+    background: #25b9d7;
+}
+
+.snod-dash-card-bar-success > span {
+    background: #2e7d32;
+}
+
+.snod-dash-card-bar-danger > span {
+    background: #c62828;
 }
 
 .snod-dash-section {
@@ -188,10 +217,18 @@
     margin: 0 15px 15px;
 }
 
-.snod-dash-queue-section {
-    padding-top: 1px;
-    padding-bottom: 15px;
-    border-top: 1px solid #eaebec;
+.snod-dash-chart-wrap {
+    position: relative;
+    height: 320px;
+    margin-bottom: 15px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    background: #fff;
+    padding: 10px 12px;
+}
+
+.snod-dash-chart-wrap canvas {
+    display: block;
 }
 
 /* Dashboard tooltips / help */
@@ -331,12 +368,85 @@
     border-color: #f5c6cb;
 }
 
+/* ---------------------------------------------------------------------------
+ * List filters (Coupons / Logs) — mirrors the dashboard filter bar layout
+ * from set_loyalty_milestones (.slm-dash-filters / .slm-dash-filter).
+ * ------------------------------------------------------------------------- */
+.snod-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 15px;
+}
+
+.snod-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-weight: normal;
+    min-width: 180px;
+}
+
+.snod-filter > span {
+    font-size: 11px;
+    color: #777;
+    text-transform: uppercase;
+}
+
+.snod-filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* Keep the row action buttons on one line (mirrors the points module table). */
 #snod-rules-table td .btn-group {
     white-space: nowrap;
 }
 
-/* Placeholder hint chips below the email HTML content field. */
+/* ---------------------------------------------------------------------------
+ * Coupons list — Actions cell (Resend + reminders + language). Icon-only
+ * buttons keep it compact; wrapping (instead of forcing one unbreakable
+ * line) keeps rows with two reminders from overflowing the table.
+ * ------------------------------------------------------------------------- */
+.snod-coupon-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.snod-coupon-actions .snod-send-lang {
+    width: 64px;
+    height: 30px;
+    padding: 2px 4px;
+    font-size: 12px;
+}
+
+.snod-coupon-actions .btn-group .btn {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.snod-coupon-actions-badge {
+    margin-left: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.snod-resend-result {
+    margin-top: 4px;
+    font-size: 12px;
+    text-align: right;
+}
+
+/* Placeholder hint chips below the email HTML content field — plain <code>
+ * look (same as %key% on the Rules → Code tab), just wrapped in a clickable
+ * link that inserts the placeholder into the content field above.
+ */
 .snod-ph-hint .snod-ph-chips {
     display: inline;
 }
@@ -348,17 +458,37 @@
 }
 
 .snod-ph-chip code {
-    color: #3d4d6a;
-    background: #eef1f7;
-    border: 1px solid #d6ddea;
-    border-radius: 3px;
-    padding: 1px 6px;
-    font-size: 12px;
     cursor: pointer;
 }
 
 .snod-ph-chip:hover code,
 .snod-ph-chip:focus code {
-    background: #e0e6f2;
-    border-color: #b9c4da;
+    text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------------------
+ * Self-contained "boxed" sub-panel (Cron/Tools → One-click install and
+ * similar nested blocks). Explicit border/background instead of relying on
+ * the admin theme's .panel/.panel-default/.panel-heading, whose look varies
+ * across PrestaShop back-office versions/themes.
+ * ------------------------------------------------------------------------- */
+.snod-subpanel {
+    margin-bottom: 15px;
+    border: 1px solid #e0e6ed;
+    border-radius: 4px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.snod-subpanel-heading {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #363a41;
+    background: #f7f8fa;
+    border-bottom: 1px solid #e0e6ed;
+}
+
+.snod-subpanel-body {
+    padding: 12px;
 }

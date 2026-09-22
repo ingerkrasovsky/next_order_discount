@@ -19,13 +19,13 @@
         <span class="badge">{$snod_total_coupons|intval}</span>
     </div>
 
-    <form method="get" action="" class="form-inline" style="margin-bottom:15px;">
+    <form method="get" action="" class="snod-filters">
         <input type="hidden" name="controller" value="NextOrderDiscount">
         <input type="hidden" name="token" value="{$snod_admin_token|escape:'html':'UTF-8'}">
         <input type="hidden" name="tab" value="coupons">
 
-        <div class="form-group" style="margin-right:8px;">
-            <label class="control-label" style="margin-right:6px;">{l s='Status' d='Modules.Setnextorderdiscount.Admin'}</label>
+        <label class="snod-filter">
+            <span>{l s='Status' d='Modules.Setnextorderdiscount.Admin'}</span>
             <select name="snod_filter_status" class="form-control">
                 <option value="">{l s='All statuses' d='Modules.Setnextorderdiscount.Admin'}</option>
                 {foreach from=$snod_coupon_statuses item=statusCode}
@@ -34,19 +34,21 @@
                     </option>
                 {/foreach}
             </select>
-        </div>
+        </label>
 
-        <div class="form-group" style="margin-right:8px;">
-            <label class="control-label" style="margin-right:6px;">{l s='Code' d='Modules.Setnextorderdiscount.Admin'}</label>
+        <label class="snod-filter">
+            <span>{l s='Code' d='Modules.Setnextorderdiscount.Admin'}</span>
             <input type="text" name="snod_filter_code" class="form-control" value="{$snod_filter_code|escape:'html':'UTF-8'}" placeholder="{l s='Search code' d='Modules.Setnextorderdiscount.Admin'}">
-        </div>
+        </label>
 
-        <button type="submit" class="btn btn-default">
-            <i class="icon-search"></i> {l s='Filter' d='Modules.Setnextorderdiscount.Admin'}
-        </button>
-        <a href="{$AdminLink|escape:'html':'UTF-8'}&tab=coupons" class="btn btn-link">
-            {l s='Reset' d='Modules.Setnextorderdiscount.Admin'}
-        </a>
+        <div class="snod-filter-actions">
+            <button type="submit" class="btn btn-default">
+                <i class="icon-search"></i> {l s='Filter' d='Modules.Setnextorderdiscount.Admin'}
+            </button>
+            <a href="{$AdminLink|escape:'html':'UTF-8'}&tab=coupons" class="btn btn-link">
+                {l s='Reset' d='Modules.Setnextorderdiscount.Admin'}
+            </a>
+        </div>
     </form>
 
     {if $snod_coupons|@count > 0}
@@ -109,41 +111,43 @@
                         </td>
                         <td>{if $coupon.valid_to_display}{$coupon.valid_to_display|escape:'html':'UTF-8'}{else}<span class="text-muted">&mdash;</span>{/if}</td>
                         <td>{if $coupon.generated_at_display}{$coupon.generated_at_display|escape:'html':'UTF-8'}{else}<span class="text-muted">&mdash;</span>{/if}</td>
-                        <td class="text-right" style="white-space:nowrap;">
+                        <td class="text-right snod-actions-cell">
                             {if $coupon.status != 'used' && $coupon.status != 'expired' && $coupon.status != 'canceled'}
-                                {if $snod_languages|count > 1}
-                                    <select class="snod-send-lang" style="max-width:110px;display:inline-block;vertical-align:middle;margin-right:4px;"
-                                            title="{l s='Language of the email to send' d='Modules.Setnextorderdiscount.Admin'}">
-                                        {foreach from=$snod_languages item=lang}
-                                            <option value="{$lang.id_lang|intval}"{if $lang.id_lang == $coupon.send_lang} selected="selected"{/if}>{$lang.iso_code|escape:'html':'UTF-8'|upper}</option>
-                                        {/foreach}
-                                    </select>
-                                {/if}
-                                <div class="btn-group" role="group">
-                                    <button type="button"
-                                            class="btn btn-default btn-sm snod-resend-coupon"
-                                            data-id="{$coupon.id_snod_coupon_link|intval}"
-                                            title="{l s='Send the coupon email to the customer again' d='Modules.Setnextorderdiscount.Admin'}">
-                                        <i class="material-icons">mail</i> {l s='Resend' d='Modules.Setnextorderdiscount.Admin'}
-                                    </button>
-                                    {if $coupon.rule_reminder_enabled && $coupon.rule_reminder1_days > 0}
-                                        <button type="button"
-                                                class="btn btn-default btn-sm snod-send-reminder"
-                                                data-id="{$coupon.id_snod_coupon_link|intval}" data-reminder="1"
-                                                title="{l s='Send reminder 1 to the customer now' d='Modules.Setnextorderdiscount.Admin'}">
-                                            <i class="material-icons">notifications</i> 1
-                                        </button>
+                                <div class="snod-coupon-actions">
+                                    {if $snod_languages|count > 1}
+                                        <select class="snod-send-lang form-control input-sm"
+                                                title="{l s='Language of the email to send' d='Modules.Setnextorderdiscount.Admin'}">
+                                            {foreach from=$snod_languages item=lang}
+                                                <option value="{$lang.id_lang|intval}"{if $lang.id_lang == $coupon.send_lang} selected="selected"{/if}>{$lang.iso_code|escape:'html':'UTF-8'|upper}</option>
+                                            {/foreach}
+                                        </select>
                                     {/if}
-                                    {if $coupon.rule_reminder_enabled && $coupon.rule_reminder2_days > 0}
+                                    <div class="btn-group" role="group">
                                         <button type="button"
-                                                class="btn btn-default btn-sm snod-send-reminder"
-                                                data-id="{$coupon.id_snod_coupon_link|intval}" data-reminder="2"
-                                                title="{l s='Send reminder 2 to the customer now' d='Modules.Setnextorderdiscount.Admin'}">
-                                            <i class="material-icons">notifications</i> 2
+                                                class="btn btn-default btn-sm snod-resend-coupon"
+                                                data-id="{$coupon.id_snod_coupon_link|intval}"
+                                                title="{l s='Send the coupon email to the customer again' d='Modules.Setnextorderdiscount.Admin'}">
+                                            <i class="material-icons">mail</i>
                                         </button>
-                                    {/if}
+                                        {if $coupon.rule_reminder_enabled && $coupon.rule_reminder1_days > 0}
+                                            <button type="button"
+                                                    class="btn btn-default btn-sm snod-send-reminder"
+                                                    data-id="{$coupon.id_snod_coupon_link|intval}" data-reminder="1"
+                                                    title="{l s='Send reminder 1 to the customer now' d='Modules.Setnextorderdiscount.Admin'}">
+                                                <i class="material-icons">notifications</i><span class="snod-coupon-actions-badge">1</span>
+                                            </button>
+                                        {/if}
+                                        {if $coupon.rule_reminder_enabled && $coupon.rule_reminder2_days > 0}
+                                            <button type="button"
+                                                    class="btn btn-default btn-sm snod-send-reminder"
+                                                    data-id="{$coupon.id_snod_coupon_link|intval}" data-reminder="2"
+                                                    title="{l s='Send reminder 2 to the customer now' d='Modules.Setnextorderdiscount.Admin'}">
+                                                <i class="material-icons">notifications</i><span class="snod-coupon-actions-badge">2</span>
+                                            </button>
+                                        {/if}
+                                    </div>
                                 </div>
-                                <span class="snod-resend-result" style="margin-left:6px;"></span>
+                                <div class="snod-resend-result"></div>
                             {else}
                                 <span class="text-muted">&mdash;</span>
                             {/if}

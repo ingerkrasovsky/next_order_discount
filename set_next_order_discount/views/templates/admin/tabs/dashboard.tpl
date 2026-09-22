@@ -25,7 +25,7 @@
     {/function}
 
     <p class="help-block snod-dash-intro">
-        {l s='Coupon lifecycle totals and dispatch queue status for the current shop context.' d='Modules.Setnextorderdiscount.Admin'}
+        {l s='Coupon lifecycle totals for the current shop context.' d='Modules.Setnextorderdiscount.Admin'}
     </p>
 
     <div class="snod-dash-section">
@@ -38,7 +38,10 @@
     <div class="snod-dash-cards">
         {foreach from=$snod_funnel item=step}
             <div class="snod-dash-card">
-                <div class="snod-dash-card-value">{$step.value|intval}</div>
+                <div class="snod-dash-card-value">
+                    {$step.value|intval}
+                    {if $step.key != 'generated'}<span class="snod-dash-card-percent">{$step.percent|floatval}%</span>{/if}
+                </div>
                 <div class="snod-dash-card-label">
                     {$step.label|escape:'html':'UTF-8'}
                     {if $step.key == 'generated'}
@@ -55,10 +58,12 @@
                         {call name=snod_dash_help tip="{l s='Coupons voided after the originating order moved to a configured cancellation status.' d='Modules.Setnextorderdiscount.Admin'}"}
                     {/if}
                 </div>
-                <div class="progress snod-dash-progress">
-                    <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="{$step.percent|floatval}" aria-valuemin="0" aria-valuemax="100" style="width:{$step.percent|floatval}%;"></div>
-                </div>
-                <small class="snod-dash-card-percent">{$step.percent|floatval}%</small>
+                {if $step.key != 'generated'}
+                    <div class="snod-dash-card-bar {if $step.key == 'used'}snod-dash-card-bar-success{elseif $step.key == 'expired' || $step.key == 'canceled'}snod-dash-card-bar-danger{elseif $step.key == 'emailed' || $step.key == 'reminded'}snod-dash-card-bar-info{/if}"
+                         role="progressbar" aria-valuenow="{$step.percent|floatval}" aria-valuemin="0" aria-valuemax="100">
+                        <span style="width:{$step.percent|floatval}%;"></span>
+                    </div>
+                {/if}
             </div>
         {/foreach}
     </div>
@@ -70,16 +75,15 @@
         {call name=snod_dash_help tip="{l s='Conversion rate equals used coupons divided by generated coupons for the current shop context.' d='Modules.Setnextorderdiscount.Admin'}"}
     </p>
 
-    <div class="snod-dash-section snod-dash-queue-section">
-        <h4 class="snod-dash-section-title">
-            {l s='Dispatch queue' d='Modules.Setnextorderdiscount.Admin'}
-            {call name=snod_dash_help tip="{l s='Current background email queue snapshot. Cron moves items from Pending to Processing, then to Done or Failed.' d='Modules.Setnextorderdiscount.Admin'}"}
-        </h4>
-        <div class="snod-targeting-badges">
-            <span class="snod-badge snod-badge-all"><i class="material-icons">schedule</i>{l s='Pending' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.pending|intval}</span>
-            <span class="snod-badge snod-badge-include"><i class="material-icons">autorenew</i>{l s='Processing' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.processing|intval}</span>
-            <span class="snod-badge snod-badge-success"><i class="material-icons">check_circle</i>{l s='Done' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.done|intval}</span>
-            <span class="snod-badge snod-badge-danger"><i class="material-icons">error</i>{l s='Failed' d='Modules.Setnextorderdiscount.Admin'}: {$snod_queue_counts.failed|intval}</span>
+    {if $snod_dash_has_chart}
+        <div class="snod-dash-section">
+            <h4 class="snod-dash-section-title">
+                {l s='Daily dynamics' d='Modules.Setnextorderdiscount.Admin'}
+                {call name=snod_dash_help tip="{l s='Day-by-day trend of generated, emailed and used coupons over the last 30 days. All three share one scale, so the lines are directly comparable — used naturally sits lowest. Click a legend entry to hide a metric: the chart rescales and the remaining lines become easier to read.' d='Modules.Setnextorderdiscount.Admin'}"}
+            </h4>
+            <div class="snod-dash-chart-wrap">
+                <canvas id="snod-dash-chart" aria-label="{l s='Daily dynamics' d='Modules.Setnextorderdiscount.Admin'}" role="img"></canvas>
+            </div>
         </div>
-    </div>
+    {/if}
 </div>

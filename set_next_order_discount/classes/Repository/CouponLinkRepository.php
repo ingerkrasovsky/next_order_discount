@@ -368,6 +368,74 @@ class CouponLinkRepository
     }
 
     /**
+     * Day-by-day counters for the Dashboard "Daily dynamics" chart: how many
+     * coupons were generated, emailed and used on each of the last N days
+     * (today included). Missing days are zero-filled so the chart always
+     * gets one point per day, even where nothing happened.
+     *
+     * @param int $idShop optional shop filter (0 = any shop)
+     * @param int $days window size in days
+     *
+     * @return array list of ['date' => 'Y-m-d', 'generated' => int, 'emailed' => int, 'used' => int]
+     */
+    public function dailySeries($idShop, $days)
+    {
+        $idShop = (int) $idShop;
+        $days = max(1, (int) $days);
+        $shopWhere = $idShop > 0 ? ' AND `id_shop` = ' . $idShop : '';
+        $since = date('Y-m-d 00:00:00', strtotime('-' . ($days - 1) . ' days'));
+
+        $generatedByDate = $this->countsByDateColumn('generated_at', $since, $shopWhere);
+        $emailedByDate = $this->countsByDateColumn('emailed_at', $since, $shopWhere);
+        $usedByDate = $this->countsByDateColumn('used_at', $since, $shopWhere);
+
+        $series = [];
+        // Start at midnight so the loop's last step lands exactly on today (a start built
+        // from "-N days" would carry the current time and drop today from the series).
+        $day = new \DateTime('today');
+        $day->modify(sprintf('-%d days', $days - 1));
+        $today = new \DateTime('today');
+        while ($day <= $today) {
+            $key = $day->format('Y-m-d');
+            $series[] = [
+                'date' => $key,
+                'generated' => isset($generatedByDate[$key]) ? $generatedByDate[$key] : 0,
+                'emailed' => isset($emailedByDate[$key]) ? $emailedByDate[$key] : 0,
+                'used' => isset($usedByDate[$key]) ? $usedByDate[$key] : 0,
+            ];
+            $day->modify('+1 day');
+        }
+
+        return $series;
+    }
+
+    /**
+     * @param string $dateColumn one of the ALLOWED_COLUMNS datetime columns
+     * @param string $since 'Y-m-d H:i:s' lower bound
+     * @param string $shopWhere pre-built ' AND `id_shop` = N' fragment, or ''
+     *
+     * @return array<string,int> counts keyed by 'Y-m-d'
+     */
+    private function countsByDateColumn($dateColumn, $since, $shopWhere)
+    {
+        $rows = \Db::getInstance()->executeS(
+            'SELECT DATE(`' . $dateColumn . '`) AS `date`, COUNT(*) AS `count`'
+            . ' FROM `' . _DB_PREFIX_ . self::TABLE_NAME . '`'
+            . ' WHERE `' . $dateColumn . '` IS NOT NULL'
+            . ' AND `' . $dateColumn . '` >= "' . pSQL($since) . '"'
+            . $shopWhere
+            . ' GROUP BY DATE(`' . $dateColumn . '`)',
+        );
+
+        $map = [];
+        foreach ((is_array($rows) ? $rows : []) as $row) {
+            $map[(string) $row['date']] = (int) $row['count'];
+        }
+
+        return $map;
+    }
+
+    /**
      * @param int $id
      *
      * @return bool

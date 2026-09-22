@@ -141,6 +141,10 @@ class NextOrderDiscountController extends ModuleAdminController
         $assetVersion = '?v=' . $this->module->version;
         $this->addCSS($modulePath . '/views/css/back.css' . $assetVersion, 'all', null, false);
         $this->addJS($modulePath . '/views/js/back.js' . $assetVersion, false);
+        if ($currentTabCode === 'dashboard') {
+            $this->addJS($modulePath . '/views/js/chart.umd.min.js' . $assetVersion, false);
+            $this->addJS($modulePath . '/views/js/dashboard_charts.js' . $assetVersion, false);
+        }
 
         $this->context->smarty->assign([
             'arTabs' => $tabs,
@@ -1381,7 +1385,8 @@ class NextOrderDiscountController extends ModuleAdminController
     {
         $domain = 'Modules.Setnextorderdiscount.Admin';
         $couponLinkRepository = new CouponLinkRepository();
-        $funnel = $couponLinkRepository->funnelCounts($this->getShopScopeId());
+        $idShop = $this->getShopScopeId();
+        $funnel = $couponLinkRepository->funnelCounts($idShop);
 
         $generated = (int) $funnel['generated'];
         $used = (int) $funnel['used'];
@@ -1407,11 +1412,46 @@ class NextOrderDiscountController extends ModuleAdminController
             ];
         }
 
+        // Daily trend for the "Daily dynamics" chart. Fixed 30-day window for now —
+        // no period/hook/shop filter bar yet (mirrors the dashboard funnel, which is
+        // scoped to the current shop context the same way).
+        $daily = $couponLinkRepository->dailySeries($idShop, 30);
+
+        $chartLabels = [];
+        $chartGenerated = [];
+        $chartEmailed = [];
+        $chartUsed = [];
+        $hasChartData = false;
+        foreach ($daily as $row) {
+            $date = DateTime::createFromFormat('Y-m-d', (string) $row['date']);
+            $chartLabels[] = $date ? $date->format('d.m') : (string) $row['date'];
+            $chartGenerated[] = (int) $row['generated'];
+            $chartEmailed[] = (int) $row['emailed'];
+            $chartUsed[] = (int) $row['used'];
+            if ($row['generated'] > 0 || $row['emailed'] > 0 || $row['used'] > 0) {
+                $hasChartData = true;
+            }
+        }
+
+        Media::addJsDef([
+            'snodDashChart' => [
+                'labels' => $chartLabels,
+                'generated' => $chartGenerated,
+                'emailed' => $chartEmailed,
+                'used' => $chartUsed,
+                'i18n' => [
+                    'generated' => $this->trans('Generated', [], $domain),
+                    'emailed' => $this->trans('Emailed', [], $domain),
+                    'used' => $this->trans('Used', [], $domain),
+                ],
+            ],
+        ]);
+
         $this->context->smarty->assign([
             'snod_funnel' => $funnelView,
             'snod_funnel_generated' => $generated,
             'snod_conversion_rate' => $conversion,
-            'snod_queue_counts' => $this->getQueueCounts(),
+            'snod_dash_has_chart' => $hasChartData,
         ]);
     }
 

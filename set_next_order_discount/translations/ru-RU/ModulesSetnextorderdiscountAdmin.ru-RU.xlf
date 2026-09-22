@@ -2,6 +2,10 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file original="ModulesSetnextorderdiscountAdmin" source-language="en-US" target-language="ru-RU" datatype="plaintext">
     <body>
+      <trans-unit id="036f1fc90a82a8bf65491c8e9350c5cd5af94d16">
+        <source>(clamped between 4 and 32).</source>
+        <target>(ограничено диапазоном от 4 до 32).</target>
+      </trans-unit>
       <trans-unit id="38631b523a72f3a56fd17832df6c3de29cdd4a0f">
         <source>A percentage discount cannot exceed 100.</source>
         <target>Процентная скидка не может превышать 100.</target>
@@ -57,6 +61,10 @@
       <trans-unit id="6ccb60071be8f00760a3824d9f7d0fad57de789f">
         <source>Categories</source>
         <target>Категории</target>
+      </trans-unit>
+      <trans-unit id="4c30e6253bedbe835f47b19a26bc8a83152d2032">
+        <source>Character set used for the generated</source>
+        <target>Набор символов, используемый для сгенерированного</target>
       </trans-unit>
       <trans-unit id="879f0b1bef59eeebf78cfd3a22f6f8077810cecf">
         <source>Channel</source>
@@ -150,9 +158,17 @@
         <source>Customer order number</source>
         <target>Номер заказа клиента</target>
       </trans-unit>
+      <trans-unit id="58f7fafa2c8fc8c185cde71b0bce69d7ceda76b5">
+        <source>Daily dynamics</source>
+        <target>Динамика по дням</target>
+      </trans-unit>
       <trans-unit id="d87f47b47e4d5794d53fe0734c49417bd046cde0">
         <source>Dashboard</source>
         <target>Дашборд</target>
+      </trans-unit>
+      <trans-unit id="9b9b86b516011148f16c92eb537b7dfec861216f">
+        <source>Day-by-day trend of generated, emailed and used coupons over the last 30 days. All three share one scale, so the lines are directly comparable — used naturally sits lowest. Click a legend entry to hide a metric: the chart rescales and the remaining lines become easier to read.</source>
+        <target>Динамика по дням: сколько купонов создано, отправлено на email и использовано за последние 30 дней. Все три линии на одной шкале, поэтому их можно напрямую сравнивать — «Использовано» естественным образом лежит ниже остальных. Клик по легенде скрывает метрику: график пересчитывает масштаб, и оставшиеся линии читаются легче.</target>
       </trans-unit>
       <trans-unit id="eb9a4bc1c0c153e4e4b042a79113b815b7e3021d">
         <source>Date</source>
@@ -386,13 +402,17 @@
         <source>No coupons found yet. Coupons appear here once they are generated for qualifying orders.</source>
         <target>Купонов пока нет. Они появятся здесь после создания для подходящих заказов.</target>
       </trans-unit>
-      <trans-unit id="6f6f507bef0dcc842eae13d49fe9edf66490cd95">
-        <source>No discount rules yet.</source>
-        <target>Правил скидок пока нет.</target>
+      <trans-unit id="ff822d5ec29cb251ec152815c92e620b6c550bd6">
+        <source>No discount rules yet. Click "Add a rule" above to create your first one.</source>
+        <target>Правил скидок пока нет. Нажмите «Добавить правило» выше, чтобы создать первое.</target>
       </trans-unit>
       <trans-unit id="ce74d5f1d9495b3284287144ec7a4b12612fdb8c">
         <source>No log entries.</source>
         <target>Записей в логе нет.</target>
+      </trans-unit>
+      <trans-unit id="2c8221a374c58e6a84a656b5c72ba8558f4a9964">
+        <source>Number of random characters in</source>
+        <target>Количество случайных символов в</target>
       </trans-unit>
       <trans-unit id="c3d7bee2c04243b3fec7f11ee0a2f0db83d25b06">
         <source>Only the selected</source>
@@ -606,6 +626,10 @@
         <source>Updated</source>
         <target>Обновлён</target>
       </trans-unit>
+      <trans-unit id="1d4d43cc6f3a833e0340a0d1794b6d7b9958657e">
+        <source>Use</source>
+        <target>Используйте</target>
+      </trans-unit>
       <trans-unit id="02c0e4a1da64085d6e5e5cc69335b54b181e8a32">
         <source>Used</source>
         <target>Использован</target>
@@ -633,6 +657,10 @@
       <trans-unit id="5397e0583f14f6c88de06b1ef28f460a1fb5b0ae">
         <source>Yes</source>
         <target>Да</target>
+      </trans-unit>
+      <trans-unit id="bad3a053086ad7ef03fe213424ed889d542e78a8">
+        <source>as a placeholder for the generated key. Example:</source>
+        <target>как плейсхолдер для сгенерированного ключа. Пример:</target>
       </trans-unit>
       <trans-unit id="98b418d3ea6f733f6fcffeb70c4afe1aa32d4426">
         <source>based on</source>
