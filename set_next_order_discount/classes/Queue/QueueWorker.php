@@ -131,7 +131,7 @@ class QueueWorker
     /**
      * Runs a single task through its lifecycle.
      *
-     * @param array $task a ps_snod_dispatch_queue row
+     * @param array $task a snod_dispatch_queue row
      *
      * @return string the outcome key: 'done', 'retried' or 'failed'
      */

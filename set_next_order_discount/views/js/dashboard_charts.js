@@ -15,10 +15,10 @@
 /**
  * Renders the Dashboard "Daily dynamics" chart with Chart.js (bundled locally).
  *
- * All three metrics share one axis: Generated, Emailed and Used are nested the same
- * way set_loyalty_milestones' impressions/reached/orders are — every use needs an
- * email, every email needs a generated coupon — so a chart that shows one above the
- * other is simply wrong. Only Generated is filled; the other two run inside it.
+ * All three metrics share one axis because they are nested: every use needs an
+ * email, every email needs a generated coupon. A chart that draws one of them above
+ * another would simply be wrong. Only Generated is filled; the other two run inside
+ * it, so several translucent fills cannot turn muddy.
  */
 (function () {
     'use strict';

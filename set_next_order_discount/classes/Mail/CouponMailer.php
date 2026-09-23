@@ -63,7 +63,7 @@ class CouponMailer
     /**
      * Sends the coupon email for one coupon link.
      *
-     * @param int $idCouponLink ps_snod_coupon_link primary key
+     * @param int $idCouponLink snod_coupon_link primary key
      * @param bool $force when true, resend even if the coupon was already
      *                    emailed or has moved to a later/terminal state
      *                    (manual back-office resend). The lifecycle status

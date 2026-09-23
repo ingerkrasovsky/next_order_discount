@@ -37,8 +37,8 @@ class CronSecurityService
      *
      * The token is a single per-installation secret, so it belongs in the global
      * (shop-independent) configuration. It reads the global value first; if only a
-     * legacy per-shop value exists (e.g. installed before this fix, where
-     * `Configuration::get()` cannot see it from the public cron front controller),
+     * per-shop value exists (an installation that predates the global storage,
+     * where `Configuration::get()` cannot see it from the public cron controller),
      * it adopts that value and promotes it to global so every later request —
      * including the token-guarded cron endpoint — resolves it consistently.
      *

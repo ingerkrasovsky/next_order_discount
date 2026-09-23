@@ -57,7 +57,7 @@ class NextOrderDiscountController extends ModuleAdminController
 
     /**
      * Adds the "Add a rule" button to the page header toolbar, shown only on the
-     * Rules tab (mirrors the header-toolbar action used across the module suite).
+     * Rules tab, next to the native back-office page actions.
      *
      * @return void
      */
@@ -1412,9 +1412,8 @@ class NextOrderDiscountController extends ModuleAdminController
             ];
         }
 
-        // Daily trend for the "Daily dynamics" chart. Fixed 30-day window for now —
-        // no period/hook/shop filter bar yet (mirrors the dashboard funnel, which is
-        // scoped to the current shop context the same way).
+        // Daily trend for the "Daily dynamics" chart: a rolling 30-day window,
+        // scoped to the current shop context exactly like the funnel above.
         $daily = $couponLinkRepository->dailySeries($idShop, 30);
 
         $chartLabels = [];

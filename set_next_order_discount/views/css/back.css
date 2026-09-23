@@ -369,8 +369,7 @@
 }
 
 /* ---------------------------------------------------------------------------
- * List filters (Coupons / Logs) — mirrors the dashboard filter bar layout
- * from set_loyalty_milestones (.slm-dash-filters / .slm-dash-filter).
+ * List filters (Coupons / Logs) — same filter-bar layout as the dashboard.
  * ------------------------------------------------------------------------- */
 .snod-filters {
     display: flex;
@@ -400,7 +399,7 @@
     gap: 8px;
 }
 
-/* Keep the row action buttons on one line (mirrors the points module table). */
+/* Keep the row action buttons on one line. */
 #snod-rules-table td .btn-group {
     white-space: nowrap;
 }
