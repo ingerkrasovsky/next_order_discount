@@ -19,8 +19,10 @@ class set_demo extends Module
     const CONFIG_SEO_META_DESC = 'SET_DEMO_SEO_META_DESC';
     const CONFIG_SEO_OG_IMAGE = 'SET_DEMO_SEO_OG_IMAGE';
 
-    const DEFAULT_SEO_META_TITLE = 'Next Order Discount для PrestaShop — живое демо купонов на следующий заказ';
-    const DEFAULT_SEO_META_DESC = 'Живое демо модуля Next Order Discount для PrestaShop: автоматические персональные купоны на следующий заказ по правилам, письма, напоминания и воронка. Попробуйте в админке.';
+    const DEFAULT_SEO_META_TITLE = 'Next Order Discount for PrestaShop | Live Demo';
+    const DEFAULT_SEO_META_DESC = 'Live demo of Next Order Discount for PrestaShop: create targeted post-purchase coupons, send reminders and track coupon conversion.';
+    const LEGACY_SEO_META_TITLE = 'Next Order Discount для PrestaShop — живое демо купонов на следующий заказ';
+    const LEGACY_SEO_META_DESC = 'Живое демо модуля Next Order Discount для PrestaShop: автоматические персональные купоны на следующий заказ по правилам, письма, напоминания и воронка. Попробуйте в админке.';
 
     /**
      * Avoid duplicated panel rendering when several hooks are executed.
@@ -171,7 +173,7 @@ class set_demo extends Module
         // sensible default path under the shop's /img.
         $image = (string) Configuration::get(self::CONFIG_SEO_OG_IMAGE);
         if ($image === '') {
-            $image = $shopUrl . '/img/next-order-discount-demo-cover.png';
+            $image = $shopUrl . '/modules/set_next_order_discount/logo.png';
         }
 
         $this->context->smarty->assign([
@@ -191,7 +193,9 @@ class set_demo extends Module
     {
         $value = (string) Configuration::get(self::CONFIG_SEO_META_TITLE);
 
-        return $value !== '' ? $value : self::DEFAULT_SEO_META_TITLE;
+        return ($value !== '' && $value !== self::LEGACY_SEO_META_TITLE)
+            ? $value
+            : self::DEFAULT_SEO_META_TITLE;
     }
 
     /**
@@ -201,7 +205,9 @@ class set_demo extends Module
     {
         $value = (string) Configuration::get(self::CONFIG_SEO_META_DESC);
 
-        return $value !== '' ? $value : self::DEFAULT_SEO_META_DESC;
+        return ($value !== '' && $value !== self::LEGACY_SEO_META_DESC)
+            ? $value
+            : self::DEFAULT_SEO_META_DESC;
     }
 
     public function hookDisplayBackOfficeHeader()
@@ -308,6 +314,7 @@ class set_demo extends Module
         // themselves and lands directly on the requested tab — the token matches that employee.
         if ($isAdmin) {
             $slmLink = (string) $this->context->link->getAdminLink('NextOrderDiscount');
+            $orderGeneratorUrl = (string) $this->context->link->getAdminLink('DemoOrderGenerator');
             $slmTabUrl = static function ($tab) use ($slmLink) {
                 $glue = (strpos($slmLink, '?') === false) ? '?' : '&';
 
@@ -323,6 +330,7 @@ class set_demo extends Module
             // The storefront has no BO token to compute anyway, so mirror that exact shape. Matching
             // the BO link format also lets the front→admin tour auto-start (see normalizeTutorialPath).
             $adminBase = rtrim($baseUrl, '/') . '/' . trim($adminDir, '/') . '/';
+            $orderGeneratorUrl = $adminBase . '?controller=DemoOrderGenerator';
             $slmTabUrl = static function ($tab) use ($adminBase) {
                 $url = $adminBase . '?controller=NextOrderDiscount';
                 if ($tab !== '') {
@@ -345,6 +353,7 @@ class set_demo extends Module
             'set_demo_slm_url_dashboard' => $slmTabUrl('dashboard'),
             'set_demo_slm_url_rules' => $slmTabUrl('rules'),
             'set_demo_slm_url_rule_edit' => $slmTabUrl('rule_edit') . '&id_rule=0',
+            'set_demo_order_generator_url' => $orderGeneratorUrl,
             'set_demo_slm_url_coupons' => $slmTabUrl('coupons'),
             'set_demo_slm_url_settings' => $slmTabUrl('settings'),
             'set_demo_slm_url_cron_tools' => $slmTabUrl('cron_tools'),
@@ -372,7 +381,7 @@ class set_demo extends Module
 
     /**
      * Panel strings for the current context language.
-     * English is the default; French and Russian are provided, others fall back to English.
+     * English is the default; EN/FR/DE/PL/ES are available in the panel.
      *
      * @return array
      */
@@ -400,8 +409,9 @@ class set_demo extends Module
                 'group_admin' => 'Back office:',
                 'group_front' => 'For the customer:',
                 'link_dashboard' => 'Dashboard: coupon funnel',
-                'link_rules' => 'Rules: rules table',
+                'link_rules' => 'Discount rules',
                 'link_rule_edit' => 'Create a rule',
+                'link_order_generator' => 'Test order to your email',
                 'link_coupons' => 'Coupons: issued coupons',
                 'link_settings' => 'Settings',
                 'link_cron_tools' => 'Cron/Tools: background tasks',
@@ -421,8 +431,9 @@ class set_demo extends Module
                 'group_admin' => 'Back-office :',
                 'group_front' => 'Pour le client :',
                 'link_dashboard' => 'Dashboard : entonnoir des coupons',
-                'link_rules' => 'Rules : tableau des règles',
+                'link_rules' => 'Règles de remise',
                 'link_rule_edit' => 'Créer une règle',
+                'link_order_generator' => 'Commande test sur votre e-mail',
                 'link_coupons' => 'Coupons : coupons émis',
                 'link_settings' => 'Settings : paramètres',
                 'link_cron_tools' => 'Cron/Tools : tâches de fond',
@@ -433,26 +444,71 @@ class set_demo extends Module
                 'resume' => 'reprendre',
                 'start' => 'démarrer',
             ],
-            'ru' => [
-                'title' => 'Навигация по демо',
-                'close' => 'Закрыть панель',
-                'talk_text' => 'Остались вопросы или нужна помощь с настройкой? Напишите нам — ответим и поможем.',
-                'talk_action' => 'Написать в поддержку',
-                'description' => 'Выберите раздел или пройдите демо движка купонов целиком — от админки до того, что получает покупатель.',
-                'group_admin' => 'Админка:',
-                'group_front' => 'Для покупателя:',
-                'link_dashboard' => 'Dashboard: воронка купонов',
-                'link_rules' => 'Rules: таблица правил',
-                'link_rule_edit' => 'Создание правила',
-                'link_coupons' => 'Coupons: выданные купоны',
-                'link_settings' => 'Settings: настройки',
-                'link_cron_tools' => 'Cron/Tools: фоновые задачи',
-                'link_logs' => 'Logs: журнал событий',
-                'link_front' => 'Как покупатель получает купон',
-                'buy_title' => 'Готовы установить модуль в свой магазин?',
-                'buy_button' => 'Открыть в маркетплейсе',
-                'resume' => 'продолжить',
-                'start' => 'начать',
+            'de' => [
+                'title' => 'Demo-Navigation',
+                'close' => 'Panel schließen',
+                'talk_text' => 'Fragen oder Hilfe bei der Einrichtung? Schreiben Sie uns — wir helfen gerne weiter.',
+                'talk_action' => 'Support kontaktieren',
+                'description' => 'Wählen Sie einen Bereich oder folgen Sie der vollständigen Demo der Coupon-Engine — vom Backoffice bis zum Kundenerlebnis.',
+                'group_admin' => 'Backoffice:',
+                'group_front' => 'Für Kunden:',
+                'link_dashboard' => 'Dashboard: Coupon-Funnel',
+                'link_rules' => 'Rabattregeln',
+                'link_rule_edit' => 'Regel erstellen',
+                'link_order_generator' => 'Testbestellung an Ihre E-Mail',
+                'link_coupons' => 'Coupons: ausgegebene Coupons',
+                'link_settings' => 'Einstellungen',
+                'link_cron_tools' => 'Cron/Tools: Hintergrundaufgaben',
+                'link_logs' => 'Logs: Ereignisprotokoll',
+                'link_front' => 'So erhält der Kunde einen Coupon',
+                'buy_title' => 'Möchten Sie das Modul in Ihrem Shop installieren?',
+                'buy_button' => 'Im Marketplace öffnen',
+                'resume' => 'fortsetzen',
+                'start' => 'starten',
+            ],
+            'pl' => [
+                'title' => 'Nawigacja po demo',
+                'close' => 'Zamknij panel',
+                'talk_text' => 'Masz pytania lub potrzebujesz pomocy z konfiguracją? Napisz do nas — chętnie pomożemy.',
+                'talk_action' => 'Skontaktuj się z pomocą',
+                'description' => 'Wybierz sekcję lub przejdź całe demo mechanizmu kuponów — od zaplecza po widok klienta.',
+                'group_admin' => 'Zaplecze:',
+                'group_front' => 'Dla klienta:',
+                'link_dashboard' => 'Dashboard: lejek kuponów',
+                'link_rules' => 'Reguły rabatowe',
+                'link_rule_edit' => 'Utwórz regułę',
+                'link_order_generator' => 'Zamówienie testowe na Twój e-mail',
+                'link_coupons' => 'Kupony: wydane kupony',
+                'link_settings' => 'Ustawienia',
+                'link_cron_tools' => 'Cron/Tools: zadania w tle',
+                'link_logs' => 'Logi: dziennik zdarzeń',
+                'link_front' => 'Jak klient otrzymuje kupon',
+                'buy_title' => 'Chcesz zainstalować moduł w swoim sklepie?',
+                'buy_button' => 'Otwórz w marketplace',
+                'resume' => 'wznów',
+                'start' => 'rozpocznij',
+            ],
+            'es' => [
+                'title' => 'Navegación de la demo',
+                'close' => 'Cerrar panel',
+                'talk_text' => '¿Tienes preguntas o necesitas ayuda con la configuración? Escríbenos y te ayudaremos.',
+                'talk_action' => 'Contactar con soporte',
+                'description' => 'Elige una sección o recorre toda la demo del motor de cupones, desde el back office hasta la experiencia del cliente.',
+                'group_admin' => 'Back office:',
+                'group_front' => 'Para el cliente:',
+                'link_dashboard' => 'Dashboard: embudo de cupones',
+                'link_rules' => 'Reglas de descuento',
+                'link_rule_edit' => 'Crear una regla',
+                'link_order_generator' => 'Pedido de prueba a tu e-mail',
+                'link_coupons' => 'Cupones: cupones emitidos',
+                'link_settings' => 'Ajustes',
+                'link_cron_tools' => 'Cron/Tools: tareas en segundo plano',
+                'link_logs' => 'Logs: registro de eventos',
+                'link_front' => 'Cómo recibe el cliente un cupón',
+                'buy_title' => '¿Quieres instalar el módulo en tu tienda?',
+                'buy_button' => 'Abrir en el marketplace',
+                'resume' => 'continuar',
+                'start' => 'iniciar',
             ],
         ];
     }
@@ -541,7 +597,7 @@ class set_demo extends Module
                         'type' => 'text',
                         'label' => $this->l('Open Graph image URL'),
                         'name' => self::CONFIG_SEO_OG_IMAGE,
-                        'desc' => $this->l('Absolute URL of the social preview image (~1200×630). Empty falls back to /img/next-order-discount-demo-cover.png.'),
+                        'desc' => $this->l('Absolute URL of the social preview image (~1200×630). Empty falls back to the module logo.'),
                         'class' => 'fixed-width-xxl',
                     ],
                 ],

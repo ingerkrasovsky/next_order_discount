@@ -2,9 +2,11 @@
   <header class="set-tutorials-panel__header js-set-tutorials-close-tutorials-panel">
     <h3 class="set-tutorials-panel__title" data-i18n="title">{$set_demo_i18n.title|escape:'htmlall':'UTF-8'}</h3>
     <div class="set-tutorials-lang" role="group" aria-label="Language">
-{*      <button type="button" class="set-tutorials-lang__btn" data-lang="en">EN</button>*}
-{*      <button type="button" class="set-tutorials-lang__btn" data-lang="fr">FR</button>*}
-      <button type="button" class="set-tutorials-lang__btn" data-lang="ru">RU</button>
+      <button type="button" class="set-tutorials-lang__btn" data-lang="en">EN</button>
+      <button type="button" class="set-tutorials-lang__btn" data-lang="fr">FR</button>
+      <button type="button" class="set-tutorials-lang__btn" data-lang="de">DE</button>
+      <button type="button" class="set-tutorials-lang__btn" data-lang="pl">PL</button>
+      <button type="button" class="set-tutorials-lang__btn" data-lang="es">ES</button>
     </div>
     <button type="button" class="set-tutorials-panel__close" data-i18n-title="close" data-i18n="close" title="{$set_demo_i18n.close|escape:'htmlall':'UTF-8'}">{$set_demo_i18n.close|escape:'htmlall':'UTF-8'}</button>
   </header>
@@ -44,6 +46,9 @@
         </li>
         <li class="set-tutorials-group__item">
           <a id="tutorialLogs" class="set-tutorials-group__link" data-i18n="link_logs" href="{$set_demo_slm_url_logs|escape:'htmlall':'UTF-8'}">{$set_demo_i18n.link_logs|escape:'htmlall':'UTF-8'}</a>
+        </li>
+        <li class="set-tutorials-group__item">
+          <a id="tutorialOrderGenerator" class="set-tutorials-group__link" data-i18n="link_order_generator" href="{$set_demo_order_generator_url|escape:'htmlall':'UTF-8'}">{$set_demo_i18n.link_order_generator|escape:'htmlall':'UTF-8'}</a>
         </li>
       </ul>
     </div>
@@ -107,15 +112,21 @@
       try { return 'slm_tour_step_front' + new URL(href, location.origin).pathname; } catch (e) { return null; }
     }
     try {
-      var tab = new URL(href, location.origin).searchParams.get('tab');
-      return tab ? ('slm_tour_step_' + tab) : null;
+      var url = new URL(href, location.origin);
+      var tab = url.searchParams.get('tab');
+      if (tab) { return 'slm_tour_step_' + tab; }
+      var controller = url.searchParams.get('controller');
+      return controller ? ('slm_tour_step_' + controller) : null;
     } catch (e) { return null; }
   }
   // Ключ тура текущей страницы (активной вкладки).
   function currentPageKey() {
     try {
-      var tab = new URL(location.href).searchParams.get('tab');
+      var url = new URL(location.href);
+      var tab = url.searchParams.get('tab');
       if (tab) { return 'slm_tour_step_' + tab; }
+      var controller = url.searchParams.get('controller');
+      if (controller) { return 'slm_tour_step_' + controller; }
     } catch (e) {}
     try { return 'slm_tour_step_front' + location.pathname; } catch (e) { return null; }
   }

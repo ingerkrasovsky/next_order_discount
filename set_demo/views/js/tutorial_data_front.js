@@ -28,17 +28,18 @@ if (!SLMDemo.q) {
         return "<p class='intro-main-text'>" + html + "</p>";
     };
 
-    // Язык туров = язык демо-панели (localStorage, см. panel.tpl). RU — источник строк.
+    // Язык туров = язык демо-панели. Русский используется только для внутренних ключей.
     SLMDemo.curLang = function () {
-        try { var l = localStorage.getItem('setDemoPanelLang'); return (l === 'en' || l === 'fr') ? l : 'ru'; }
-        catch (e) { return 'ru'; }
+        try {
+            var l = localStorage.getItem('setDemoPanelLang');
+            return ['en', 'fr', 'de', 'pl', 'es'].indexOf(l) !== -1 ? l : 'en';
+        } catch (e) { return 'en'; }
     };
 
     // Перевод строки шага по каталогу tutorial_i18n.js; нет перевода — возвращаем как есть.
     SLMDemo.tr = function (s) {
         if (typeof s !== 'string') { return s; }
         var lang = SLMDemo.curLang();
-        if (lang === 'ru') { return s; }
         var m = window.SLM_TOUR_I18N && window.SLM_TOUR_I18N[lang];
         return (m && m[s] != null) ? m[s] : s;
     };
@@ -234,7 +235,10 @@ if (!SLMDemo.q) {
         try {
             var u = new URL(href, location.origin);
             var tab = u.searchParams.get('tab');
-            return tab ? ('slm_tour_step_' + tab) : ('slm_tour_step_front' + u.pathname);
+            var controller = u.searchParams.get('controller');
+            if (tab) { return 'slm_tour_step_' + tab; }
+            if (controller) { return 'slm_tour_step_' + controller; }
+            return 'slm_tour_step_front' + u.pathname;
         } catch (e) {
             return null;
         }
@@ -485,34 +489,41 @@ function loadTutorialFront() {
     var guideLink = function (tutorialId, label) {
         var el = document.getElementById(tutorialId);
         var href = el ? el.getAttribute('href') : '';
-        if (!href) { return label; }
+        var translatedLabel = SLMDemo.tr(label);
+        if (!href) { return translatedLabel; }
         var sep = href.indexOf('?') > -1 ? '&' : '?';
-        return '<a href="' + href + sep + 'set_demo_tutorial=' + tutorialId + '">' + label + '</a>';
+        return '<a href="' + href + sep + 'set_demo_tutorial=' + tutorialId + '">' + translatedLabel + '</a>';
     };
     var couponsLink = guideLink('tutorialCoupons', 'Coupons');
     var cronLink = guideLink('tutorialCronTools', 'Cron/Tools');
-    var rulesLink = guideLink('tutorialRules', 'Rules');
+    var rulesLink = guideLink('tutorialRules', 'Discount rules');
+    var generatorLink = guideLink('tutorialOrderGenerator', 'Demo Order Generator');
 
     var steps = [
         SLMDemo.stepEl(
             null,
             'Как покупатель получает купон',
-            'У Next Order Discount нет виджета на витрине — вся работа скрыта. Покупатель просто оформляет заказ, а купон на <b>следующий</b> заказ приходит ему письмом автоматически. Ниже — как прогнать это на тестовом заказе за пару минут.'
+            'У Next Order Discount нет виджета на витрине — вся работа скрыта. Покупатель оформляет заказ, а купон на <b>следующий</b> заказ приходит ему письмом. Проверить этот сценарий можно двумя способами: совершить обычный заказ на витрине или использовать Demo Order Generator.'
         ),
         SLMDemo.fill(SLMDemo.stepEl(
             null,
-            'Шаг 1. Оформите тестовый заказ',
-            'Добавьте товар в корзину и оформите заказ в этом магазине (как обычный покупатель). Заказ должен подходить под условия правила — проверьте их в {rules}: триггерные статусы, сумма, группа, страна и т.д.'
-        ), { rules: rulesLink }),
+            'Шаг 1. Создайте тестовый заказ',
+            'Выберите один из двух вариантов:'
+                + '<ol style="margin:4px 0 0; padding-left:18px;">'
+                + '<li><b>На витрине</b> — добавьте товар в корзину и оформите заказ как обычный покупатель.</li>'
+                + '<li><b>Через {generator}</b> — укажите свой email и задайте нужные сумму, товар, страну, группу и статус.</li>'
+                + '</ol>'
+                + 'В обоих случаях заказ должен подходить под условия активного правила в {rules}.'
+        ), { generator: generatorLink, rules: rulesLink }),
         SLMDemo.fill(SLMDemo.stepEl(
             null,
-            'Шаг 2. Переведите заказ в триггерный статус',
-            'В админке откройте <b>Заказы → ваш заказ</b> и смените его статус на тот, что указан в правиле (например «Оплачено»). В этот момент модуль подбирает правило и создаёт персональный купон. Проверить, что купон появился, можно во вкладке {coupons}.'
+            'Шаг 2. Доведите заказ до триггерного статуса',
+            'Если заказ оформлен на витрине, откройте его в админке и переведите в статус, указанный в правиле. Demo Order Generator сразу создаёт заказ в выбранном статусе и показывает ссылку на заказ. После срабатывания правила купон появится в {coupons}; генератор также покажет его код.'
         ), { coupons: couponsLink }),
         SLMDemo.fill(SLMDemo.stepEl(
             null,
             'Шаг 3. Дождитесь письма с купоном',
-            'Купонное письмо ставится в очередь и уходит при ближайшем проходе cron. Чтобы не ждать — откройте {cron} и нажмите <b>Run all tasks now</b>. После этого покупатель получит письмо с кодом купона на следующий заказ.'
+            'Основное письмо с купоном отправляется сразу после его создания. Если первая попытка не удалась, письмо попадает в очередь. В этом случае откройте {cron} и нажмите <b>Run all tasks now</b>. Cron также нужен для писем-напоминаний.'
         ), { cron: cronLink }),
         SLMDemo.fill(SLMDemo.stepEl(
             null,

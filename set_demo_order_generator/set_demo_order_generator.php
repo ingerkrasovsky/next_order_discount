@@ -244,6 +244,7 @@ class set_demo_order_generator extends Module
                     ],
                     'submit' => [
                         'title' => $this->l('Create test order'),
+                        'id' => 'set_demo_order_generator_form_submit_btn',
                         'class' => 'btn btn-primary pull-right',
                         'icon' => 'process-icon-save',
                     ],

@@ -8,7 +8,8 @@
 
 > Демка скопирована с демо-модуля Loyalty Milestones. Имя модуля, класс и префиксы
 > (`set_demo`, `SET_DEMO_*`) сохранены; под next_order_discount переделаны **SEO-лендинг**,
-> **навигационная панель** и **туры**. Язык — русский (панель RU-only).
+> **навигационная панель** и **туры**. Доступны английский, французский, немецкий, польский
+> и испанский языки; английский используется по умолчанию.
 
 ---
 
@@ -19,8 +20,9 @@
 
 - **Свёрнутая кнопка** — вертикальная вкладка у правого края. Клик разворачивает панель.
 - **Панель навигации** — список разделов, сгруппированный на «Админка» и «Для покупателя».
-- **Язык** — RU (переключатель оставлен в разметке, показана только кнопка RU; EN/FR закомментированы,
-  каталог переводов `tutorial_i18n.js` пуст — тексты берутся из русского источника).
+- **Язык** — EN / FR / DE / PL / ES. Выбор сохраняется в `localStorage`; русский используется
+  только как внутренний ключ исходных строк и в переключателе не показывается. Полный каталог
+  переводов находится в `tutorial_i18n.js`.
 - **Подсветка текущего пункта** — если открытая страница соответствует пункту меню, пункт
   подсвечивается: здесь можно запустить тур.
 - **Запуск тура** — клик по пункту переводит на нужную вкладку (`&tab=...`) и **автоматически
@@ -35,8 +37,8 @@
 ### Полный маршрут (цепочка туров)
 
 ```
-Dashboard → Rules → Создание правила (Rule) → Coupons → Settings → Cron/Tools → Logs →
-Для покупателя (поп-ап с тестовым сценарием) → Dashboard → …
+Dashboard → Discount rules → Создание правила (Rule) → Coupons → Settings → Cron/Tools → Logs →
+Demo Order Generator → Для покупателя (поп-ап с тестовым сценарием) → Dashboard → …
 ```
 
 Маршрут **цикличный**: с последнего шага поп-апа кнопка ведёт обратно на Dashboard. Каждый тур
@@ -53,26 +55,27 @@ Dashboard → Rules → Создание правила (Rule) → Coupons → S
 | `tutorialSettings` | `loadTutorialSettings` | `settings` |
 | `tutorialCronTools` | `loadTutorialCronTools` | `cron_tools` |
 | `tutorialLogs` | `loadTutorialLogs` | `logs` |
+| `tutorialOrderGenerator` | `loadTutorialOrderGenerator` | `controller=DemoOrderGenerator` |
 | `tutorialFront` | `loadTutorialFront` | витрина (поп-ап) |
 
 ---
 
 ## 2. Админка — пошагово
 
-### 2.1. Dashboard — воронка купонов → *дальше: Rules*
+### 2.1. Dashboard — воронка купонов → *дальше: Discount rules*
 
 | Элемент | Текст шага |
 |---|---|
-| — | **Dashboard.** Путь купонов от выдачи до использования; открывается по умолчанию; данные в контексте выбранного магазина. |
-| `.panel.page-content .row` | **Coupon funnel.** Шесть плиток: Generated, Emailed, Reminded, Used, Expired, Canceled — с долей от сгенерированных. |
-| `.panel.page-content > p.text-muted` | **Conversion.** Доля использованных купонов от сгенерированных (ссылка на вкладку Settings — сбор данных при включённом модуле). |
-| `.snod-targeting-badges` | **Dispatch queue.** Pending / Processing / Done / Failed (ссылка на Cron/Tools). |
+| `.panel.page-content .panel-heading` | **Dashboard.** Общая картина по созданным, отправленным, использованным, просроченным и отменённым купонам. |
+| `.snod-dash-cards` | **Coupon funnel.** Карточки Generated, Emailed, Reminded, Used, Expired и Canceled; проценты считаются от Generated, а этапы могут пересекаться. |
+| `.snod-dash-conversion` | **Conversion.** Доля купонов, использованных в следующем заказе, от всех созданных. |
+| `.snod-dash-chart-wrap` | **Daily dynamics.** Generated, Emailed и Used по дням за последние 30 дней; при отсутствии данных график не выводится. |
 
-### 2.2. Rules — таблица правил → *дальше: создание правила*
+### 2.2. Discount rules — таблица правил → *дальше: создание правила*
 
 | Элемент | Текст шага |
 |---|---|
-| `.panel.page-content .panel-heading` | **Rules.** Список всех правил магазина; правило = условия + скидка. |
+| `.panel.page-content .panel-heading` | **Discount rules.** Каждое правило определяет условия срабатывания и скидку для следующего заказа. |
 | `#snod-rules-table thead` | **Столбцы:** Priority, Name (бейджи Stop/напоминаний), Discount, Validity, Trigger statuses, Conditions. |
 | `#snod-rules-table … .icon-arrow-down/up` | **Priority.** Стрелки ▲▼; проверка сверху вниз; важно при Stop after this rule. |
 | `#snod-rules-table .prestashop-switch` | **Active.** Быстрый переключатель правила. |
@@ -81,21 +84,23 @@ Dashboard → Rules → Создание правила (Rule) → Coupons → S
 
 ### 2.3. Создание / редактирование правила (Rule) → *дальше: Coupons*
 
-Форма разбита на bootstrap-вкладки **General / Conditions / Code / Email** (панели `display:none`,
-пока не активны). Тур сам активирует нужную под-вкладку (`beforeChange` → `activatePane` по
-`target.closest('.tab-pane')`) перед подсветкой поля.
+Форма разбита на четыре вкладки: **General / Conditions / Code / Email**. Каждый шаг тура
+подсвечивает отдельное поле и объясняет его назначение.
 
 | Элемент | Текст шага |
 |---|---|
-| `.nav-tabs` | **Форма правила.** Четыре вкладки; внизу Save/Cancel. |
-| `[name="snod_rule_name"]` | **Rule name** (+ Voucher name / description). |
+| `.defaultForm .panel.page-content > .nav.nav-tabs` | **Форма правила.** Четыре вкладки; внизу Save/Cancel. |
+| `[name="snod_rule_name"]` | **Rule name** — внутреннее обязательное название; покупатель его не видит. |
+| `[name="snod_rule_voucher_name"]` | **Voucher name** — название купона для покупателя; пустое поле даёт `Next Order Discount`. |
+| `[name="snod_rule_voucher_description"]` | **Voucher description** — необязательное описание, сохраняемое в купоне. |
 | `#snod-discount-type` | **Discount type** — percent / amount / free shipping. |
 | `#snod-discount-value-group` | **Discount value** — величина (для % капается на 100). |
-| `[name="snod_rule_validity_days"]` | **Validity period** (+ Minimum next order amount). |
+| `[name="snod_rule_validity_days"]` | **Validity period** — сколько дней можно использовать выданный купон. |
+| `[name="snod_rule_next_min"]` | **Minimum next order amount** — минимальная сумма нового заказа для применения купона; 0 отключает ограничение. |
 | `#snod_rule_stop_on` | **Stop after this rule.** |
 | `#snod_rule_reminder_on` | **Send reminders.** |
 | `[name="snod_rule_reminder_basis"]` | **Reminder timing** (+ First/Second reminder days). |
-| `[name="snod_rule_statuses[]"]` | **Trigger on order statuses** (Conditions; логика И). |
+| `[name="snod_rule_statuses[]"]` | **Trigger on order statuses** — проверяются при создании заказа и при изменении статуса; пустой список не ограничивает правило. |
 | `.snod-cond-mode` | **Списочные условия** — groups/countries/currencies/categories/brands в режиме All/Include/Exclude. |
 | `[name="snod_rule_source_min"]` | **Source order total** (Min/Max). |
 | `[name="snod_rule_date_from"]` | **Active date window** (From/To). |
@@ -112,7 +117,7 @@ Dashboard → Rules → Создание правила (Rule) → Coupons → S
 
 | Элемент | Текст шага |
 |---|---|
-| `#snod-coupons .panel-heading` | **Coupons.** Список сгенерированных купонов (просмотр + ручная отправка). |
+| `#snod-coupons .panel-heading` | **Coupons.** Список выданных купонов, их статусов и ручных действий по отправке. |
 | `[name="snod_filter_status"]` | **Фильтры** — Status и Code, постранично. |
 | `#snod-coupons table thead` | **Столбцы** — Code, Customer, Source order, Rule, Status (+1/2), Valid until, Generated. |
 | `#snod-coupons .btn-group` | **Resend / 1 / 2** — пока купон активен (не used/expired/canceled). |
@@ -133,14 +138,14 @@ Dashboard → Rules → Создание правила (Rule) → Coupons → S
 
 | Элемент | Текст шага |
 |---|---|
-| `#snod-cron-tools .alert-info` | **Зачем нужен cron.** Без cron письма/напоминания не уходят, купоны не просрочиваются. |
+| `#snod-cron-tools .alert-info` | **Зачем нужен cron.** Основное письмо отправляется сразу; cron повторяет неудавшуюся отправку, обрабатывает напоминания и просрочку купонов. |
 | `#snod-cron-install-box` | **One-click install** (если доступно). |
 | `#snod-cron-tools .form-group input[readonly]` | **Crontab / внешний cron** (curl/wget/URL; токен в секрете). |
 | `.snod-run-task[data-task="all"]` | **Run all tasks now** (+ проба окружения Your server). |
 | `#snod-cron-tools table` | **Tasks** — задачи, расписание, Last run (OK/Late/Not running/Never), Lock. |
 | `#snod-cron-tools .snod-targeting-badges` | **Dispatch queue** — снимок очереди. |
 
-### 2.7. Logs — журнал → *дальше: для покупателя*
+### 2.7. Logs — журнал → *дальше: Demo Order Generator*
 
 | Элемент | Текст шага |
 |---|---|
@@ -149,6 +154,20 @@ Dashboard → Rules → Создание правила (Rule) → Coupons → S
 | `[name="snod_log_channel"]` | **Channel** — cron/queue/coupon… |
 | `.panel.page-content table thead` | **Столбцы** — Date, Level, Channel, Message, Correlation. |
 | — | **Глубина и хранение** — зависят от Debug mode и Keep logs for (ссылка на Settings). |
+
+### 2.8. Demo Order Generator — заказ на свой email → *дальше: для покупателя*
+
+Это отдельный демо-модуль `set_demo_order_generator`. Он создаёт настоящий заказ через
+`PaymentModule::validateOrder()`.
+
+| Элемент | Текст шага |
+|---|---|
+| `.alert.alert-info` | **Быстрый end-to-end тест.** Создаётся настоящий заказ через штатный API PrestaShop. |
+| `[name="sdog_email"]` | **Ваш email.** Нужно указать свой ящик: на него могут прийти подтверждение заказа и письмо с купоном. Существующий клиент переиспользуется. |
+| `[name="sdog_target_total"]` | **Точная сумма.** Итог с налогами и доставкой; должен попадать в диапазон правила. |
+| `form.defaultForm .form-wrapper` | **Товар и данные покупателя.** Весь блок полей: товар, валюта, страна, группа и язык должны совпадать с условиями правила. |
+| `[name="sdog_id_order_state"]` | **Статус.** Заказ сразу создаётся в выбранном триггерном статусе. |
+| `#set_demo_order_generator_form_submit_btn` | **Создать и проверить.** После создания видны ссылка на заказ и код купона; основное письмо отправляется сразу, а при ошибке его можно повторно запустить через Cron/Tools. |
 
 ---
 
@@ -160,10 +179,10 @@ Dashboard → Rules → Создание правила (Rule) → Coupons → S
 
 | Шаг | Текст |
 |---|---|
-| Обзор | **Как покупатель получает купон.** Виджета нет; купон приходит письмом автоматически. |
-| Шаг 1 | **Оформите тестовый заказ** (проверьте условия правила — ссылка на Rules). |
-| Шаг 2 | **Переведите заказ в триггерный статус** в админке (Заказы → заказ); создаётся купон (ссылка на Coupons). |
-| Шаг 3 | **Дождитесь письма** или нажмите Run all tasks now (ссылка на Cron/Tools). |
+| Обзор | **Как покупатель получает купон.** Виджета нет; купон приходит письмом. Сценарий можно проверить на витрине или через Demo Order Generator. |
+| Шаг 1 | **Создайте тестовый заказ:** оформите его как обычный покупатель на витрине или укажите свой email и нужные условия в Demo Order Generator. |
+| Шаг 2 | **Доведите заказ до триггерного статуса.** Заказ с витрины нужно перевести в нужный статус в админке; генератор создаёт заказ сразу в выбранном статусе. Купон можно проверить в Coupons. |
+| Шаг 3 | **Проверьте письмо:** основная отправка выполняется сразу, а cron повторяет неудавшуюся попытку и обрабатывает напоминания. |
 | Шаг 4 | **Купон применяется к следующему заказу** → статус used; Resend/напоминания в Coupons. |
 
 **Цикличность:** на последнем шаге — кнопка **«Дальше: Dashboard →»**, замыкающая маршрут.
@@ -173,13 +192,15 @@ Dashboard → Rules → Создание правила (Rule) → Coupons → S
 ## 4. Технические заметки
 
 - **Переходы фронт↔админка.** Ссылки в формате `?controller=NextOrderDiscount&tab=...` без токена
-  (токены админки в демо отключены). Автозапуск тура сверяет текущий URL с адресом пункта по пути и
-  параметру `tab`; параметр запуска `set_demo_tutorial` передаётся при переходе.
+  (токены админки в демо отключены). Автозапуск тура сверяет текущий URL с адресом пункта по пути,
+  `controller` и, если он есть, `tab`; параметр запуска `set_demo_tutorial` передаётся при переходе.
 - **Под-вкладки формы правила** (General/Conditions/Code/Email) переключаются туром вручную:
   `activatePane()` тогглит классы `.active` на `.tab-pane` и на `li` навигации (без зависимости от JS
   Bootstrap).
+- **Demo Order Generator:** тур открывает отдельный admin-controller `DemoOrderGenerator` модуля
+  `set_demo_order_generator`; для него ключ возобновления строится по `controller`, а не по `tab`.
 - **Файлы:** панель — `views/templates/hook/panel.tpl`; движок тура и данные шагов —
   `views/js/tutorial_helper.js`, `scenario_admin.js`, `scenario_front.js`,
-  `tutorial_data_admin.js`, `tutorial_data_front.js`; переводы — `tutorial_i18n.js` (пустой);
+  `tutorial_data_admin.js`, `tutorial_data_front.js`; переводы EN/FR/DE/PL/ES — `tutorial_i18n.js`;
   SEO-лендинг — `controllers/front/seo.php` + `views/templates/front/seo.tpl` (маршрут
   `/next-order-discount-demo`).

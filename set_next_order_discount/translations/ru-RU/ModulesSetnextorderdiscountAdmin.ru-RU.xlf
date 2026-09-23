@@ -506,6 +506,10 @@
         <source>Reminded</source>
         <target>Напоминание отправлено</target>
       </trans-unit>
+      <trans-unit id="04148d61b0b7212b69dd8b267c98c74a3ae36942">
+        <source>Required field</source>
+        <target>Обязательное поле</target>
+      </trans-unit>
       <trans-unit id="44c57abd888a66b36d4b7c902134063e4a097223">
         <source>Reset</source>
         <target>Сбросить</target>

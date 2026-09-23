@@ -417,6 +417,16 @@ function isCurrentUrlMatchHref(href) {
             || stripLanguagePrefix(currentPath) === stripLanguagePrefix(targetPath)
             || (getPathBasename(currentPath) !== '' && getPathBasename(currentPath) === getPathBasename(targetPath));
 
+        // Legacy admin controllers share the same /admin-dir/ path. A standalone page such as
+        // DemoOrderGenerator has no `tab`, so compare `controller` before treating it as current.
+        var targetController = url.searchParams.get('controller');
+        if (targetController !== null && targetController !== '') {
+            var currentController = new URL(window.location.href).searchParams.get('controller') || '';
+            if (currentController !== targetController) {
+                return false;
+            }
+        }
+
         // Admin tabs of the module share one index.php path and differ only by the `tab`
         // query param (index.php?controller=...&tab=points). When the target link carries a
         // `tab`, the page matches only if the current `tab` is the same one — otherwise every

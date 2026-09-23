@@ -43,7 +43,7 @@
             {* ===================== GENERAL ===================== *}
             <div class="tab-pane active" id="snod-tab-general">
                 <div class="form-group">
-                    <label class="control-label col-lg-3">{l s='Rule name' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <label class="control-label col-lg-3">{l s='Rule name' d='Modules.Setnextorderdiscount.Admin'} <span class="snod-required" title="{l s='Required field' d='Modules.Setnextorderdiscount.Admin'}">*</span></label>
                     <div class="col-lg-5">
                         <input type="text" name="snod_rule_name" class="form-control" value="{$snod_rule_form.name|escape:'html':'UTF-8'}" maxlength="128">
                         <p class="help-block">{l s='Internal label shown in the rules list.' d='Modules.Setnextorderdiscount.Admin'}</p>
@@ -93,7 +93,7 @@
                 </div>
 
                 <div class="form-group" id="snod-discount-value-group">
-                    <label class="control-label col-lg-3">{l s='Discount value' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <label class="control-label col-lg-3">{l s='Discount value' d='Modules.Setnextorderdiscount.Admin'} <span class="snod-required" title="{l s='Required field' d='Modules.Setnextorderdiscount.Admin'}">*</span></label>
                     <div class="col-lg-3">
                         <div class="input-group">
                             <input type="text" name="snod_rule_discount_value" class="form-control" value="{$snod_rule_form.discount_value|escape:'html':'UTF-8'}">
@@ -104,7 +104,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="control-label col-lg-3">{l s='Validity period (days)' d='Modules.Setnextorderdiscount.Admin'}</label>
+                    <label class="control-label col-lg-3">{l s='Validity period (days)' d='Modules.Setnextorderdiscount.Admin'} <span class="snod-required" title="{l s='Required field' d='Modules.Setnextorderdiscount.Admin'}">*</span></label>
                     <div class="col-lg-3">
                         <input type="text" name="snod_rule_validity_days" class="form-control" value="{$snod_rule_form.validity_days|escape:'html':'UTF-8'}">
                     </div>
@@ -409,6 +409,7 @@
         </div>
 
         <div class="panel-footer">
+            <span class="snod-required-legend"><span class="snod-required">*</span> {l s='Required field' d='Modules.Setnextorderdiscount.Admin'}</span>
             <a href="{$AdminLink|escape:'html':'UTF-8'}&tab=rules" class="btn btn-default">
                 <i class="process-icon-cancel"></i> {l s='Cancel' d='Modules.Setnextorderdiscount.Admin'}
             </a>

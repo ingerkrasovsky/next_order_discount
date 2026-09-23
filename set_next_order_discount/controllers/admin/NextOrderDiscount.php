@@ -1376,8 +1376,7 @@ class NextOrderDiscountController extends ModuleAdminController
     }
 
     /**
-     * Builds the Dashboard tab: the coupon funnel aggregates for the current
-     * shop context and a queue snapshot.
+     * Builds the Dashboard tab: coupon funnel aggregates and a 30-day trend.
      *
      * @return void
      */

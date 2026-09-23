@@ -1,5 +1,5 @@
 /**
- * Next Order Discount — интерактивные туры по админке модуля (на русском).
+ * Next Order Discount — интерактивные туры по админке модуля.
  *
  * Каждая вкладка модуля открывается отдельным URL (&tab=...), поэтому под каждую
  * вкладку — свой загрузчик loadTutorialXxx(), который вызывается из панели
@@ -25,19 +25,20 @@ SLMDemo.text = function (html) {
 };
 
 /**
- * Язык туров = язык демо-панели (её переключатель EN/FR/RU хранит выбор в localStorage,
- * см. panel.tpl). Русский — язык-источник строк в этом файле, для него перевод не ищется.
+ * Язык туров = язык демо-панели (её переключатель хранит выбор в localStorage).
+ * Русский используется только как внутренний язык ключей и не показывается посетителю.
  */
 SLMDemo.curLang = function () {
-    try { var l = localStorage.getItem('setDemoPanelLang'); return (l === 'en' || l === 'fr') ? l : 'ru'; }
-    catch (e) { return 'ru'; }
+    try {
+        var l = localStorage.getItem('setDemoPanelLang');
+        return ['en', 'fr', 'de', 'pl', 'es'].indexOf(l) !== -1 ? l : 'en';
+    } catch (e) { return 'en'; }
 };
 
 /** Перевод строки шага по каталогу tutorial_i18n.js. Нет перевода — возвращаем как есть. */
 SLMDemo.tr = function (s) {
     if (typeof s !== 'string') { return s; }
     var lang = SLMDemo.curLang();
-    if (lang === 'ru') { return s; }
     var m = window.SLM_TOUR_I18N && window.SLM_TOUR_I18N[lang];
     return (m && m[s] != null) ? m[s] : s;
 };
@@ -170,8 +171,10 @@ SLMDemo.whenReady = function (callback) {
 SLMDemo.tourKey = function () {
     var id = 'default';
     try {
-        var tab = new URL(location.href).searchParams.get('tab');
-        id = tab || location.pathname;
+        var url = new URL(location.href);
+        var tab = url.searchParams.get('tab');
+        var controller = url.searchParams.get('controller');
+        id = tab || controller || location.pathname;
     } catch (e) { /* оставляем default */ }
     return 'slm_tour_step_' + id;
 };
@@ -181,7 +184,10 @@ SLMDemo.tourKeyForHref = function (href) {
     try {
         var u = new URL(href, location.origin);
         var tab = u.searchParams.get('tab');
-        return tab ? ('slm_tour_step_' + tab) : ('slm_tour_step_front' + u.pathname);
+        var controller = u.searchParams.get('controller');
+        if (tab) { return 'slm_tour_step_' + tab; }
+        if (controller) { return 'slm_tour_step_' + controller; }
+        return 'slm_tour_step_front' + u.pathname;
     } catch (e) {
         return null;
     }
@@ -482,54 +488,45 @@ SLMDemo.run = function (steps, chain, hooks) {
 };
 
 window.SLMDemo = SLMDemo;
-/** Вкладка Dashboard — воронка купонов. */
+/** Вкладка Dashboard — воронка купонов и динамика по дням. */
 function loadTutorialDashboard() {
-    // «вкладка Settings» и «вкладка Cron/Tools» в тексте — ссылки: открывают вкладку и сразу запускают её тур.
-    function tabLink(id, label) {
-        var el = document.getElementById(id);
-        var href = el ? el.getAttribute('href') : '';
-        if (!href) { return SLMDemo.tr(label); }
-        var sep = href.indexOf('?') > -1 ? '&' : '?';
-        return '<a href="' + href + sep + 'set_demo_tutorial=' + id + '">' + SLMDemo.tr(label) + '</a>';
-    }
-    var settingsLabel = tabLink('tutorialSettings', 'вкладка Settings');
-    var cronLabel = tabLink('tutorialCronTools', 'вкладка Cron/Tools');
-
     var steps = [
         SLMDemo.step(
-            null,
-            'Dashboard',
-            'Показывает, как купоны проходят путь от выдачи до использования. Вкладка открывается по умолчанию. Данные — в контексте выбранного вверху магазина (в «All shops» суммарно).'
-        ),
-        SLMDemo.step(
-            '.panel.page-content .row',
-            'Coupon funnel — воронка купонов',
-            'Шесть плиток: число купонов на каждом этапе и доля от сгенерированных:'
-                + '<ul style="margin:4px 0 0; padding-left:18px;">'
-                + '<li><b>Generated</b> — всего сгенерировано (база для процентов).</li>'
-                + '<li><b>Emailed</b> — по скольким отправлено купонное письмо.</li>'
-                + '<li><b>Reminded</b> — по скольким ушло хотя бы одно напоминание.</li>'
-                + '<li><b>Used</b> — использованы покупателями.</li>'
-                + '<li><b>Expired</b> — просрочены.</li>'
-                + '<li><b>Canceled</b> — отменены (в т.ч. из-за возврата заказа-источника).</li>'
-                + '</ul>',
+            '.panel.page-content .panel-heading',
+            'Dashboard — результаты работы купонов',
+            'Здесь собрана общая картина: сколько купонов создано, по скольким отправлены письма, сколько использовано, просрочено или отменено. По этим показателям можно быстро оценить, как работают правила и письма.',
             'bottom'
         ),
-        SLMDemo.fill(SLMDemo.step(
-            '.panel.page-content > p.text-muted',
+        SLMDemo.step(
+            '.snod-dash-cards',
+            'Coupon funnel — воронка купонов',
+            'Каждая карточка показывает, сколько купонов достигло этого этапа:'
+                + '<ul style="margin:4px 0 0; padding-left:18px;">'
+                + '<li><b>Generated</b> — купон создан после срабатывания правила.</li>'
+                + '<li><b>Emailed</b> — письмо с купоном успешно отправлено.</li>'
+                + '<li><b>Reminded</b> — отправлено хотя бы одно напоминание.</li>'
+                + '<li><b>Used</b> — покупатель применил купон в новом заказе.</li>'
+                + '<li><b>Expired</b> — срок действия купона закончился.</li>'
+                + '<li><b>Canceled</b> — купон отменён и больше недоступен.</li>'
+                + '</ul>'
+                + 'Проценты считаются от <b>Generated</b>. Этапы могут пересекаться, поэтому их проценты не обязаны складываться в 100%.',
+            'bottom'
+        ),
+        SLMDemo.step(
+            '.snod-dash-conversion',
             'Conversion — конверсия',
-            'Доля использованных купонов от сгенерированных — ключевой показатель эффективности акции. Данные собираются, если модуль включён ({settings}).',
+            'Доля купонов, которые покупатели использовали в следующем заказе, от всех созданных купонов. Показатель помогает понять, какая доля выданных купонов привела к повторной покупке.',
             'top'
-        ), { settings: settingsLabel }),
-        SLMDemo.fill(SLMDemo.step(
-            '.snod-targeting-badges',
-            'Dispatch queue — очередь отправки',
-            'Снимок фоновой очереди писем: <b>Pending</b> (ждут), <b>Processing</b> (в обработке), <b>Done</b> (отправлены), <b>Failed</b> (с ошибкой). Если письма подолгу «висят» в Pending — проверьте настройку cron ({cron}).',
+        ),
+        SLMDemo.step(
+            '.snod-dash-chart-wrap',
+            'Daily dynamics — динамика по дням',
+            'График показывает за последние 30 дней, сколько купонов было создано, по скольким успешно отправлено письмо и сколько было использовано. Линии можно скрывать кликом по легенде; если данных за период нет, график не отображается.',
             'top'
-        ), { cron: cronLabel })
+        )
     ];
 
-    SLMDemo.run(steps, { id: 'tutorialRules', label: 'Дальше: Rules →' });
+    SLMDemo.run(steps, { id: 'tutorialRules', label: 'Дальше: Discount rules →' });
 }
 
 /** Вкладка Rules — таблица правил. */
@@ -537,8 +534,8 @@ function loadTutorialRules() {
     var steps = [
         SLMDemo.step(
             '.panel.page-content .panel-heading',
-            'Rules — правила выдачи купонов',
-            'Основная рабочая область: список всех правил для текущего магазина. Каждое правило связывает условия (когда выдавать) со скидкой (что выдать). Если правил ещё нет — здесь подсказка «No discount rules yet».',
+            'Discount rules — правила выдачи купонов',
+            'Здесь настраиваются правила выдачи купонов. Каждое правило определяет, какой заказ должен сработать и какую скидку получит покупатель на следующий заказ. Правила проверяются по приоритету сверху вниз.',
             'bottom'
         ),
         SLMDemo.step(
@@ -608,9 +605,9 @@ function loadTutorialRuleEdit() {
 
     var steps = [
         SLMDemo.step(
-            '.nav-tabs',
+            '.defaultForm .panel.page-content > .nav.nav-tabs',
             'Форма правила',
-            'Одно правило = условия (когда выдать купон) + результат (какую скидку). Форма разбита на четыре вкладки: <b>General</b>, <b>Conditions</b>, <b>Code</b>, <b>Email</b>. Внизу — общие кнопки Save и Cancel. Тур сам переключает вкладки.',
+            'Одно правило объединяет условия срабатывания и скидку для следующего заказа. Настройки разделены на четыре вкладки: <b>General</b>, <b>Conditions</b>, <b>Code</b> и <b>Email</b>. Кнопки Save и Cancel находятся внизу формы.',
             'bottom'
         ),
 
@@ -618,7 +615,19 @@ function loadTutorialRuleEdit() {
         SLMDemo.stepRow(
             '[name="snod_rule_name"]',
             'Rule name — название правила',
-            'Внутреннее название, отображается в таблице правил. Обязательное поле. Ниже — Voucher name (что видит покупатель на купоне; пусто = «Next Order Discount») и Voucher description (необязательное описание на купоне).',
+            'Внутреннее название правила. Оно отображается в таблице Discount rules и помогает администратору различать правила. Обязательное поле; покупатель это название не видит.',
+            'bottom'
+        ),
+        SLMDemo.stepRow(
+            '[name="snod_rule_voucher_name"]',
+            'Voucher name — название купона',
+            'Название, которое покупатель увидит у купона. Если оставить поле пустым, будет использовано название <b>Next Order Discount</b>.',
+            'bottom'
+        ),
+        SLMDemo.stepRow(
+            '[name="snod_rule_voucher_description"]',
+            'Voucher description — описание купона',
+            'Необязательное описание, которое сохраняется в купоне и видно в админке. Оставьте поле пустым, если отдельное описание не нужно.',
             'bottom'
         ),
         SLMDemo.stepRow(
@@ -636,7 +645,13 @@ function loadTutorialRuleEdit() {
         SLMDemo.stepRow(
             '[name="snod_rule_validity_days"]',
             'Validity period — срок действия',
-            'Сколько дней действует купон (целое число, не меньше 1). Ниже — Minimum next order amount: минимальная сумма следующего заказа, при которой купон применим (0 = без ограничения).',
+            'Сколько дней покупатель сможет использовать выданный купон. Укажите целое число не меньше 1.',
+            'bottom'
+        ),
+        SLMDemo.stepRow(
+            '[name="snod_rule_next_min"]',
+            'Minimum next order amount — минимальная сумма',
+            'Минимальная сумма следующего заказа, при которой купон можно применить. Ограничение относится именно к новому заказу, а не к заказу, за который был выдан купон. Значение <b>0</b> отключает минимальную сумму.',
             'bottom'
         ),
         SLMDemo.stepRow(
@@ -662,7 +677,7 @@ function loadTutorialRuleEdit() {
         SLMDemo.stepRow(
             '[name="snod_rule_statuses[]"]',
             'Trigger on order statuses — триггерные статусы',
-            'Статусы заказа, при переходе в которые правило срабатывает. Пусто = любой статус (без ограничения). Несколько выбираются с Ctrl/Cmd. Все условия вкладки работают по логике И.',
+            'Выберите статусы, в которых заказ может выдать купон. Проверка выполняется при создании заказа и при каждом изменении его статуса. Если список пуст, статус не ограничивает правило. Для выбора нескольких статусов удерживайте Ctrl/Cmd. Подходящий статус сам по себе не гарантирует выдачу: заказ должен соответствовать и остальным условиям правила.',
             'bottom'
         ),
         SLMDemo.stepRow(
@@ -756,13 +771,68 @@ function loadTutorialRuleEdit() {
     );
 }
 
+/** Demo Order Generator — создание реального тестового заказа на свой email. */
+function loadTutorialOrderGenerator() {
+    function tabLink(id, label) {
+        var el = document.getElementById(id);
+        var href = el ? el.getAttribute('href') : '';
+        if (!href) { return SLMDemo.tr(label); }
+        var sep = href.indexOf('?') > -1 ? '&' : '?';
+        return '<a href="' + href + sep + 'set_demo_tutorial=' + id + '">' + SLMDemo.tr(label) + '</a>';
+    }
+
+    var rulesLink = tabLink('tutorialRules', 'Discount rules');
+    var couponsLink = tabLink('tutorialCoupons', 'Coupons');
+    var cronLink = tabLink('tutorialCronTools', 'Cron/Tools');
+    var steps = [
+        SLMDemo.step(
+            '.alert.alert-info',
+            'Demo Order Generator — быстрый end-to-end тест',
+            'Здесь можно создать <b>настоящий тестовый заказ</b> через штатный API PrestaShop.',
+            'bottom'
+        ),
+        SLMDemo.stepRow(
+            '[name="sdog_email"]',
+            'Ваш email',
+            'Укажите <b>ящик, к которому у вас есть доступ</b>: на него могут прийти подтверждение заказа и письмо с купоном. Если клиент с таким email уже есть, он будет использован повторно — так можно тестировать условия по номеру заказа.',
+            'bottom'
+        ),
+        SLMDemo.stepRow(
+            '[name="sdog_target_total"]',
+            'Точная сумма заказа',
+            'Задайте итоговую сумму с налогами и доставкой. Генератор подберёт количество товара и временную скидку, чтобы получилась именно эта сумма. Она должна попадать в диапазон активного правила.',
+            'bottom'
+        ),
+        SLMDemo.fill(SLMDemo.step(
+            'form.defaultForm .form-wrapper',
+            'Товар и данные покупателя',
+            'Выберите товар, валюту, страну, группу и язык письма. Категория и бренд товара, а также остальные значения должны совпадать с условиями в {rules}.',
+            'bottom'
+        ), { rules: rulesLink }),
+        SLMDemo.stepRow(
+            '[name="sdog_id_order_state"]',
+            'Статус заказа',
+            'Выберите статус, указанный как триггер в правиле. Генератор создаст заказ сразу в этом статусе, поэтому вручную менять его не нужно.',
+            'bottom'
+        ),
+        SLMDemo.fill(SLMDemo.step(
+            '#set_demo_order_generator_form_submit_btn',
+            'Создать и проверить',
+            'Закройте тур и нажмите <b>Create test order</b>. Сверху появятся ссылка на заказ и код купона. Купон также виден в {coupons}. Если письмо не пришло, откройте {cron} и нажмите <b>Run all tasks now</b>.',
+            'top'
+        ), { coupons: couponsLink, cron: cronLink })
+    ];
+
+    SLMDemo.run(steps, { id: 'tutorialFront', label: 'Дальше: как это видит покупатель →' });
+}
+
 /** Вкладка Coupons — выданные купоны. */
 function loadTutorialCoupons() {
     var steps = [
         SLMDemo.step(
             '#snod-coupons .panel-heading',
             'Coupons — выданные купоны',
-            'Список всех сгенерированных купонов (просмотр + ручные действия по отправке). Если купонов ещё нет — здесь подсказка: они появятся после того, как под правило подойдёт заказ.',
+            'Список выданных купонов. Здесь можно проверить код, покупателя, заказ-источник, правило, статус и срок действия, а также повторно отправить письмо или напоминание.',
             'bottom'
         ),
         SLMDemo.stepRow(
@@ -832,13 +902,13 @@ function loadTutorialCronTools() {
         SLMDemo.step(
             '#snod-cron-tools .alert-info',
             'Зачем нужен cron',
-            'Модулю нужен cron, чтобы отправлять письма из очереди, планировать напоминания и просрочивать купоны. Без cron купоны создаются, но письма и напоминания не уходят, а просроченные не переводятся в expired. Рекомендуемый способ — одна строка в crontab, раз в 5 минут, по HTTP (работает на любом хостинге).',
+            'После создания купона модуль сразу пытается отправить основное письмо. Если отправка не удалась, письмо попадает в очередь, а cron повторяет попытку. Cron также планирует и отправляет напоминания и переводит купоны с истёкшим сроком в <b>expired</b>. Рекомендуемый запуск — одна HTTP-строка в crontab с интервалом 5 минут.',
             'bottom'
         ),
         SLMDemo.step(
             '#snod-cron-install-box',
             'One-click install',
-            'Если сервер умеет управлять своим crontab — кнопка <b>Install cron automatically</b> ставит нужную строку сама (и <b>Remove cron</b> убирает). Строка помечается маркерами и удаляется при удалении модуля. Если автоустановка недоступна (например, shell_exec заблокирован) — используйте строки ниже.',
+            'Если на сервере доступна автоматическая настройка crontab, кнопка <b>Install cron automatically</b> добавит нужную строку, а <b>Remove cron</b> удалит её. Строка помечается маркерами и также удаляется при удалении модуля. Если автоустановка недоступна (например, shell_exec заблокирован), используйте строки ниже.',
             'bottom'
         ),
         SLMDemo.step(
@@ -858,8 +928,8 @@ function loadTutorialCronTools() {
             'Tasks — задачи и их здоровье',
             'Фоновые задачи, расписание, время последнего запуска, персональный URL, блокировка и ручной запуск:'
                 + '<ul style="margin:4px 0 0; padding-left:18px;">'
-                + '<li><b>Process the dispatch queue</b> — отправляет письма. Каждые 5 минут.</li>'
-                + '<li><b>Plan coupon reminders</b> — планирует напоминания. Каждые 30 минут.</li>'
+                + '<li><b>Process the dispatch queue</b> — повторяет неудавшуюся отправку основного письма и отправляет запланированные напоминания. Каждые 5 минут.</li>'
+                + '<li><b>Plan coupon reminders</b> — находит напоминания, срок которых наступил, и добавляет их в очередь. Каждые 30 минут.</li>'
                 + '<li><b>Expire lapsed coupons</b> — просрочивает купоны. Раз в день.</li>'
                 + '</ul>'
                 + '<b>Last run</b>: OK / Late / Not running / Never run. <b>Lock</b>: Running / Free (не даёт двум запускам пересечься).',
@@ -868,7 +938,7 @@ function loadTutorialCronTools() {
         SLMDemo.step(
             '#snod-cron-tools .snod-targeting-badges',
             'Dispatch queue — очередь отправки',
-            'Тот же снимок, что и на Dashboard: Pending / Processing / Done / Failed. Растущий Pending или заметный Failed — повод проверить cron и настройки почты.',
+            'Состояние фоновых задач на отправку: <b>Pending</b> — ожидают, <b>Processing</b> — выполняются, <b>Done</b> — завершены, <b>Failed</b> — завершились с ошибкой. Растущий Pending или Failed — повод проверить cron и настройки почты.',
             'top'
         )
     ];
@@ -920,5 +990,5 @@ function loadTutorialLogs() {
         ), { settings: settingsLabel })
     ];
 
-    SLMDemo.run(steps, { id: 'tutorialFront', label: 'Дальше: как это видит покупатель →' });
+    SLMDemo.run(steps, { id: 'tutorialOrderGenerator', label: 'Дальше: тестовый заказ →' });
 }
