@@ -16,7 +16,7 @@ class set_demo_order_generator extends Module
     {
         $this->name = 'set_demo_order_generator';
         $this->tab = 'administration';
-        $this->version = '1.1.0';
+        $this->version = '1.1.1';
         $this->author = 'Smart Ecommerce Tech';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -77,6 +77,7 @@ class set_demo_order_generator extends Module
 
         $output = $this->display(__FILE__, 'views/templates/admin/intro.tpl');
         $output .= $this->renderForm($data, $controller);
+        $output .= $this->display(__FILE__, 'views/templates/admin/form_lock.tpl');
 
         return $output;
     }

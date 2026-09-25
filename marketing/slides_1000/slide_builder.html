@@ -8,11 +8,19 @@
      то и уйдёт на маркетплейс. Экспорт всё равно рендерит в 4000 и уменьшает до 1000,
      поэтому качество максимальное. Правите размеры — правьте в 2000-системе. -->
 <style>
-  @font-face{font-family:Unbounded;src:url('../../set_demo/views/fonts/unbounded-700-cyrillic.woff2') format('woff2');font-weight:700 800;font-style:normal;font-display:swap}
-  @font-face{font-family:Unbounded;src:url('../../set_demo/views/fonts/unbounded-600-cyrillic.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap}
-  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-400-cyrillic.woff2') format('woff2');font-weight:400 500;font-style:normal;font-display:swap}
-  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-600-cyrillic.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap}
-  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-700-cyrillic.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+  /* Два сабсета на каждое начертание: кириллица и латиница. Без latin-файла
+     нерусские языки теряли Unbounded/Manrope и падали на системный sans-serif.
+     unicode-range обязателен: иначе браузер берёт только последнее правило. */
+  @font-face{font-family:Unbounded;src:url('../../set_demo/views/fonts/unbounded-700-cyrillic.woff2') format('woff2');font-weight:700 800;font-style:normal;font-display:swap;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+  @font-face{font-family:Unbounded;src:url('../../set_demo/views/fonts/unbounded-700-latin.woff2') format('woff2');font-weight:700 800;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+  @font-face{font-family:Unbounded;src:url('../../set_demo/views/fonts/unbounded-600-cyrillic.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+  @font-face{font-family:Unbounded;src:url('../../set_demo/views/fonts/unbounded-600-latin.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-400-cyrillic.woff2') format('woff2');font-weight:400 500;font-style:normal;font-display:swap;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-400-latin.woff2') format('woff2');font-weight:400 500;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-600-cyrillic.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-600-latin.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-700-cyrillic.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+  @font-face{font-family:Manrope;src:url('../../set_demo/views/fonts/manrope-700-latin.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
   :root{
     --accent:#37657D; --accent-2:#4A8BA8; --accent-soft:#E8F1F5;
     --ink:#101C24; --ink-2:#465863; --bg:#FFFFFF;
@@ -187,7 +195,14 @@
 <body>
 
 <div class="toolbar">
-  <span>Next Order Discount · RU</span>
+  <span>Next Order Discount</span>
+  <span style="margin-left:18px">Язык:</span>
+  <button type="button" data-lang="ru" aria-pressed="true">RU</button>
+  <button type="button" data-lang="en">EN</button>
+  <button type="button" data-lang="fr">FR</button>
+  <button type="button" data-lang="de">DE</button>
+  <button type="button" data-lang="pl">PL</button>
+  <button type="button" data-lang="es">ES</button>
   <span style="margin-left:18px">Масштаб:</span>
   <button type="button" data-zoom="0.25">25%</button>
   <button type="button" data-zoom="0.5" aria-pressed="true">50% = 1000px</button>
@@ -210,51 +225,51 @@
       "shot": "shot_dashboard.png"
     },
     {
-      "n": 5,
-      "banner": true,
-      "shot": "shot_targeting.png"
-    },
-    {
-      "n": 8,
-      "banner": true,
-      "shot": "shot_email.png"
-    },
-    {
-      "n": 11,
-      "banner": true,
-      "shot": "shot_cron.png"
-    },
-    {
       "n": 2,
       "shot": "shot1.png"
     },
     {
       "n": 3,
-      "shot": "shot2.png"
+      "shot": "shot8.png"
     },
     {
       "n": 4,
+      "shot": "shot2.png"
+    },
+    {
+      "n": 5,
       "shot": "shot3.png"
     },
     {
       "n": 6,
-      "shot": "shot4.png"
+      "banner": true,
+      "shot": "shot_targeting.png"
     },
     {
       "n": 7,
+      "shot": "shot4.png"
+    },
+    {
+      "n": 8,
       "shot": "shot5.png"
     },
     {
       "n": 9,
-      "shot": "shot6.png"
+      "banner": true,
+      "shot": "shot_email.png"
     },
     {
       "n": 10,
+      "shot": "shot6.png"
+    },
+    {
+      "n": 11,
       "shot": "shot7.png"
     },
     {
       "n": 12,
-      "shot": "shot8.png"
+      "banner": true,
+      "shot": "shot_cron.png"
     },
     {
       "n": 13,

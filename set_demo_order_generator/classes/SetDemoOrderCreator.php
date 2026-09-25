@@ -211,6 +211,16 @@ class SetDemoOrderCreator
                 throw new RuntimeException('The existing customer could not be loaded.');
             }
 
+            // The form is the source of truth for a demo order. In particular,
+            // coupon templates load the customer again by id, so changing only
+            // the in-memory object would still send the old profile name.
+            $customer->firstname = $data['firstname'];
+            $customer->lastname = $data['lastname'];
+            $customer->id_lang = $data['id_lang'];
+            if (!$customer->update()) {
+                throw new RuntimeException('The existing demo customer could not be updated.');
+            }
+
             return $customer;
         }
 
@@ -255,7 +265,17 @@ class SetDemoOrderCreator
             . ' ORDER BY `id_address` DESC'
         );
         if ($idAddress > 0) {
-            return new Address($idAddress);
+            $address = new Address($idAddress);
+            if (!Validate::isLoadedObject($address)) {
+                throw new RuntimeException('The existing demo address could not be loaded.');
+            }
+            $address->firstname = (string) $customer->firstname;
+            $address->lastname = (string) $customer->lastname;
+            if (!$address->update()) {
+                throw new RuntimeException('The existing demo address could not be updated.');
+            }
+
+            return $address;
         }
 
         $country = new Country($data['id_country'], $data['id_lang']);

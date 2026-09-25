@@ -2,7 +2,7 @@
 <module>
     <name>set_demo_order_generator</name>
     <displayName><![CDATA[Demo Order Generator]]></displayName>
-    <version><![CDATA[1.1.0]]></version>
+    <version><![CDATA[1.1.1]]></version>
     <description><![CDATA[Creates configurable test orders for the Next Order Discount demo.]]></description>
     <author><![CDATA[Smart Ecommerce Tech]]></author>
     <tab><![CDATA[administration]]></tab>

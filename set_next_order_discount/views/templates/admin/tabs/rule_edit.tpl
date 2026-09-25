@@ -409,7 +409,6 @@
         </div>
 
         <div class="panel-footer">
-            <span class="snod-required-legend"><span class="snod-required">*</span> {l s='Required field' d='Modules.Setnextorderdiscount.Admin'}</span>
             <a href="{$AdminLink|escape:'html':'UTF-8'}&tab=rules" class="btn btn-default">
                 <i class="process-icon-cancel"></i> {l s='Cancel' d='Modules.Setnextorderdiscount.Admin'}
             </a>

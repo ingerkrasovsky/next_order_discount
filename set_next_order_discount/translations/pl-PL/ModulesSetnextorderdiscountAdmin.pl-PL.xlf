@@ -1,0 +1,1055 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file original="ModulesSetnextorderdiscountAdmin" source-language="en-US" target-language="pl-PL" datatype="plaintext">
+    <body>
+      <trans-unit id="929f2f79b04e6f22a506628eeeaa1c05f46925e8">
+        <source>%d days ago</source>
+        <target>%d dni temu</target>
+      </trans-unit>
+      <trans-unit id="58da3110e0aa8509a5478f05ae3f6966c18d5861">
+        <source>%d h ago</source>
+        <target>%d godz. temu</target>
+      </trans-unit>
+      <trans-unit id="1476e3bb5bb5578a99bed5c993cd37a4fbe78f4c">
+        <source>%d min ago</source>
+        <target>%d min temu</target>
+      </trans-unit>
+      <trans-unit id="1b61ef500d9cf4eebf807844a2db44ec349e2b61">
+        <source>(a crontab entry created from this page is active)</source>
+        <target>(wpis w crontabie utworzony na tej stronie jest aktywny)</target>
+      </trans-unit>
+      <trans-unit id="eb509e004e19a45d7419851129c8be2e56b37f2c">
+        <source>(a quick way to test that the endpoint works)</source>
+        <target>(szybki sposób, aby sprawdzić, czy adres działa)</target>
+      </trans-unit>
+      <trans-unit id="036f1fc90a82a8bf65491c8e9350c5cd5af94d16">
+        <source>(clamped between 4 and 32).</source>
+        <target>(ograniczone do zakresu od 4 do 32).</target>
+      </trans-unit>
+      <trans-unit id="3965b9d98b8607f256f1cae97af9d97e70275b60">
+        <source>(no crontab access on this server — check the Last run column instead)</source>
+        <target>(brak dostępu do crontaba na tym serwerze — sprawdź kolumnę „Ostatnie uruchomienie”)</target>
+      </trans-unit>
+      <trans-unit id="57241df9fbb0d326da34939b3f822931cce56c06">
+        <source>(the cron may still be set up manually or via a web-cron service)</source>
+        <target>(cron może być mimo to skonfigurowany ręcznie lub przez usługę web-cron)</target>
+      </trans-unit>
+      <trans-unit id="38631b523a72f3a56fd17832df6c3de29cdd4a0f">
+        <source>A percentage discount cannot exceed 100.</source>
+        <target>Rabat procentowy nie może przekraczać 100.</target>
+      </trans-unit>
+      <trans-unit id="c3cd636a585b20c40ac2df5ffb403e83cb2eef51">
+        <source>Actions</source>
+        <target>Akcje</target>
+      </trans-unit>
+      <trans-unit id="a733b809d2f1233496ab516eed0f3ef75cf3791a">
+        <source>Active</source>
+        <target>Aktywna</target>
+      </trans-unit>
+      <trans-unit id="d9e3f759e006b4caf9b6aa591b08cce3c67e2209">
+        <source>Active date window</source>
+        <target>Okres aktywności</target>
+      </trans-unit>
+      <trans-unit id="d119887bf72362125175c1ba5ca0f51e3b143bbd">
+        <source>Add a rule</source>
+        <target>Dodaj regułę</target>
+      </trans-unit>
+      <trans-unit id="73d01401e5101b0b0ab92e42e6fdcbf2d641c5a9">
+        <source>Adds one line (every 5 minutes) to this server’s crontab, wrapped in markers so it is removed cleanly when you uninstall the module.</source>
+        <target>Dodaje jedną linię (co 5 minut) do crontaba tego serwera, otoczoną znacznikami, dzięki czemu zostanie czysto usunięta przy odinstalowaniu modułu.</target>
+      </trans-unit>
+      <trans-unit id="6a72085653e4c5be8c7640c868ef787cbcf063d1">
+        <source>All</source>
+        <target>Wszystkie</target>
+      </trans-unit>
+      <trans-unit id="792b75d2cf516ea4700eae6d6109c5cfb8d36f39">
+        <source>All (no restriction)</source>
+        <target>Wszystkie (bez ograniczeń)</target>
+      </trans-unit>
+      <trans-unit id="9dda7ef7a013e9ae2ddff61002d53fd01bf21889">
+        <source>All except the selected</source>
+        <target>Wszystkie oprócz wybranych</target>
+      </trans-unit>
+      <trans-unit id="6405179d241bf89ae6303c61e7e618b36c53a096">
+        <source>All statuses</source>
+        <target>Wszystkie statusy</target>
+      </trans-unit>
+      <trans-unit id="fb236b7f60fa3b26b02176b2263df1d50a821aca">
+        <source>Alphabetic (A-Z)</source>
+        <target>Litery (A-Z)</target>
+      </trans-unit>
+      <trans-unit id="8b9bed89c83fd561c3d7635b8b3d67bcff58ee14">
+        <source>Alphanumeric (A-Z, 0-9)</source>
+        <target>Alfanumeryczny (A-Z, 0-9)</target>
+      </trans-unit>
+      <trans-unit id="55201ac9166b370daeb5cfb419c06dfd4d02619a">
+        <source>Any status</source>
+        <target>Dowolny status</target>
+      </trans-unit>
+      <trans-unit id="bbaea1d715ace14b7b47779a3353952b3ee7d96d">
+        <source>Automatic install is not available on this server</source>
+        <target>Automatyczna instalacja nie jest dostępna na tym serwerze</target>
+      </trans-unit>
+      <trans-unit id="ad5cfd4c1823687be1a99015bcbb8a4705523b4e">
+        <source>Available placeholders (click to insert):</source>
+        <target>Dostępne znaczniki (kliknij, aby wstawić):</target>
+      </trans-unit>
+      <trans-unit id="ecd05348c2a555579030121c949156cb499534b0">
+        <source>Brands</source>
+        <target>Marki</target>
+      </trans-unit>
+      <trans-unit id="77dfd2135f4db726c47299bb55be26f7f4525a46">
+        <source>Cancel</source>
+        <target>Anuluj</target>
+      </trans-unit>
+      <trans-unit id="77afa653d977f269d4c2f60c730c8b5cc9b79cc1">
+        <source>Cancel coupon on order statuses</source>
+        <target>Anuluj kupon przy tych statusach zamówienia</target>
+      </trans-unit>
+      <trans-unit id="f840ac65b3e56cbe7d49f5922ce51270404ec62c">
+        <source>Canceled</source>
+        <target>Anulowane</target>
+      </trans-unit>
+      <trans-unit id="757b3e5dbd7fae037482b408c7e498b2addbd3f9">
+        <source>Cannot verify</source>
+        <target>Nie można zweryfikować</target>
+      </trans-unit>
+      <trans-unit id="6ccb60071be8f00760a3824d9f7d0fad57de789f">
+        <source>Categories</source>
+        <target>Kategorie</target>
+      </trans-unit>
+      <trans-unit id="879f0b1bef59eeebf78cfd3a22f6f8077810cecf">
+        <source>Channel</source>
+        <target>Kanał</target>
+      </trans-unit>
+      <trans-unit id="4c30e6253bedbe835f47b19a26bc8a83152d2032">
+        <source>Character set used for the generated</source>
+        <target>Zestaw znaków używany do wygenerowania</target>
+      </trans-unit>
+      <trans-unit id="7c9392f9e1a5573888d34de7784fab0989cd9056">
+        <source>Choose whether the day values below count from the coupon email, or backwards from the coupon expiry.</source>
+        <target>Wybierz, czy wartości dni poniżej liczone są od e-maila z kuponem, czy wstecz od daty wygaśnięcia kuponu.</target>
+      </trans-unit>
+      <trans-unit id="adac69379a626c2436948a4ef1792c7d719ef929">
+        <source>Code</source>
+        <target>Kod</target>
+      </trans-unit>
+      <trans-unit id="5506eb6161a07356d96e91770d25d5a0f22200ef">
+        <source>Conditions</source>
+        <target>Warunki</target>
+      </trans-unit>
+      <trans-unit id="5bdfe7c39a7a654549c6b89466e5f82c1f32308d">
+        <source>Conversion (used vs generated):</source>
+        <target>Konwersja (użyte vs wygenerowane):</target>
+      </trans-unit>
+      <trans-unit id="be50c0643ce3678491125595046c5c6154e2b7db">
+        <source>Conversion rate equals used coupons divided by generated coupons for the current shop context.</source>
+        <target>Współczynnik konwersji to liczba użytych kuponów podzielona przez liczbę wygenerowanych kuponów w bieżącym kontekście sklepu.</target>
+      </trans-unit>
+      <trans-unit id="2b6a8b85da6426d3a8c097b6ab86004fc6a17321">
+        <source>Correlation</source>
+        <target>Korelacja</target>
+      </trans-unit>
+      <trans-unit id="5fdb20bbab7d98141739953832c7f9c49d0173ad">
+        <source>Could not install the cron on this server. Use the copy-paste line instead.</source>
+        <target>Nie udało się zainstalować crona na tym serwerze. Użyj linii do skopiowania.</target>
+      </trans-unit>
+      <trans-unit id="875fb43cca50c8225e81d1b8450e39f2bce8fd8e">
+        <source>Could not remove the cron.</source>
+        <target>Nie udało się usunąć crona.</target>
+      </trans-unit>
+      <trans-unit id="89482586a358d7ebda86771beebf8817737cb417">
+        <source>Could not save the rule.</source>
+        <target>Nie udało się zapisać reguły.</target>
+      </trans-unit>
+      <trans-unit id="9c9f84366594a1d000d7a484f1f7b6c78c3ae549">
+        <source>Could not send the email. Check the customer email address and your mail configuration.</source>
+        <target>Nie udało się wysłać e-maila. Sprawdź adres e-mail klienta i konfigurację poczty.</target>
+      </trans-unit>
+      <trans-unit id="bd8af0405e73e1a07ac2c7a83e3c9f0ea2b0ad6c">
+        <source>Could not send the reminder. Check the customer email address and your mail configuration.</source>
+        <target>Nie udało się wysłać przypomnienia. Sprawdź adres e-mail klienta i konfigurację poczty.</target>
+      </trans-unit>
+      <trans-unit id="8467c0d99c7925d9e5fdb471fce551ee2115df40">
+        <source>Countries</source>
+        <target>Kraje</target>
+      </trans-unit>
+      <trans-unit id="0d3d0f5d52bfb4fd0f60eb3f4b534467b91dd068">
+        <source>Coupon email</source>
+        <target>E-mail z kuponem</target>
+      </trans-unit>
+      <trans-unit id="65057624b8d56eaa9e67ae1837ccfa8dd40e5d21">
+        <source>Coupon email sent.</source>
+        <target>E-mail z kuponem został wysłany.</target>
+      </trans-unit>
+      <trans-unit id="aa9392743ff0de520fa7acd551e4a2d89829b41b">
+        <source>Coupon funnel</source>
+        <target>Lejek kuponów</target>
+      </trans-unit>
+      <trans-unit id="507c099a3ffe86b994d0ec2f215d1e44195ebf29">
+        <source>Coupon lifecycle totals for the current shop context.</source>
+        <target>Podsumowanie cyklu życia kuponów w bieżącym kontekście sklepu.</target>
+      </trans-unit>
+      <trans-unit id="97a3bacad749a8c1213633a58dd5564f4f064807">
+        <source>Coupons</source>
+        <target>Kupony</target>
+      </trans-unit>
+      <trans-unit id="b0dccbb8952a0ce8f57b7d92ae5ac657354ce14e">
+        <source>Coupons created after an order matched an active rule. This is the baseline used for all funnel percentages.</source>
+        <target>Kupony utworzone po dopasowaniu zamówienia do aktywnej reguły. To podstawa wszystkich wartości procentowych w lejku.</target>
+      </trans-unit>
+      <trans-unit id="afce473cbf4ac2d4eee4594fb9cf528dd220613d">
+        <source>Coupons for which at least one reminder email was sent.</source>
+        <target>Kupony, dla których wysłano co najmniej jedno przypomnienie.</target>
+      </trans-unit>
+      <trans-unit id="68511960aed6716f0ff195703c5f923f958da9b2">
+        <source>Coupons redeemed by customers on a later order.</source>
+        <target>Kupony wykorzystane przez klientów przy kolejnym zamówieniu.</target>
+      </trans-unit>
+      <trans-unit id="edede83448d8b7183ef09905e3eddaee0db29a8a">
+        <source>Coupons voided after the originating order moved to a configured cancellation status.</source>
+        <target>Kupony unieważnione po zmianie statusu zamówienia źródłowego na skonfigurowany status anulowania.</target>
+      </trans-unit>
+      <trans-unit id="accf40c89baa4fa88e6a7ff11e1f805beecafd3f">
+        <source>Created</source>
+        <target>Utworzono</target>
+      </trans-unit>
+      <trans-unit id="830f62dc200f279742b4258f4a8397a8fce44703">
+        <source>Cron URL</source>
+        <target>Adres URL crona</target>
+      </trans-unit>
+      <trans-unit id="16586cc7e2e785a0c2bb15ebe540e6276b7e4100">
+        <source>Cron installed on this server.</source>
+        <target>Cron zainstalowany na tym serwerze.</target>
+      </trans-unit>
+      <trans-unit id="2de99b27e27c0c5c9e3580a1c5db53702c303db6">
+        <source>Cron removed from this server.</source>
+        <target>Cron usunięty z tego serwera.</target>
+      </trans-unit>
+      <trans-unit id="f278c5eeb26dce758fbdad1b247e1f7146abfcff">
+        <source>Cron/Tools</source>
+        <target>Cron/Narzędzia</target>
+      </trans-unit>
+      <trans-unit id="8ba4afeea5a296fbf04d9a21069f7fc3d55cdbe6">
+        <source>Crontab line (curl)</source>
+        <target>Linia crontab (curl)</target>
+      </trans-unit>
+      <trans-unit id="a68898efa4d2e2d8bfd469058246118350f79d78">
+        <source>Currencies</source>
+        <target>Waluty</target>
+      </trans-unit>
+      <trans-unit id="0e85749a6f40d4614b87411e141fe8109099bc4f">
+        <source>Customer</source>
+        <target>Klient</target>
+      </trans-unit>
+      <trans-unit id="236ddab4832d076fa0fb45c9820feb176fc13e2f">
+        <source>Customer groups</source>
+        <target>Grupy klientów</target>
+      </trans-unit>
+      <trans-unit id="e53ded572f567466e3cb5c843708b3d233789fad">
+        <source>Customer order number</source>
+        <target>Liczba zamówień klienta</target>
+      </trans-unit>
+      <trans-unit id="58f7fafa2c8fc8c185cde71b0bce69d7ceda76b5">
+        <source>Daily dynamics</source>
+        <target>Dynamika dzienna</target>
+      </trans-unit>
+      <trans-unit id="d87f47b47e4d5794d53fe0734c49417bd046cde0">
+        <source>Dashboard</source>
+        <target>Pulpit</target>
+      </trans-unit>
+      <trans-unit id="eb9a4bc1c0c153e4e4b042a79113b815b7e3021d">
+        <source>Date</source>
+        <target>Data</target>
+      </trans-unit>
+      <trans-unit id="fb9a9f47c6b56bae5e2262c7841076e849481c53">
+        <source>Date window</source>
+        <target>Zakres dat</target>
+      </trans-unit>
+      <trans-unit id="9b9b86b516011148f16c92eb537b7dfec861216f">
+        <source>Day-by-day trend of generated, emailed and used coupons over the last 30 days. All three share one scale, so the lines are directly comparable — used naturally sits lowest. Click a legend entry to hide a metric: the chart rescales and the remaining lines become easier to read.</source>
+        <target>Dzienny przebieg liczby kuponów wygenerowanych, wysłanych i użytych w ciągu ostatnich 30 dni. Wszystkie trzy serie mają wspólną skalę, więc są bezpośrednio porównywalne — użyte naturalnie leżą najniżej. Kliknij pozycję legendy, aby ukryć metrykę: wykres przeskaluje się, a pozostałe linie staną się czytelniejsze.</target>
+      </trans-unit>
+      <trans-unit id="098799ef89b5522659112097c97c49539f98b874">
+        <source>Days after the coupon email</source>
+        <target>Dni po e-mailu z kuponem</target>
+      </trans-unit>
+      <trans-unit id="58b9a0124ca488b5ed219bfa042635c1fb821c47">
+        <source>Days before the coupon expires</source>
+        <target>Dni przed wygaśnięciem kuponu</target>
+      </trans-unit>
+      <trans-unit id="db0dd3026eeabb25699ceaf9ec4e63d90a734d0a">
+        <source>Debug mode</source>
+        <target>Tryb debugowania</target>
+      </trans-unit>
+      <trans-unit id="f6fdbe48dc54dd86f63097a03bd24094dedd713a">
+        <source>Delete</source>
+        <target>Usuń</target>
+      </trans-unit>
+      <trans-unit id="8f8f7028bbfa4ff319861d2fc5b73a7938d928a1">
+        <source>Delete this rule?</source>
+        <target>Usunąć tę regułę?</target>
+      </trans-unit>
+      <trans-unit id="b524936d7aa1316e00d3354c9a8664d00e4bce5a">
+        <source>Discount</source>
+        <target>Rabat</target>
+      </trans-unit>
+      <trans-unit id="22c038e6589319bbd7fba6815afd68b579a2001b">
+        <source>Discount rules</source>
+        <target>Reguły rabatowe</target>
+      </trans-unit>
+      <trans-unit id="c5137ddde86cfc76661e7870cbe48497224fa33b">
+        <source>Discount type</source>
+        <target>Typ rabatu</target>
+      </trans-unit>
+      <trans-unit id="cfbd2d59622d0507e5380c08986b5a85a1204dc7">
+        <source>Discount value</source>
+        <target>Wartość rabatu</target>
+      </trans-unit>
+      <trans-unit id="a2a1c5c5982fef2e310324c0a9c7c6aee6541b9d">
+        <source>Discount value must be a number greater than zero.</source>
+        <target>Wartość rabatu musi być liczbą większą od zera.</target>
+      </trans-unit>
+      <trans-unit id="cb269b9ec3adf54048b7d3f83c5706f364383c2b">
+        <source>Dispatch queue</source>
+        <target>Kolejka wysyłki</target>
+      </trans-unit>
+      <trans-unit id="f801bfc13afad3f57e8032b84688e1c1ab2d7ba4">
+        <source>Documentation, feature requests or bug reports:</source>
+        <target>Dokumentacja, propozycje funkcji lub zgłoszenia błędów:</target>
+      </trans-unit>
+      <trans-unit id="e9b450d14bc2363d292c84f17cfad5cfbd58a458">
+        <source>Done</source>
+        <target>Zakończono</target>
+      </trans-unit>
+      <trans-unit id="888a7b652d4423a63849ae6c191b8d31a7239b80">
+        <source>Each card shows a coupon lifecycle total. Percentages use generated coupons as the baseline; lifecycle outcomes can overlap, so they do not need to add up to 100%.</source>
+        <target>Każda karta pokazuje sumę z cyklu życia kuponów. Wartości procentowe liczone są względem kuponów wygenerowanych; etapy mogą się nakładać, więc nie muszą sumować się do 100%.</target>
+      </trans-unit>
+      <trans-unit id="5ac04cb36f089a954843df32f8348e3bee058239">
+        <source>Each rule has its own email content, pre-filled with the default template. The placeholders listed under each field are replaced with real values when the email is sent.</source>
+        <target>Każda reguła ma własną treść e-maila, wstępnie wypełnioną domyślnym szablonem. Znaczniki wymienione pod każdym polem są zastępowane rzeczywistymi wartościami przy wysyłce.</target>
+      </trans-unit>
+      <trans-unit id="cf44c86194dc401c3c549f4f79249d61250ca2c6">
+        <source>Each task also has its own URL if you prefer separate cron entries. Keep the token secret: anyone with a URL can run the corresponding task.</source>
+        <target>Każde zadanie ma też własny adres URL, jeśli wolisz osobne wpisy crona. Zachowaj token w tajemnicy: każdy, kto zna adres, może uruchomić dane zadanie.</target>
+      </trans-unit>
+      <trans-unit id="5301648dcf6b53cefc9ed52999aaa92d4603cae0">
+        <source>Edit</source>
+        <target>Edytuj</target>
+      </trans-unit>
+      <trans-unit id="1f53b22761f2755644f59a9a62705126375d8099">
+        <source>Edit rule</source>
+        <target>Edytuj regułę</target>
+      </trans-unit>
+      <trans-unit id="84add5b2952787581cb9a8851eef63d1ec75d22b">
+        <source>Email</source>
+        <target>E-mail</target>
+      </trans-unit>
+      <trans-unit id="a2b663db0433c1601bf605ec2e98196125466d9f">
+        <source>Emailed</source>
+        <target>Wysłane</target>
+      </trans-unit>
+      <trans-unit id="8a06a09e196bad6eadfa7d6beaf83331ba36582b">
+        <source>Enables verbose logging for troubleshooting. Keep disabled in production.</source>
+        <target>Włącza szczegółowe logowanie na potrzeby diagnostyki. Na produkcji pozostaw wyłączone.</target>
+      </trans-unit>
+      <trans-unit id="961bb4517909aac10d610ac2bf4dc8ca0fcf1245">
+        <source>Expire lapsed coupons</source>
+        <target>Wygaś przeterminowane kupony</target>
+      </trans-unit>
+      <trans-unit id="a689a999a5e62055bda8c21b1dbe92c119308def">
+        <source>Expired</source>
+        <target>Wygasłe</target>
+      </trans-unit>
+      <trans-unit id="09fef5d8d9a3c86b2523fef60d512606e7fe0003">
+        <source>Failed</source>
+        <target>Błąd</target>
+      </trans-unit>
+      <trans-unit id="d7decf1aa22b02ae8abf9a96849ee423eee838e4">
+        <source>Filter</source>
+        <target>Filtruj</target>
+      </trans-unit>
+      <trans-unit id="85791bab3a0a46e8d55723afac83d690ae1e66b0">
+        <source>First reminder (days)</source>
+        <target>Pierwsze przypomnienie (dni)</target>
+      </trans-unit>
+      <trans-unit id="9a1eddada27d54996c03592175e994b5b5cf7305">
+        <source>First reminder email</source>
+        <target>E-mail pierwszego przypomnienia</target>
+      </trans-unit>
+      <trans-unit id="341e8bb9d2362aecfc9871902a007c9cd64e530f">
+        <source>Fixed amount</source>
+        <target>Kwota stała</target>
+      </trans-unit>
+      <trans-unit id="75f527181b574f84568f33f67adc3b267a6fef9c">
+        <source>Free</source>
+        <target>Wolna</target>
+      </trans-unit>
+      <trans-unit id="b6da5263ea361ec875fab0f88ca4d12a7ec638e5">
+        <source>Free shipping</source>
+        <target>Darmowa dostawa</target>
+      </trans-unit>
+      <trans-unit id="3f66052a107eaf9bae7cad0f61fb462f47ec2c47">
+        <source>From</source>
+        <target>Od</target>
+      </trans-unit>
+      <trans-unit id="9239ee2cda84eca4c3440e2a7b50148af67da3d4">
+        <source>General</source>
+        <target>Ogólne</target>
+      </trans-unit>
+      <trans-unit id="8eefdd52ad2d9b9bb6ad00ddcd70e1821191b6cd">
+        <source>Generated</source>
+        <target>Wygenerowane</target>
+      </trans-unit>
+      <trans-unit id="c14c2cecdca4b92903385808956e1f6f40565a0f">
+        <source>Generated coupons whose initial customer email was sent successfully.</source>
+        <target>Wygenerowane kupony, dla których pierwszy e-mail do klienta został wysłany pomyślnie.</target>
+      </trans-unit>
+      <trans-unit id="ae9629f4ebb82c6331c0809fa9a0e54b00e578e6">
+        <source>Groups</source>
+        <target>Grupy</target>
+      </trans-unit>
+      <trans-unit id="4c41038188894303cbb976481fb1aa9e2a5e355e">
+        <source>HTML content</source>
+        <target>Treść HTML</target>
+      </trans-unit>
+      <trans-unit id="5fe3dd3158baff86e7419f9286c40a7f696e4780">
+        <source>How many valid orders the customer must have. Set both to 1 for first-order-only. Use 0 for no limit.</source>
+        <target>Ile ważnych zamówień musi mieć klient. Ustaw oba pola na 1, aby objąć wyłącznie pierwsze zamówienie. 0 = bez ograniczeń.</target>
+      </trans-unit>
+      <trans-unit id="3ed0551c413b46931595edbc4c0e259c9bc83906">
+        <source>If curl is not available, use wget instead:</source>
+        <target>Jeśli curl jest niedostępny, użyj wget:</target>
+      </trans-unit>
+      <trans-unit id="f168b436a0f0e9b9853778d3b9cd7673966bc44f">
+        <source>If disabled, no coupons are generated for new orders. Discounts themselves are configured in the Rules tab.</source>
+        <target>Gdy wyłączone, dla nowych zamówień nie są generowane żadne kupony. Same rabaty konfiguruje się w zakładce Reguły.</target>
+      </trans-unit>
+      <trans-unit id="74d7dbc3886eec0f2062291ae539a3d8971ec4f8">
+        <source>Ignored for free shipping. Percentage is capped at 100.</source>
+        <target>Ignorowane przy darmowej dostawie. Procent jest ograniczony do 100.</target>
+      </trans-unit>
+      <trans-unit id="f5cf79da719b1508a3906905bcce693935677df8">
+        <source>Insert into the content above</source>
+        <target>Wstaw do treści powyżej</target>
+      </trans-unit>
+      <trans-unit id="bb2553b54a962d534e22f76d25c298457b46e21d">
+        <source>Install cron automatically</source>
+        <target>Zainstaluj cron automatycznie</target>
+      </trans-unit>
+      <trans-unit id="7bb4405cdfc9a15a3759bb0a3bbc05c3aadb95d3">
+        <source>Installed</source>
+        <target>Zainstalowany</target>
+      </trans-unit>
+      <trans-unit id="d19c0d615d9f6d0a5dce5ca5c056c8a14d337c3e">
+        <source>Installed by this module</source>
+        <target>Zainstalowany przez ten moduł</target>
+      </trans-unit>
+      <trans-unit id="a8603c91de6859135be826839f975a510b33b127">
+        <source>Internal label shown in the rules list.</source>
+        <target>Wewnętrzna etykieta wyświetlana na liście reguł.</target>
+      </trans-unit>
+      <trans-unit id="493805b2e7951e234421ba61bd06df182cddbfa7">
+        <source>Interpreted per the timing above. 0 or empty = this reminder is not sent.</source>
+        <target>Interpretowane zgodnie z ustawieniem powyżej. 0 lub puste = to przypomnienie nie jest wysyłane.</target>
+      </trans-unit>
+      <trans-unit id="12a77adba37bf9a5288a1119b89e1f37d9b8fea7">
+        <source>Keep logs for</source>
+        <target>Przechowuj logi przez</target>
+      </trans-unit>
+      <trans-unit id="f6a08398d3140a11317b3085cf52fca0c83fa20e">
+        <source>Key length</source>
+        <target>Długość klucza</target>
+      </trans-unit>
+      <trans-unit id="21bf7b13ea8097e20fd6c99a335c6becc4b1efaf">
+        <source>Key template</source>
+        <target>Szablon klucza</target>
+      </trans-unit>
+      <trans-unit id="3b13fb6c977af374e3b8e0635255ee4581fd9121">
+        <source>Key type</source>
+        <target>Typ klucza</target>
+      </trans-unit>
+      <trans-unit id="77e851da463338b805bb6ce7e42f7ef036b1cb63">
+        <source>Language of the email to send</source>
+        <target>Język wysyłanego e-maila</target>
+      </trans-unit>
+      <trans-unit id="333c63a502105eff394bc10bfbbfe001f98b3853">
+        <source>Last run</source>
+        <target>Ostatnie uruchomienie</target>
+      </trans-unit>
+      <trans-unit id="4310ed540c1cbd97566abcbc5a4e1fbeb8644917">
+        <source>Late</source>
+        <target>Opóźnione</target>
+      </trans-unit>
+      <trans-unit id="34fc3a5867d01b1417c5f6b8ab593da1bdc45833">
+        <source>Leave empty to trigger on any status (no restriction). Hold Ctrl/Cmd to select several.</source>
+        <target>Pozostaw puste, aby wyzwalać przy dowolnym statusie (bez ograniczeń). Przytrzymaj Ctrl/Cmd, aby wybrać kilka.</target>
+      </trans-unit>
+      <trans-unit id="7c7f5d049fad2569721d446c4a811f9bd5da5393">
+        <source>Level</source>
+        <target>Poziom</target>
+      </trans-unit>
+      <trans-unit id="891ebccd5baa32daed16fb5a0825ca7a4464931f">
+        <source>Lock</source>
+        <target>Blokada</target>
+      </trans-unit>
+      <trans-unit id="126dd3b70a5ca7818e0e26ad1e008d23b0f14a53">
+        <source>Logs</source>
+        <target>Logi</target>
+      </trans-unit>
+      <trans-unit id="5c60c4c80c6990d343c87fe6f6aa52ca63dd77a5">
+        <source>Managed cron:</source>
+        <target>Zarządzany cron:</target>
+      </trans-unit>
+      <trans-unit id="5e840f8281cbfc1cfa42a07c3c393d5ad357ff16">
+        <source>Manual run</source>
+        <target>Uruchomienie ręczne</target>
+      </trans-unit>
+      <trans-unit id="a95e85aed56318093b024674e217cae0bd30241d">
+        <source>Max</source>
+        <target>Maks.</target>
+      </trans-unit>
+      <trans-unit id="68f4145fee7dde76afceb910165924ad14cf0d00">
+        <source>Message</source>
+        <target>Wiadomość</target>
+      </trans-unit>
+      <trans-unit id="7eb0cee888ab55b559592d38eec027e9118d7d35">
+        <source>Min</source>
+        <target>Min.</target>
+      </trans-unit>
+      <trans-unit id="8ea36dfd7b0be66353f77a0feb0eed90e24d260f">
+        <source>Minimum next order amount</source>
+        <target>Minimalna kwota następnego zamówienia</target>
+      </trans-unit>
+      <trans-unit id="b1fec3a3c9a9a7ad72619067f7dea718f8c1ee4b">
+        <source>Minimum total the coupon requires on the next order. 0 to disable.</source>
+        <target>Minimalna wartość wymagana przez kupon przy następnym zamówieniu. 0 wyłącza.</target>
+      </trans-unit>
+      <trans-unit id="ff99def4de0170bdbcb15b434365817ed0b5e64c">
+        <source>Module active</source>
+        <target>Moduł aktywny</target>
+      </trans-unit>
+      <trans-unit id="260ff8ae7182fc851337b6b2fdb25f8cac2b8d47">
+        <source>Move down</source>
+        <target>Przesuń w dół</target>
+      </trans-unit>
+      <trans-unit id="b4f57cd0cd5c7d88461c1718646713dea47a36c9">
+        <source>Move up</source>
+        <target>Przesuń w górę</target>
+      </trans-unit>
+      <trans-unit id="709a23220f2c3d64d1e1d6d18c4d5280f8d82fca">
+        <source>Name</source>
+        <target>Nazwa</target>
+      </trans-unit>
+      <trans-unit id="ae9864cd55b97b461d80383602bb52b701e8ce88">
+        <source>Name shown to the customer on the voucher. Leave empty to use the default "Next Order Discount".</source>
+        <target>Nazwa pokazywana klientowi na kuponie. Pozostaw puste, aby użyć domyślnej „Next Order Discount”.</target>
+      </trans-unit>
+      <trans-unit id="97e2e9fd57980decdd1004f953f3c50a6794f0aa">
+        <source>Need help?</source>
+        <target>Potrzebujesz pomocy?</target>
+      </trans-unit>
+      <trans-unit id="9ca8ec7d0023678fa6c8aa831111ce5093a7cec3">
+        <source>Never run</source>
+        <target>Nigdy nie uruchomiono</target>
+      </trans-unit>
+      <trans-unit id="b9ac14b0c6a55d1ae0c63d6a84dff7a2b1a47e49">
+        <source>New rule</source>
+        <target>Nowa reguła</target>
+      </trans-unit>
+      <trans-unit id="bc981983e7f547dc62e19a1e383acfe00782a6d5">
+        <source>Next</source>
+        <target>Dalej</target>
+      </trans-unit>
+      <trans-unit id="929381e3d053c81ad8f1b7ad7ab4ac6c3af4ea80">
+        <source>Next Order Discount</source>
+        <target>Next Order Discount</target>
+      </trans-unit>
+      <trans-unit id="816c52fd2bdd94a63cd0944823a6c0aa9384c103">
+        <source>No</source>
+        <target>Nie</target>
+      </trans-unit>
+      <trans-unit id="7aca4b0f2e4499028dee2359c3e42eb279667b56">
+        <source>No access to the server crontab? Paste this URL into a free web-cron service (e.g. cron-job.org) and set it to run every 5 minutes:</source>
+        <target>Brak dostępu do crontaba na serwerze? Wklej ten adres URL do darmowej usługi web-cron (np. cron-job.org) i ustaw uruchamianie co 5 minut:</target>
+      </trans-unit>
+      <trans-unit id="efbec23f15bf47b63693cfcd7ca079b558e273de">
+        <source>No coupons found yet. Coupons appear here once they are generated for qualifying orders.</source>
+        <target>Brak kuponów. Kupony pojawią się tutaj, gdy zostaną wygenerowane dla kwalifikujących się zamówień.</target>
+      </trans-unit>
+      <trans-unit id="ff822d5ec29cb251ec152815c92e620b6c550bd6">
+        <source>No discount rules yet. Click "Add a rule" above to create your first one.</source>
+        <target>Brak reguł rabatowych. Kliknij „Dodaj regułę” powyżej, aby utworzyć pierwszą.</target>
+      </trans-unit>
+      <trans-unit id="ce74d5f1d9495b3284287144ec7a4b12612fdb8c">
+        <source>No log entries.</source>
+        <target>Brak wpisów w logu.</target>
+      </trans-unit>
+      <trans-unit id="8665e804aec7b583c790614738590cf63e7d6214">
+        <source>Not installed by this module</source>
+        <target>Niezainstalowany przez ten moduł</target>
+      </trans-unit>
+      <trans-unit id="2a2cd4b515b7c093ff20747a838785b167669aa0">
+        <source>Not running</source>
+        <target>Nie działa</target>
+      </trans-unit>
+      <trans-unit id="2c8221a374c58e6a84a656b5c72ba8558f4a9964">
+        <source>Number of random characters in</source>
+        <target>Liczba losowych znaków w</target>
+      </trans-unit>
+      <trans-unit id="2c20a11a5baf9e74d774ffac78d6d028315b7f1e">
+        <source>Numeric (0-9)</source>
+        <target>Cyfry (0-9)</target>
+      </trans-unit>
+      <trans-unit id="9ce3bd4224c8c1780db56b4125ecf3f24bf748b7">
+        <source>OK</source>
+        <target>OK</target>
+      </trans-unit>
+      <trans-unit id="15d99e7560578570dae945f86c7534c98ce360c1">
+        <source>Older log entries are deleted automatically (during cron). Set 0 to keep logs forever.</source>
+        <target>Starsze wpisy logu są usuwane automatycznie (podczas crona). Ustaw 0, aby przechowywać je bezterminowo.</target>
+      </trans-unit>
+      <trans-unit id="c4cda82e3b95fd547322220a2da043b89cf13af1">
+        <source>One-click install</source>
+        <target>Instalacja jednym kliknięciem</target>
+      </trans-unit>
+      <trans-unit id="c3d7bee2c04243b3fec7f11ee0a2f0db83d25b06">
+        <source>Only the selected</source>
+        <target>Tylko wybrane</target>
+      </trans-unit>
+      <trans-unit id="6c192be368a569f6df38ab50879ca5e4031c008f">
+        <source>Optional description stored on the voucher (visible in the back office). Leave empty for none.</source>
+        <target>Opcjonalny opis zapisany na kuponie (widoczny w panelu administracyjnym). Pozostaw puste, aby go nie dodawać.</target>
+      </trans-unit>
+      <trans-unit id="f43a86a495285d2272966d50c83ed7a9cd483701">
+        <source>Optional. Leave both empty for an always-active rule.</source>
+        <target>Opcjonalne. Pozostaw oba pola puste, aby reguła była zawsze aktywna.</target>
+      </trans-unit>
+      <trans-unit id="56fc1797596f8f527dfaf60eaf42e97ae26358c6">
+        <source>Or use an external cron service</source>
+        <target>Albo użyj zewnętrznej usługi cron</target>
+      </trans-unit>
+      <trans-unit id="9f73a6e071e873daddf77d5209455a5d46e3654d">
+        <source>Order count minimum cannot be greater than the maximum.</source>
+        <target>Minimalna liczba zamówień nie może być większa niż maksymalna.</target>
+      </trans-unit>
+      <trans-unit id="be42782d4ef499e09b91242343c62224928e663d">
+        <source>Order no.</source>
+        <target>Nr zamówienia</target>
+      </trans-unit>
+      <trans-unit id="2f32f2000aa65d24654aaf9f04739691d96dd31c">
+        <source>Order total</source>
+        <target>Wartość zamówienia</target>
+      </trans-unit>
+      <trans-unit id="44c26a9c2701c85c37adf7d0360422785febda38">
+        <source>Order total minimum cannot be greater than the maximum.</source>
+        <target>Minimalna wartość zamówienia nie może być większa niż maksymalna.</target>
+      </trans-unit>
+      <trans-unit id="0ffc4637c1b12b512ffc679ac4b98e00ca414029">
+        <source>Order total range that triggers this rule. Use 0 for no limit.</source>
+        <target>Zakres wartości zamówienia wyzwalający tę regułę. 0 = bez ograniczeń.</target>
+      </trans-unit>
+      <trans-unit id="2dc541063271296069b480edbab8729662f5d8db">
+        <source>PHP cannot run shell commands here — common on shared hosting</source>
+        <target>PHP nie może tu uruchamiać poleceń powłoki — częste na hostingu współdzielonym</target>
+      </trans-unit>
+      <trans-unit id="55d90e5b31e48e0345036f91f593796d519daedc">
+        <source>PHP version</source>
+        <target>Wersja PHP</target>
+      </trans-unit>
+      <trans-unit id="fb06270f7c212baabc8749ffc36e49dc8f321548">
+        <source>Page</source>
+        <target>Strona</target>
+      </trans-unit>
+      <trans-unit id="96f608c16cef16caa06bf38901fb5f618a35a70b">
+        <source>Pending</source>
+        <target>Oczekuje</target>
+      </trans-unit>
+      <trans-unit id="a92697cdc83c5e59146da61cb1c6888cd4327f66">
+        <source>Percentage (%)</source>
+        <target>Procent (%)</target>
+      </trans-unit>
+      <trans-unit id="91cfe508af913d22bbc1848dd6094d43b2038b02">
+        <source>Plan coupon reminders</source>
+        <target>Zaplanuj przypomnienia o kuponach</target>
+      </trans-unit>
+      <trans-unit id="4d6278728c5c30836b64b9e37ff1f2e49516f7c7">
+        <source>PrestaShop Addons contact form</source>
+        <target>Formularz kontaktowy PrestaShop Addons</target>
+      </trans-unit>
+      <trans-unit id="f1fbb2b43dca281d0138f4fcc92543ad143ef0b1">
+        <source>Preview</source>
+        <target>Podgląd</target>
+      </trans-unit>
+      <trans-unit id="50f94286ba30706a19070d3ec0a0c8d34d6cf6eb">
+        <source>Previous</source>
+        <target>Wstecz</target>
+      </trans-unit>
+      <trans-unit id="886cbff9d9df761ec642945e519631a23ed173a2">
+        <source>Priority</source>
+        <target>Priorytet</target>
+      </trans-unit>
+      <trans-unit id="91ae6a9718b81672244cdd6b43391c69e5cd98cf">
+        <source>Process the dispatch queue</source>
+        <target>Przetwórz kolejkę wysyłki</target>
+      </trans-unit>
+      <trans-unit id="e63451d3cf90040c075dc1fe95aa1f7d7528c37f">
+        <source>Processing</source>
+        <target>Przetwarzanie</target>
+      </trans-unit>
+      <trans-unit id="21a6f1708d8fe0294dbe065b9964ce68dac902d1">
+        <source>Product categories</source>
+        <target>Kategorie produktów</target>
+      </trans-unit>
+      <trans-unit id="9ef937556efe782b8e9bf8ef16e540c185c5bf00">
+        <source>Recommended</source>
+        <target>Zalecane</target>
+      </trans-unit>
+      <trans-unit id="2d40a3d4b23c33dba91182fa7193e3bc8d084647">
+        <source>Recommended:</source>
+        <target>Zalecane:</target>
+      </trans-unit>
+      <trans-unit id="5afdde13cc404484c628ca47bdd23d11459cbc96">
+        <source>Registered customers only</source>
+        <target>Tylko zarejestrowani klienci</target>
+      </trans-unit>
+      <trans-unit id="2b625720123757ac925a3c863c5a38ce67326232">
+        <source>Remind the customer about their unused coupon by email. Reminders stop automatically once the coupon is used or expires.</source>
+        <target>Przypominaj klientowi e-mailem o niewykorzystanym kuponie. Przypomnienia kończą się automatycznie, gdy kupon zostanie użyty lub wygaśnie.</target>
+      </trans-unit>
+      <trans-unit id="744404772d517f75b5c5cfa7f7e9aabeb5c83a2e">
+        <source>Reminded</source>
+        <target>Przypomniane</target>
+      </trans-unit>
+      <trans-unit id="f6e64660144c28e0b292ce4146c39d22f5e8f513">
+        <source>Reminder 1 sent</source>
+        <target>Przypomnienie 1 wysłane</target>
+      </trans-unit>
+      <trans-unit id="df466643987dda6cc14e949cac7203184354a186">
+        <source>Reminder 2 sent</source>
+        <target>Przypomnienie 2 wysłane</target>
+      </trans-unit>
+      <trans-unit id="f5bc00bb5a67daa1e07ca856f5079ecdab42aebd">
+        <source>Reminder email sent.</source>
+        <target>E-mail z przypomnieniem został wysłany.</target>
+      </trans-unit>
+      <trans-unit id="638acd8c71582e4ba76fc7236a3e6b6e35da010f">
+        <source>Reminder timing</source>
+        <target>Sposób liczenia przypomnień</target>
+      </trans-unit>
+      <trans-unit id="69d7ca912ac65fc32dbff67b98732eab0000da64">
+        <source>Reminders: days after the coupon email</source>
+        <target>Przypomnienia: dni po e-mailu z kuponem</target>
+      </trans-unit>
+      <trans-unit id="83a6592e2e34f8e8c4f62e8cf9ecf8b19818e1da">
+        <source>Reminders: days before the coupon expires</source>
+        <target>Przypomnienia: dni przed wygaśnięciem kuponu</target>
+      </trans-unit>
+      <trans-unit id="884ed7a65251d54350c268e914f237fa997a8ab8">
+        <source>Remove cron</source>
+        <target>Usuń cron</target>
+      </trans-unit>
+      <trans-unit id="04148d61b0b7212b69dd8b267c98c74a3ae36942">
+        <source>Required field</source>
+        <target>Pole wymagane</target>
+      </trans-unit>
+      <trans-unit id="44c57abd888a66b36d4b7c902134063e4a097223">
+        <source>Reset</source>
+        <target>Wyczyść</target>
+      </trans-unit>
+      <trans-unit id="6f0abcde9c0bc1fc64cf121079d6dda0a4ae4fd9">
+        <source>Restrict this rule by the selected items. "All" ignores the list.</source>
+        <target>Ogranicz tę regułę do wybranych pozycji. „Wszystkie” ignoruje listę.</target>
+      </trans-unit>
+      <trans-unit id="78e1790e29a5541b6d02348fc3f45f18445709f4">
+        <source>Rule</source>
+        <target>Reguła</target>
+      </trans-unit>
+      <trans-unit id="9e84d721dc29380b88a37b0dd5ec0f925b4ac77f">
+        <source>Rule name</source>
+        <target>Nazwa reguły</target>
+      </trans-unit>
+      <trans-unit id="5ddb6273162841a6369f7d6b0cba5dcaad08b49e">
+        <source>Rule name is required.</source>
+        <target>Nazwa reguły jest wymagana.</target>
+      </trans-unit>
+      <trans-unit id="54bd3038988c9b7739b15bb1cb19c84fe9e34042">
+        <source>Rule not found.</source>
+        <target>Nie znaleziono reguły.</target>
+      </trans-unit>
+      <trans-unit id="bb11a8e3f8712e36e7cd9d1c615a4e3dbb03336a">
+        <source>Rules</source>
+        <target>Reguły</target>
+      </trans-unit>
+      <trans-unit id="4c6ce77b2ca76f0725bbf7274bc16ce794c543f3">
+        <source>Run all tasks now</source>
+        <target>Uruchom wszystkie zadania teraz</target>
+      </trans-unit>
+      <trans-unit id="2af00e23c480ba779fddda60673b28364ccb8e89">
+        <source>Run now</source>
+        <target>Uruchom teraz</target>
+      </trans-unit>
+      <trans-unit id="73989d9c59264da08a15dba21c7d58237a91f08f">
+        <source>Running</source>
+        <target>W trakcie</target>
+      </trans-unit>
+      <trans-unit id="efc007a393f66cdb14d57d385822a3d9e36ef873">
+        <source>Save</source>
+        <target>Zapisz</target>
+      </trans-unit>
+      <trans-unit id="3738a3799b885b4f072d533927ac0e4898dd43e7">
+        <source>Search code</source>
+        <target>Szukaj kodu</target>
+      </trans-unit>
+      <trans-unit id="9fd87d0d9bf3aa02e35320f05c517c0b4a4f1d6b">
+        <source>Second reminder (days)</source>
+        <target>Drugie przypomnienie (dni)</target>
+      </trans-unit>
+      <trans-unit id="6e80a178258a58c4f4b0d327d34f3dcaac417cf2">
+        <source>Second reminder email</source>
+        <target>E-mail drugiego przypomnienia</target>
+      </trans-unit>
+      <trans-unit id="e4873bf37e1f053ba35aded3f9144483a2584ba7">
+        <source>Send reminder 1 to the customer now</source>
+        <target>Wyślij klientowi przypomnienie 1 teraz</target>
+      </trans-unit>
+      <trans-unit id="d479c484493cdd9dccdd8be86da4c885d53f8ad6">
+        <source>Send reminder 2 to the customer now</source>
+        <target>Wyślij klientowi przypomnienie 2 teraz</target>
+      </trans-unit>
+      <trans-unit id="b81424a741c52b9ebe17b54e0ff49578b8f14c81">
+        <source>Send reminders</source>
+        <target>Wyślij przypomnienia</target>
+      </trans-unit>
+      <trans-unit id="fc552c754dd8f66b415bc0e0df960c5ad545e7bb">
+        <source>Send test email</source>
+        <target>Wyślij testowy e-mail</target>
+      </trans-unit>
+      <trans-unit id="bef2074ab796c3e09f3429d460ab7aa83604cdcd">
+        <source>Send the coupon email to the customer again</source>
+        <target>Wyślij klientowi ponownie e-mail z kuponem</target>
+      </trans-unit>
+      <trans-unit id="deb072089e64ffc2e16ef122579a124322ee7368">
+        <source>Set the coupon code format for this rule. Leave a field empty to use the built-in default.</source>
+        <target>Ustaw format kodu kuponu dla tej reguły. Puste pole oznacza użycie wbudowanej wartości domyślnej.</target>
+      </trans-unit>
+      <trans-unit id="68997a1c99ec002fe3e3608cea1d009fc6f7594a">
+        <source>Set up the cron</source>
+        <target>Skonfiguruj cron</target>
+      </trans-unit>
+      <trans-unit id="c7f73bb54d928922c3838bb789ee9fb8a5b1eb37">
+        <source>Settings</source>
+        <target>Ustawienia</target>
+      </trans-unit>
+      <trans-unit id="c619e6bf800c9d4d9d8b47274250497cd88f3559">
+        <source>Skip guest-checkout orders. Recommended for "first order" / returning-customer rules: each guest checkout creates a new customer record, so guests cannot be reliably counted as returning and would qualify as a first order every time.</source>
+        <target>Pomijaj zamówienia składane jako gość. Zalecane dla reguł „pierwsze zamówienie” i reguł dla klientów powracających: każde zamówienie gościa tworzy nowy rekord klienta, więc gości nie da się wiarygodnie policzyć jako powracających i za każdym razem kwalifikowaliby się jako pierwsze zamówienie.</target>
+      </trans-unit>
+      <trans-unit id="9bfc557947364f0c63e887afcf5af167217b152c">
+        <source>Source order</source>
+        <target>Zamówienie źródłowe</target>
+      </trans-unit>
+      <trans-unit id="d73452879a6b587dc6ec01bedb261daaf2d0340a">
+        <source>Source order total</source>
+        <target>Wartość zamówienia źródłowego</target>
+      </trans-unit>
+      <trans-unit id="bae7d5be70820ed56467bd9a63744e23b47bd711">
+        <source>Status</source>
+        <target>Status</target>
+      </trans-unit>
+      <trans-unit id="9e253470c876ee6d5c720eb777aeb82d4c26e28f">
+        <source>Stop</source>
+        <target>Stop</target>
+      </trans-unit>
+      <trans-unit id="f5c075919649f2235a9bfaf65c365c8de3b44518">
+        <source>Stop after this rule</source>
+        <target>Zatrzymaj po tej regule</target>
+      </trans-unit>
+      <trans-unit id="95df23f13ec39f461dcda5ae76cb46df0bd54804">
+        <source>Stop evaluating further rules after this one</source>
+        <target>Nie sprawdzaj kolejnych reguł po tej</target>
+      </trans-unit>
+      <trans-unit id="8d183dbdcea3b29906090bd83fa6fa37923cc8ec">
+        <source>Subject</source>
+        <target>Temat</target>
+      </trans-unit>
+      <trans-unit id="7bb0ddf9221c03b806b03c209e8366000124aa15">
+        <source>Task</source>
+        <target>Zadanie</target>
+      </trans-unit>
+      <trans-unit id="090ec5f560fc50377fcd95e5cda128e91b276e98">
+        <source>Tasks</source>
+        <target>Zadania</target>
+      </trans-unit>
+      <trans-unit id="72d6f43fc9543254529d2c9d108bfe86426f2dad">
+        <source>Test email</source>
+        <target>Testowy e-mail</target>
+      </trans-unit>
+      <trans-unit id="7e8d51f3ea686ec2fe86db6320a897bea65f4caf">
+        <source>The module needs a cron to send queued emails, plan reminders and expire lapsed coupons. The recommended way works on any hosting and is independent of your PHP version, because it calls a URL over HTTP instead of running PHP from the command line.</source>
+        <target>Moduł potrzebuje crona, aby wysyłać e-maile z kolejki, planować przypomnienia i wygaszać przeterminowane kupony. Zalecana metoda działa na każdym hostingu i nie zależy od wersji PHP, ponieważ wywołuje adres URL przez HTTP zamiast uruchamiać PHP z wiersza poleceń.</target>
+      </trans-unit>
+      <trans-unit id="41d818de0e1d816fcf9708acbd4dabec85a63433">
+        <source>The start date cannot be after the end date.</source>
+        <target>Data początkowa nie może być późniejsza niż data końcowa.</target>
+      </trans-unit>
+      <trans-unit id="64eccde285269aa612e34350aa274228d9dfc633">
+        <source>This coupon can no longer be used, so a reminder cannot be sent.</source>
+        <target>Tego kuponu nie można już użyć, więc nie da się wysłać przypomnienia.</target>
+      </trans-unit>
+      <trans-unit id="2197d4936b8ea4481b627d0e3cecf51d1405516b">
+        <source>This coupon can no longer be used, so its email cannot be resent.</source>
+        <target>Tego kuponu nie można już użyć, więc nie da się ponownie wysłać e-maila.</target>
+      </trans-unit>
+      <trans-unit id="b0a61ece31173b9f2763ebbf88a950c379672014">
+        <source>This server can manage its own crontab, so you can install the cron without leaving this page.</source>
+        <target>Ten serwer może zarządzać własnym crontabem, więc cron zainstalujesz bez opuszczania tej strony.</target>
+      </trans-unit>
+      <trans-unit id="64259625c768e09161f66c645c78980deb6b77e3">
+        <source>Tip: the HTTP cron line above does not depend on any of this — it runs through your web server, so the PHP version and shell settings shown here do not matter for it.</source>
+        <target>Wskazówka: powyższa linia crona po HTTP nie zależy od żadnego z tych ustawień — działa przez serwer WWW, więc pokazana tu wersja PHP i ustawienia powłoki nie mają dla niej znaczenia.</target>
+      </trans-unit>
+      <trans-unit id="ae79ea1e9c6391a9ed83a2e18a031b835feec0c9">
+        <source>To</source>
+        <target>Do</target>
+      </trans-unit>
+      <trans-unit id="d866ef55cc18eaf9c88ad54188abde709c6254f9">
+        <source>Total entries:</source>
+        <target>Łączna liczba wpisów:</target>
+      </trans-unit>
+      <trans-unit id="b5cf50e440c417947c635f3c6c1b2285d7cd6b91">
+        <source>Trigger on order statuses</source>
+        <target>Wyzwalaj przy statusach zamówienia</target>
+      </trans-unit>
+      <trans-unit id="48b50da6a96218ed4e30b6a00e08f62038bd9e19">
+        <source>Trigger statuses</source>
+        <target>Statusy wyzwalające</target>
+      </trans-unit>
+      <trans-unit id="3b14f5d7100930f962fac747defe82c797875605">
+        <source>Unused coupons whose validity period has ended.</source>
+        <target>Niewykorzystane kupony, których okres ważności dobiegł końca.</target>
+      </trans-unit>
+      <trans-unit id="f2f8570ddd7b1e7b571311bbf9159efb02571e07">
+        <source>Updated</source>
+        <target>Zaktualizowano</target>
+      </trans-unit>
+      <trans-unit id="1d4d43cc6f3a833e0340a0d1794b6d7b9958657e">
+        <source>Use</source>
+        <target>Użyj</target>
+      </trans-unit>
+      <trans-unit id="b38319251f1b83b75f8b786ad33e170292b20ab1">
+        <source>Use the copy-paste line below instead.</source>
+        <target>Użyj zamiast tego linii do skopiowania poniżej.</target>
+      </trans-unit>
+      <trans-unit id="02c0e4a1da64085d6e5e5cc69335b54b181e8a32">
+        <source>Used</source>
+        <target>Użyte</target>
+      </trans-unit>
+      <trans-unit id="c8214d35a16e2ce6ecca4a054a7242e2e5ff7fe6">
+        <source>Valid until</source>
+        <target>Ważny do</target>
+      </trans-unit>
+      <trans-unit id="dbc5c52e073823ba4fe43f0f21d8dd13fb624944">
+        <source>Validity</source>
+        <target>Ważność</target>
+      </trans-unit>
+      <trans-unit id="78e808274f6e5407d3b2b06709be979584667852">
+        <source>Validity period (days)</source>
+        <target>Okres ważności (dni)</target>
+      </trans-unit>
+      <trans-unit id="d0289b11f8d8608d0832c5567fc7bdc7c2cb47d0">
+        <source>Validity period must be a whole number of days (at least 1).</source>
+        <target>Okres ważności musi być liczbą całkowitą dni (co najmniej 1).</target>
+      </trans-unit>
+      <trans-unit id="b2edd4dfe1b0c99028c6edefee46e369905675ad">
+        <source>Voucher description</source>
+        <target>Opis kuponu</target>
+      </trans-unit>
+      <trans-unit id="a71ab13fa522bd6be3d01e445810f37933831a47">
+        <source>Voucher name</source>
+        <target>Nazwa kuponu</target>
+      </trans-unit>
+      <trans-unit id="5e9eac33a3d583b8384b1f286225c6d5f3ca1bc3">
+        <source>When enabled, no further rules are evaluated after this one matches (single coupon). Disable to allow additional matching rules to issue their own coupons.</source>
+        <target>Gdy włączone, po dopasowaniu tej reguły kolejne nie są sprawdzane (jeden kupon). Wyłącz, aby pozostałe pasujące reguły mogły wystawić własne kupony.</target>
+      </trans-unit>
+      <trans-unit id="068a65e5b6c62d7ef53be608f63aca9c41d3aa4a">
+        <source>When the order that issued a coupon moves to one of these statuses, that coupon is voided (deactivated and marked canceled) and no new coupon is issued for it. Defaults to Canceled and Refunded. Leave empty to never auto-cancel. Hold Ctrl/Cmd to select several.</source>
+        <target>Gdy zamówienie, które wygenerowało kupon, zmieni status na jeden z wybranych, kupon zostaje unieważniony (dezaktywowany i oznaczony jako anulowany) i nie jest dla niego wystawiany nowy. Domyślnie: Anulowane i Zwrócone. Pozostaw puste, aby nigdy nie anulować automatycznie. Przytrzymaj Ctrl/Cmd, aby wybrać kilka.</target>
+      </trans-unit>
+      <trans-unit id="5397e0583f14f6c88de06b1ef28f460a1fb5b0ae">
+        <source>Yes</source>
+        <target>Tak</target>
+      </trans-unit>
+      <trans-unit id="388a7ff9f458d90e6eb66e97eeebcc7dfc0d5436">
+        <source>Your server</source>
+        <target>Twój serwer</target>
+      </trans-unit>
+      <trans-unit id="09b2cda30107b690274c20344e7eed96141b1a7f">
+        <source>add ONE line to your server crontab that runs every 5 minutes. It triggers all tasks at once:</source>
+        <target>dodaj JEDNĄ linię do crontaba serwera, uruchamianą co 5 minut. Wyzwala ona wszystkie zadania naraz:</target>
+      </trans-unit>
+      <trans-unit id="bad3a053086ad7ef03fe213424ed889d542e78a8">
+        <source>as a placeholder for the generated key. Example:</source>
+        <target>jako symbol zastępczy generowanego klucza. Przykład:</target>
+      </trans-unit>
+      <trans-unit id="7b231a50a498ef151e291795f46f56bee569eae5">
+        <source>available</source>
+        <target>dostępny</target>
+      </trans-unit>
+      <trans-unit id="98b418d3ea6f733f6fcffeb70c4afe1aa32d4426">
+        <source>based on</source>
+        <target>na podstawie</target>
+      </trans-unit>
+      <trans-unit id="4d91178642d0dfe0285f5beb2d73d19dcdc51b03">
+        <source>blocked (normal on shared hosting)</source>
+        <target>zablokowane (normalne na hostingu współdzielonym)</target>
+      </trans-unit>
+      <trans-unit id="3c363836cf4e16666669a25da280a1865c2d2874">
+        <source>d</source>
+        <target>d</target>
+      </trans-unit>
+      <trans-unit id="5548ae4f34cbb6e30414532924e2088d915b460f">
+        <source>days</source>
+        <target>dni</target>
+      </trans-unit>
+      <trans-unit id="49bec3046f913e039695a3b3fb86b680327e1ac2">
+        <source>every 30 minutes</source>
+        <target>co 30 minut</target>
+      </trans-unit>
+      <trans-unit id="01f513ec1e869454214f8301f6fd7b31bf26cb91">
+        <source>every 5 minutes</source>
+        <target>co 5 minut</target>
+      </trans-unit>
+      <trans-unit id="61d464842cdbafc0c7e84fa63eb0cdca206a776b">
+        <source>generated coupons</source>
+        <target>wygenerowanych kuponów</target>
+      </trans-unit>
+      <trans-unit id="a7f8e7cc0d43d21e5d1a4d0a3b0d5ff66a5da1ed">
+        <source>just now</source>
+        <target>przed chwilą</target>
+      </trans-unit>
+      <trans-unit id="b1cec91d55ed19fdf477959a02969e7accd0a2c2">
+        <source>not found — use wget or an external cron service</source>
+        <target>nie znaleziono — użyj wget lub zewnętrznej usługi cron</target>
+      </trans-unit>
+      <trans-unit id="3c3defc36c690575457ec5d2e6b23afc3af4a949">
+        <source>once a day</source>
+        <target>raz dziennie</target>
+      </trans-unit>
+      <trans-unit id="6f4568197d3d0fbcf9c4763e6773df156fd41cee">
+        <source>the crontab tool is not installed on this server</source>
+        <target>narzędzie crontab nie jest zainstalowane na tym serwerze</target>
+      </trans-unit>
+      <trans-unit id="4ee135fd9de176d28c0756d5005b090f3651872a">
+        <source>the web-server user is not allowed to manage the crontab</source>
+        <target>użytkownik serwera WWW nie ma prawa zarządzać crontabem</target>
+      </trans-unit>
+      <trans-unit id="a31175b2fbc3278480f85b503aa00da59a287367">
+        <source>unknown (cannot probe the shell on this host)</source>
+        <target>nieznane (nie można sprawdzić powłoki na tym hoście)</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

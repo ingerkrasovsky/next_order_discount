@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
-  <file original="ModulesSetnextorderdiscountShop" source-language="en-US" target-language="ru-RU" datatype="plaintext">
+  <file original="ModulesSetnextorderdiscountShop" source-language="en-US" target-language="fr-FR" datatype="plaintext">
     <body>
       <trans-unit id="31688596ad58aaedd7c9e84591995f59cefea865">
         <source>Next order discount</source>
-        <target>Скидка на следующий заказ</target>
+        <target>Remise sur la prochaine commande</target>
       </trans-unit>
     </body>
   </file>

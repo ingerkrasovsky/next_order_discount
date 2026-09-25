@@ -43,5 +43,5 @@
     <li>{l s='Choose values that match one of the active Next Order Discount rules.' mod='set_demo_order_generator'}</li>
     <li>{l s='Create the order and check the result above and your inbox.' mod='set_demo_order_generator'}</li>
   </ol>
-  <p>{l s='Existing customers are reused by email. Names are only used when a new customer is created.' mod='set_demo_order_generator'}</p>
+  <p>{l s='Existing customers are reused by email. Their first name, last name and email language are updated from this form before the order is created.' mod='set_demo_order_generator'}</p>
 </div>
